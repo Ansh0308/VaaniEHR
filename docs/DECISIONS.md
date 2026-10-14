@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D14 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D16 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -73,9 +73,74 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Decision:** Writing a visit to ClinicOS = `POST /api/visits`, then `PATCH /api/visits/:id`, then `PATCH /api/visits/:id/complete`, using the **doctor's own bearer token**, and **only after VaaniEHR sign-off** (ADR-D11).
 - **Consequences:** `complete` has side effects in ClinicOS (token marked `served`, doctor's `avgConsultMins` recomputed, queue positions recalculated, socket update) - Phase 12 must handle or deliberately avoid them (CLINICOS_INTEGRATION_FACTS Q3c). Visit routes are doctor-only and owner-bound, so no service account can write. After `complete`, ClinicOS rejects further edits (400); VaaniEHR amendments cannot be pushed to the same ClinicOS visit. `POST /api/visits` is idempotent per `tokenId` only.
 
+
+## D15 - PRD v1.1 is the source of truth
+- **Context:** `docs/VaaniEHR_PRD_v1.1.md` reconciles the PRD with the code-verified ClinicOS audit (ClinicOS = MySQL, own PostgreSQL for VaaniEHR, `AuthProvider`, real integration contract, VaaniEHR-owned side tables).
+- **Decision (owner, 2026-10-14):** PRD v1.1 supersedes v1.0. It becomes `DOCUMENTS/VaaniEHR_PRD.md`; v1.0 is kept as `DOCUMENTS/archive/VaaniEHR_PRD_v1.0.md`. ADR-D5 still applies for ClinicOS facts (code wins).
+- **Consequences:** Requirement IDs are read from v1.1. `docs/PRD_ERRATA.md` rows that v1.1 already fixes are marked "applied in PRD v1.1"; rows it does not cover stay open.
+
+## D16 - The `SIMULATED_DATA_ONLY=false` refusal stays
+- **Decision (owner, 2026-10-14):** api-node and asr-py refuse to start when `SIMULATED_DATA_ONLY` is anything other than `true` (real-data mode is not permitted; AGENTS.md Hard Rule 1, NFR-PRIV-02).
+- **Consequences:** **Phase 12 must not weaken or bypass this guard without the owner's explicit approval.** Tests: `apps/api-node/test/config.test.ts`, `apps/asr-py/tests/test_config.py`.
+
 ---
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
 - **Docker:** installed with WSL2 (daemon must be running to use compose).
 - **ADR-D4 amendment - standalone dev auth:** `DevAuthProvider` issues its **own access token, about 1 hour**, signed with a **VaaniEHR-only secret**, claims `{ sub, role, clinicId, devUser: true }`. **No refresh token in standalone mode** (PRD NFR-SEC-01 "JWT with refresh" is deliberately not met in standalone mode; recorded as a deviation).
 - **Git:** remote `origin` = `https://github.com/Ansh0308/VaaniEHR.git`. Tracked: `AGENTS.md`, `CLAUDE.md`, `docs/`, `DOCUMENTS/`, `skills-lock.json`. Git-ignored: `.agents/`, `.claude/`.
+
+
+---
+
+## Phase 1.1 dependency register
+
+AGENTS.md Hard Rule 6 and the Phase 1.1 brief: no dependency without a stated reason here. `scripts/sbom.mjs --reasons-only` (part of `npm run check`) fails if any **direct** dependency in any `package.json` or `requirements*.txt` is missing from this table. All versions are pinned exactly (`.npmrc` `save-exact`, `==` in requirements). Transitive packages are listed with licences in `docs/SBOM.md`.
+
+Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-10-14): the PRD targets **Node 20**, so tools whose latest major needs Node 22+ (vitest 5, jsdom 30) are not used; typescript-eslint 8.x supports TypeScript below 6.1, so TypeScript is pinned to 5.9.3; React stays at 18.3.1 per the PRD. The developer machine runs Node 24; CI tests Node 20 and 24.
+
+<!-- DEP-REASONS:START -->
+| Dependency | Reason |
+|---|---|
+| @eslint/js | ESLint's recommended JavaScript rule set (flat config); official companion of eslint. |
+| eslint | Linting for all TypeScript/JavaScript (NFR-MAINT-01). v10 (supports Node 20.19+; v9 is flagged as unsupported by npm). |
+| eslint-config-prettier | Disables ESLint rules that conflict with Prettier so the two tools never fight. |
+| globals | Declares Node/browser global names for ESLint so no-undef style rules work. |
+| prettier | Single code formatter (NFR-MAINT-01); checked in `npm run lint`. |
+| typescript | Strict typing for api-node, web, rules (PRD §17). 5.9.3 because typescript-eslint 8.x does not yet support TypeScript 6.1+/7. |
+| typescript-eslint | TypeScript parser and rules for ESLint. |
+| cors | Restricts browser origins for the HTTP API to CORS_ORIGIN (NFR-SEC-06). |
+| express | HTTP framework named in the PRD stack (§11: Node 20 + Express). Version 5 for native async error handling. |
+| helmet | Sets standard security headers (NFR-SEC-06 / ASVS L1); ClinicOS lacks it. |
+| jose | Signs/verifies the dev provider's HS256 JWT (ADR-D4 amendment): pure ESM, no native build, strict algorithm and claim checks. |
+| pg | PostgreSQL client for api-node (ADR-D1); used for the readiness check and, later, all data access. |
+| socket.io | Realtime server named in the PRD stack (§11, FR-F2-01); authenticated at handshake (ADR-D10). |
+| zod | Runtime validation of environment variables and request bodies (Phase 1.1 API conventions, NFR-SEC-01). |
+| @types/cors | Type declarations for cors. |
+| @types/express | Type declarations for express 5. |
+| @types/node | Type declarations for Node 20 APIs (matches the minimum supported Node). |
+| @types/pg | Type declarations for pg. |
+| @types/supertest | Type declarations for supertest. |
+| node-pg-migrate | SQL-first migration tool (migration 0001: schema_info + vector extension); standard, Postgres-only, no ORM lock-in. |
+| socket.io-client | Test-only: connects real sockets to verify handshake auth and room isolation. |
+| supertest | Test-only: HTTP assertions against the Express app without opening a port. |
+| tsx | Runs TypeScript directly for `npm run dev` (watch mode) without a build step. |
+| vitest | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
+| react | UI library named in the PRD stack (§11). 18.3.1 per PRD (not 19). |
+| react-dom | DOM renderer for react. |
+| @testing-library/dom | Peer dependency of @testing-library/react. |
+| @testing-library/react | Component tests for the web app (banner test now, more in Phase 1.2). |
+| @types/react | Type declarations for react 18. |
+| @types/react-dom | Type declarations for react-dom 18. |
+| @vitejs/plugin-react | Vite plugin for React (JSX transform, fast refresh). 5.x is the line that supports Vite 7. |
+| jsdom | Browser-like DOM for Vitest component tests. 27.x chosen: 30.x needs Node 22+. |
+| tailwindcss | Styling named in the PRD stack (§11). v4 (4.3.3): v3.4 pulls in vulnerable build tooling (braces, postcss-selector-parser; npm audit high). ClinicOS tokens (ADR-D7) are carried over as CSS `@theme` values in Phase 1.2. |
+| @tailwindcss/vite | Official Tailwind 4 integration for Vite (replaces the PostCSS + autoprefixer setup, so those two are no longer dependencies). |
+| vite | Build tool and dev server for the web app (PRD §11). 7.x chosen as the conservative line (works on Node 20.19+); 8.x also supports it but is newer and pairs with plugin-react 6; revisit later. |
+| fastapi | Python service framework named in the PRD stack (§11: asr-py). |
+| pydantic | Validation of asr-py settings (and, later, extraction schemas, FR-F3-01); also a hard dependency of fastapi. |
+| uvicorn | ASGI server that runs the FastAPI app. |
+| httpx | Required by FastAPI's TestClient for API tests (dev only). |
+| pytest | Python test runner (NFR-MAINT-01). |
+| ruff | Python linter and formatter (one fast tool for lint + format). |
+<!-- DEP-REASONS:END -->
