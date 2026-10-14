@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "skills": {
+    "convert-documents-to-markdown": {
+      "source": "firecrawl/anydoc",
+      "sourceType": "github",
+      "skillPath": "skills/convert-documents-to-markdown/SKILL.md",
+      "computedHash": "f5cf8f73b291fd0e29adb9a762dcda267245b44ffbdabc3321771aac1c41fb11"
+    },
+    "design-doc-mermaid": {
+      "source": "spillwavesolutions/design-doc-mermaid",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "379bb1b77bba960f4629114254cd68ca84618044de61c4c4f363801f2c6f0fe1"
+    },
+    "docx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/docx/SKILL.md",
+      "computedHash": "59c70107f8eae818bdfca7da685a6e4111aa519638b667775b794cb74987ec47"
+    },
+    "excalidraw-diagram-generator": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/excalidraw-diagram-generator/SKILL.md",
+      "computedHash": "d26f6110fda8be59a3ba2e627f26b9d11834cd6a82b8cba05a9d80e97ea457d3"
+    },
+    "fhir-developer-skill": {
+      "source": "anthropics/healthcare",
+      "sourceType": "github",
+      "skillPath": "plugins/healthcare/skills/fhir-developer/SKILL.md",
+      "computedHash": "ba1feeb41491ccf4ce7347255b5d214acbb18ba3e7c1bf5fd79646607b1e2385"
+    },
+    "fhir-ig-analysis": {
+      "source": "forschungsgruppe-digital-health/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fhir-ig-analysis/SKILL.md",
+      "computedHash": "b49ddf4e84dd68a4fe96c624c0713776a9885cb2565f46d770b1895501434018"
+    },
+    "healthcare-cdss-patterns": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/healthcare-cdss-patterns/SKILL.md",
+      "computedHash": "e9eaec115b554b99be2bcbe13955450c74482d8198f6fcc0109e84fdcca6efdb"
+    },
+    "healthcare-emr-patterns": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/healthcare-emr-patterns/SKILL.md",
+      "computedHash": "d9e752a67714027d3d9032f80ae250ce31bbda363bd72b13f677cb27b293a8bf"
+    },
+    "healthcare-eval-harness": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/healthcare-eval-harness/SKILL.md",
+      "computedHash": "10d8f1952df86c6616b59274bb7b2fa9f00e64e12b71c227fcb1b351522570e9"
+    },
+    "healthcare-phi-compliance": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/healthcare-phi-compliance/SKILL.md",
+      "computedHash": "2a8d985f52bc8e1d6a3625972fe6c0aa657808bf6b0169d8c5d89cfbd672cbe3"
+    },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "playwright-best-practices/SKILL.md",
+      "computedHash": "7eb144f734450fee649dc1d209114775ddda07cbf45be84fe969d3d4f3971dce"
+    },
+    "vitest": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vitest/SKILL.md",
+      "computedHash": "21af2b13d47d31f3094b61c0f41abc8d6a7eed0df3c9a4029ea671f6978b7209"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}

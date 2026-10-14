@@ -1,0 +1,44 @@
+# --- VaaniEHR .gitignore ---
+# Local tooling installed by the skills CLI / IDE (owner decision 2026-10-14)
+.agents/
+.claude/
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets and local env (never commit; commit only *.env.example)
+.env
+.env.*
+!.env.example
+
+# Logs, OS and editor noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local data that must not be committed (audio, raw licensed downloads, DB volumes)
+infra/pgdata/
+data/bench/audio/
+data/medicines/raw/
+data/safety/*.local.csv
+*.wav
+*.mp3
+*.m4a
