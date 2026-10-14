@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.venv
+.agents
+.claude
+DOCUMENTS
+docs
+AGENTS.md
+CLAUDE.md
+package-lock.json
+skills-lock.json
+apps/asr-py
+*.md

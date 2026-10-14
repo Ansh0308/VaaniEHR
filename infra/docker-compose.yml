@@ -1,0 +1,27 @@
+# VaaniEHR local development services (Phase 1.1: database only).
+# Start with: npm run db:up   (needs infra/.env: run `npm run setup:env`; Docker Desktop must be running).
+# App Dockerfiles (web, api-node, asr-py) are intentionally not part of Phase 1.1.
+name: vaaniehr
+
+services:
+  db:
+    # PostgreSQL 16 + pgvector 0.8.7 (Debian bookworm), pinned by tag AND digest (checked on Docker Hub 2026-10-14).
+    image: pgvector/pgvector:0.8.7-pg16-bookworm@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vaani}
+      POSTGRES_DB: ${POSTGRES_DB:-vaaniehr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required (run npm run setup:env)}
+    ports:
+      # Bound to localhost only. 5433 avoids clashing with a native PostgreSQL on 5432.
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - vaaniehr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  vaaniehr_pgdata:
