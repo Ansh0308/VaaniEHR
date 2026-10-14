@@ -56,6 +56,28 @@ jobs:
           node-version: '20'
       - run: node scripts/check-no-shell-scripts.mjs
 
+  docker-build:
+    name: docker build ${{ matrix.image }} (no push)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api-node, web, asr-py]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/${{ matrix.image }}/Dockerfile -t vaaniehr/${{ matrix.image }}:ci .
+
+  compose-config:
+    name: docker compose config is valid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/setup-env.mjs
+      - run: docker compose --env-file infra/.env -f infra/docker-compose.yml config --quiet
+
   sbom:
     name: generate SBOM (artifact)
     runs-on: ubuntu-latest

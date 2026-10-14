@@ -144,3 +144,18 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | pytest | Python test runner (NFR-MAINT-01). |
 | ruff | Python linter and formatter (one fast tool for lint + format). |
 <!-- DEP-REASONS:END -->
+
+---
+
+## Phase 1 container stack (base images and runtime rules)
+
+Base images count as third-party components (Hard Rule 6); they are listed in `docs/SBOM.md` section 3. All are pinned by exact tag **and** digest (checked on Docker Hub 2026-10-14).
+
+| Image | Reason |
+|---|---|
+| `pgvector/pgvector:0.8.7-pg16-bookworm` | PostgreSQL 16 + pgvector for ADR-D1 (own database). |
+| `node:24.21.0-bookworm-slim` | Build and run api-node, build web. **Node 24, not the PRD's Node 20**: Node 20 reached end of life in April 2026; engines still allow >= 20.19 and CI tests Node 20 and 24. The developer machine runs Node 24. Debian slim (glibc) avoids Alpine/musl surprises for native modules. |
+| `nginxinc/nginx-unprivileged:1.30.5-alpine3.24` | Serves the static web build as a non-root user (uid 101) on port 8080; stable nginx line. |
+| `python:3.11.17-slim-bookworm` | asr-py runtime; Python 3.11 as in the PRD stack. |
+
+Runtime rules (apply to every new service): non-root user; no secrets in images or build args (`.dockerignore` excludes every `.env*`; configuration arrives from env files at run time); `cap_drop: ALL`, `no-new-privileges`, read-only root filesystem for app containers; ports bound to 127.0.0.1; every service has a healthcheck and `depends_on` waits for `service_healthy`. `NODE_ENV` is not set to `production` in the stack because the dev auth provider is refused in production (ADR-D4, config guard).

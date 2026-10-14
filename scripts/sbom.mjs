@@ -259,9 +259,38 @@ function skills() {
 
 // ---------- docker images ----------
 function dockerImages() {
-  const file = 'infra/docker-compose.yml';
-  if (!existsSync(join(ROOT, file))) return [];
-  return [...read(file).matchAll(/^\s*image:\s*(\S+)/gm)].map((m) => m[1]);
+  const found = new Map(); // image -> where it is used
+  const compose = 'infra/docker-compose.yml';
+  if (existsSync(join(ROOT, compose))) {
+    for (const m of read(compose).matchAll(/^\s*image:\s*(\S+)/gm)) {
+      // Locally built images (vaaniehr/*:local) are our own, not third-party components.
+      if (!m[1].startsWith('vaaniehr/')) found.set(m[1], compose);
+    }
+  }
+  for (const app of ['api-node', 'web', 'asr-py']) {
+    const file = `apps/${app}/Dockerfile`;
+    if (!existsSync(join(ROOT, file))) continue;
+    for (const m of read(file).matchAll(/^ARG\s+[A-Z_]*IMAGE=(\S+)/gm)) {
+      found.set(m[1], found.has(m[1]) ? `${found.get(m[1])}, ${file}` : file);
+    }
+  }
+  return [...found].map(([image, usedIn]) => ({ image, usedIn }));
+}
+
+function imageLicenseNote(image) {
+  if (image.startsWith('pgvector/')) {
+    return 'pgvector: PostgreSQL License (PRD §12.3); PostgreSQL: PostgreSQL License; Debian base layers carry mixed licences - UNVERIFIED in detail';
+  }
+  if (image.startsWith('node:')) {
+    return 'Node.js: MIT (plus bundled third-party licences); Debian base layers carry mixed licences - UNVERIFIED in detail';
+  }
+  if (image.startsWith('python:')) {
+    return 'CPython: PSF License; Debian base layers carry mixed licences - UNVERIFIED in detail';
+  }
+  if (image.startsWith('nginxinc/nginx-unprivileged')) {
+    return 'nginx: BSD-2-Clause; Alpine base layers carry mixed licences (mostly MIT/BSD/GPL-family for system tools) - UNVERIFIED in detail';
+  }
+  return 'UNVERIFIED';
 }
 
 // ---------- render ----------
@@ -340,11 +369,15 @@ if (flagged.length > 0) {
     );
 }
 
-push('', '## 3. Docker images', '', '| Image | Licence note |', '|---|---|');
-for (const image of dockerImages()) {
-  push(
-    `| \`${cell(image)}\` | pgvector: PostgreSQL License (PRD §12.3); PostgreSQL: PostgreSQL License; Debian base layers carry mixed licences - UNVERIFIED in detail |`,
-  );
+push(
+  '',
+  '## 3. Docker base images (pinned by tag and digest; checked on Docker Hub 2026-10-14)',
+  '',
+  '| Image | Used in | Licence note |',
+  '|---|---|---|',
+);
+for (const { image, usedIn } of dockerImages()) {
+  push(`| \`${cell(image)}\` | ${cell(usedIn)} | ${cell(imageLicenseNote(image))} |`);
 }
 
 push(

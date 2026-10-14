@@ -70,11 +70,14 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 - npm packages in lockfile: 493; pip distributions installed: 26
 - Packages needing review or with unverified licence: 0
 
-## 3. Docker images
+## 3. Docker base images (pinned by tag and digest; checked on Docker Hub 2026-10-14)
 
-| Image | Licence note |
-|---|---|
-| `pgvector/pgvector:0.8.7-pg16-bookworm@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a` | pgvector: PostgreSQL License (PRD §12.3); PostgreSQL: PostgreSQL License; Debian base layers carry mixed licences - UNVERIFIED in detail |
+| Image | Used in | Licence note |
+|---|---|---|
+| `pgvector/pgvector:0.8.7-pg16-bookworm@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a` | infra/docker-compose.yml | pgvector: PostgreSQL License (PRD §12.3); PostgreSQL: PostgreSQL License; Debian base layers carry mixed licences - UNVERIFIED in detail |
+| `node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20` | apps/api-node/Dockerfile, apps/web/Dockerfile | Node.js: MIT (plus bundled third-party licences); Debian base layers carry mixed licences - UNVERIFIED in detail |
+| `nginxinc/nginx-unprivileged:1.30.5-alpine3.24@sha256:56b8272e43a0525f67aed68d1e0794a712d10e3e45a563e118e9a77c817e6f86` | apps/web/Dockerfile | nginx: BSD-2-Clause; Alpine base layers carry mixed licences (mostly MIT/BSD/GPL-family for system tools) - UNVERIFIED in detail |
+| `python:3.11.17-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89` | apps/asr-py/Dockerfile | CPython: PSF License; Debian base layers carry mixed licences - UNVERIFIED in detail |
 
 ## 4. Installed agent skills (tooling only; not shipped)
 
