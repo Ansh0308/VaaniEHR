@@ -1,0 +1,18 @@
+# Build context is the repo root for every Dockerfile. Keep secrets, dependencies and docs OUT of images.
+.git
+.github
+.agents
+.claude
+DOCUMENTS
+docs
+infra
+**/node_modules
+**/dist
+**/coverage
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.env
+**/.env.*
+**/*.log
