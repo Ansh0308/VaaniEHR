@@ -3,21 +3,30 @@
 | | |
 |---|---|
 | **Product** | VaaniEHR — voice-assisted, guideline-grounded, ABDM-ready consultation module |
-| **Document version** | 1.0 (build-ready draft) |
+| **Document version** | 1.1 (build-ready; reconciled with the code-verified ClinicOS audit) |
 | **Date** | 14 October 2026 |
 | **Author** | Ansh Raythatha (B.Tech ICT, Marwadi University, Rajkot) — Course 01CT2801 "Project", Sem VIII |
-| **Status** | Faculty-approved concept; pre-build |
+| **Status** | Faculty-approved concept; Phase 0 complete; building |
 | **Audience** | Faculty guide and review panel, developers, AI coding tools |
 | **Companion document** | SRS (IEEE 29148 structure) — this PRD is its source of requirement IDs (`FR-*`, `NFR-*`) |
 | **Positioning** | Research prototype. Acted / simulated data only. **Not for clinical use.** |
 
-> **How to use this document with AI building tools:** Section 17 is a ready-to-paste build brief. Every requirement has a stable ID (`F1`, `FR-M3-02`, `NFR-SEC-04`). Quote IDs in prompts, commits and tests so work stays traceable to the PRD.
+> **How to use this document with AI building tools:** Section 17 is a ready-to-paste build brief. Every requirement has a stable ID (`F1`, `FR-F4-02`, `NFR-SEC-04`). Quote IDs in prompts, commits and tests so work stays traceable to the PRD.
 
 **Evidence labels used throughout**
 
 - **[Source]** = taken from the ClinicOS documents or a cited public source.
 - **[Assumption]** = a decision or number proposed by this PRD that you must confirm.
 - **[Unverified]** = reported by a secondary source and not yet confirmed first-hand. Re-check before presenting it as fact.
+- **[Code-verified]** = read directly in the ClinicOS source code on 14 Oct 2026 (see `docs/CLINICOS_AUDIT.md` and `docs/CLINICOS_INTEGRATION_FACTS.md`). Where ClinicOS documents and code disagree, **the code wins** (ADR-D5).
+
+**What changed in v1.1 (summary; full list in Appendix F)**
+
+1. ClinicOS is **MySQL + Sequelize 6**, not PostgreSQL. VaaniEHR has its **own PostgreSQL 16 + pgvector** database and talks to ClinicOS **only over REST** (ADR-D1, D3).
+2. ClinicOS has **no `doctor` table, no allergies, no consent record, no sign-off state**. VaaniEHR owns these in side tables keyed by ClinicOS ids (ADR-D11).
+3. Authentication goes through an **`AuthProvider` interface**: a seeded dev provider now; `ClinicOSTokenAuth` via `GET /api/auth/me` in Phase 12. The ClinicOS `JWT_SECRET` is never shared (ADR-D4).
+4. §9.4 integration contract rewritten to the **real** ClinicOS endpoints; the invented webhook is removed.
+5. VaaniEHR sockets authenticate at handshake; ClinicOS sockets do not (ADR-D10).
 
 ---
 
@@ -59,7 +68,7 @@ VaaniEHR is a web module for a general-medicine OPD doctor. It listens to the co
 | No published Gujarati *medical* ASR accuracy | No public Gujarati medical WER was found in the research dossier. | [Source] (absence of evidence, not proof) |
 | ABDM is hard for small clinics | More than 100 crore health records are reported as linked to ABHA; small clinics still need working ABHA, FHIR R4 and NRCeS-profile output. | [Source] |
 | Existing AI scribes exist but do not *guide* the consultation | EkaScribe, HealthPlix and Augnito document what was said; none was found that publicly cites Indian treatment guidelines when suggesting the next question or medicine. | [Source] |
-| Doctors prescribe repetitive combinations slowly | ClinicOS already specifies a prescription-template library (F20) but has no medicine master table, so prescriptions are free text. | [Source: ClinicOS Data Dictionary] |
+| Doctors prescribe repetitive combinations slowly | ClinicOS has a clinic-entered `medicines` list and `prescription_templates`, but with no codes, sources or safety data; prescription items are free-form JSON `{ name, dose, frequency, duration }`. | [Code-verified: ClinicOS audit] |
 
 ### 1.3 Vision and positioning
 
@@ -89,7 +98,7 @@ VaaniEHR is a web module for a general-medicine OPD doctor. It listens to the co
 - Diagnosis. The system proposes a ranked shortlist for the doctor; it never "diagnoses".
 - Children, pregnancy, emergencies and specialty care. A pregnancy mention or any red flag triggers "refer / stop", not a prescription.
 - Building our own ASR model, translation model or drug-interaction database.
-- Billing, appointments, queue management (ClinicOS already specifies these).
+- Billing and queue management (already built in ClinicOS); appointments (specified in ClinicOS documents but **not yet built**) — all out of scope here.
 - Telemedicine video, lab integration, offline mode.
 
 ### 1.6 Intended-use statement (required for the regulatory section)
@@ -126,7 +135,7 @@ This follows the CDSCO Guidance on Medical Device Software (CDSCO/MD/GD/MDSW/01/
 
 ### 2.2 Roles and permissions (extends ClinicOS RBAC)
 
-ClinicOS already defines roles `patient`, `admin`, `doctor`, `staff` **[Source]**. VaaniEHR adds one project role, `researcher`.
+ClinicOS defines roles `patient`, `admin`, `doctor`, `staff` **[Code-verified]** (the ClinicOS data dictionary says `receptionist`; the code says `staff`). ClinicOS has **no `researcher` role**, so VaaniEHR treats `researcher` as a **VaaniEHR-local flag** on a user, never written to ClinicOS.
 
 | Capability | doctor | staff | admin | researcher | patient |
 |---|---|---|---|---|---|
@@ -167,26 +176,31 @@ ClinicOS already defines roles `patient`, `admin`, `doctor`, `staff` **[Source]*
 | A2 | An LLM API with a no-training-on-data option is available | Fall back to a local model (slower, lower Gujarati quality) |
 | A3 | One practising doctor reviews scripts and rules | Clinical content cannot be defended; ask faculty for an introduction in week 1 |
 | A4 | Ethics/faculty approval is granted for recording acted consultations | Use text-only scripts and TTS audio |
-| A5 | ClinicOS data is on PostgreSQL 16 | See open decision D1 (§16) |
+| A5 | ~~ClinicOS data is on PostgreSQL 16~~ **Corrected:** ClinicOS runs MySQL via Sequelize 6 **[Code-verified]**. VaaniEHR uses its own PostgreSQL 16 + pgvector and integrates over REST only | Resolved (ADR-D1, D3) |
 
 ### 3.4 Constraints
 
-- Solo developer, about 20 hours/week for about 16 weeks (**about 300–340 hours**; ClinicOS reuse saves about 60 hours **[Source: project plan]**).
+- Solo developer, about 20 hours/week for about 16 weeks (**about 300–350 hours**; the earlier "ClinicOS reuse saves about 60 hours" estimate is **[Unverified]**, because the audit found much of the assumed reuse — consent, doctor profile, allergies, webhooks — does not exist in ClinicOS).
 - Budget: ASR about ₹2,500 for 300 acted consultations at Sarvam's reported ₹30/hour **[Source — secondary; check the live price page]**; LLM API usage is extra.
 - All third-party licences must be recorded in a software bill of materials (SBOM) **[Source: CDSCO 2026 guidance expects SBOM]**.
 
 ### 3.5 What exists in ClinicOS today (and the gap VaaniEHR fills)
 
-| Area | In the ClinicOS documents | Gap for VaaniEHR |
+Source: code audit of `AWT-Project` at commit `32f1cea`, 14 Oct 2026 **[Code-verified]**. ClinicOS was read, not run.
+
+| Area | What the code has | Gap / what VaaniEHR does |
 |---|---|---|
-| Stack | React 18 + Vite + Tailwind; Node/Express + Socket.IO; JWT/RBAC; PostgreSQL 16 in the PRD, tech-stack and data-dictionary documents; the build checklist uses MySQL/Sequelize | **Database mismatch to resolve (D1).** |
-| Build status | The checklist (dated 18 March 2026) marks only the public website and design tokens as done (6 items); the author says more has been built since | Confirm real status with the author before integration planning (D2) |
-| Visit/EHR | `visit` table: vitals (JSONB), free-text diagnosis, prescriptions (JSONB), tests_ordered, follow-up, status `draft → signed → amended`, "Save & Sign" | No coded diagnosis, no coded vitals |
-| Prescriptions | `prescription_template` table and F20 "Quick-Rx" | No medicine master, no SNOMED codes, no strength/dose-form structure |
-| Patient | Phone-first lookup, `allergies TEXT[]`, consent fields | No ABHA number/address |
-| Doctor | Registration number, signature URL | No HPR identifier |
-| Audit and consent | Immutable `audit_log`, `consent_record` | Need audio-recording and AI-processing consent types |
-| Messaging | WhatsApp/SMS/email engine specified (templates, logs, retries) | Need Gujarati clinical-summary template |
+| Stack | React **19** + Vite 7 (JavaScript, Context state, axios, react-hook-form, zod, recharts); Node + **Express 5.2**; Socket.IO; **MySQL via Sequelize 6** (`sync({alter})`, no migrations); JWT HS256 `{ userId, iat, exp }`, 7-day default, no refresh; no tests, Docker or CI | VaaniEHR is a **separate service** with its own PostgreSQL 16 + pgvector and TypeScript; REST-only integration (ADR-D1, D3) |
+| Build status | Auth, patient lookup, token queue + sockets, basic visit/EHR, billing, analytics, patient portal and admin pages are implemented; appointments, lab, referral, consent record and attachments are **not** | D2 closed; VaaniEHR needs only auth, patients, tokens and visits |
+| Visit/EHR | `visits`: `complaint`, `complaintTags` (JSON), `vitals` (JSON, de-facto `{bp,temp,weight,height}` strings), `diagnosis` (text), `notes`, `prescriptions` (JSON, de-facto `{name,dose,frequency,duration}` strings), `testsOrdered` (JSON), `followUpDate`, `isComplete` (boolean). **No** status, `signedAt/By`, amendment or versioning. After complete, edits return 400 | Draft / signed / amended state lives in **VaaniEHR** (ADR-D11). ClinicOS receives the final result only after sign-off |
+| Prescriptions | `medicines` (name, brand, default dose/frequency/duration, category) and `prescription_templates` (`isShared`, `usageCount`) | Not a clinical source (ADR-D6). VaaniEHR builds its own NLEM-based `medicine_master` |
+| Patient | `patients`: `id`, `userId?`, `clinicId?`, `phone` (10-digit India-style), `email?`, `name?`, `dob?`, `gender?` (free text, ≤10 chars), `optInMsg`. **No allergies, age, ABHA, blood group** | VaaniEHR keeps a `patient_clinical_profile` (allergies etc.) keyed by `patients.id` |
+| Doctor | A `users` row with `role='doctor'`, `doctorStatus`, `avgConsultMins`. **No `doctor` table**, registration number or signature | VaaniEHR keeps a `doctor_profile` (registration no., HPR id) keyed by `users.id` |
+| Audit | `audit_logs` via `logAudit(...)`; append-only by convention only; `updateVisit` writes **no** entry | VaaniEHR keeps its own hash-chained audit |
+| Consent | One boolean `optInMsg`; no timestamp or notice version | VaaniEHR `consent_event` is the only consent log |
+| Messaging | Email works; WhatsApp/SMS only log to the console unless keys are set; custom templates looked up for `channel:'email'` only | VaaniEHR sends its own Gujarati WhatsApp message (§12.7) |
+| Sockets | Socket.IO rooms `clinic:{id}` / `patient:{id}`; **no authentication** on connect or join | VaaniEHR runs its own authenticated socket namespace (ADR-D10); no PHI over ClinicOS sockets |
+| Rate limits | `/api/auth/*`: **10 requests per 15 min per IP**; global 200 per 15 min | `ClinicOSTokenAuth` cannot validate tokens at volume until ClinicOS exempts `/me` or adds a verify endpoint (ADR-D12; needs Phase 12 approval) |
 | Audio / ASR / LLM / rules / FHIR | None | Entire VaaniEHR scope |
 
 ---
@@ -197,7 +211,7 @@ Routes assume a React Router app. Priority: **P0** must-have for the viva demo, 
 
 | ID | Page | Route | Roles | Purpose | Key components | Pri |
 |---|---|---|---|---|---|---|
-| PG-01 | Login | `/login` | all | Authenticate (ClinicOS JWT) | Email/password, OTP optional, role redirect | P0 |
+| PG-01 | Login | `/login` | all | Authenticate via the configured `AuthProvider` (dev provider now; ClinicOS token in Phase 12) | Email/password, role redirect (no OTP at login in ClinicOS) | P0 |
 | PG-02 | Doctor dashboard | `/doctor` | doctor | Today's tokens, drafts awaiting sign-off, quick start | Token list, "Start consultation", draft counter | P0 |
 | PG-03 | Patient lookup / register | `/patients` | staff, admin | Phone lookup, quick-create | Phone box, patient card, allergy chips | P0 |
 | PG-04 | ABHA verification | `/patients/:id/abha` | staff, admin | Verify or link ABHA (sandbox) | ABHA number/address input, OTP step, status badge | P1 |
@@ -243,7 +257,7 @@ Routes assume a React Router app. Priority: **P0** must-have for the viva demo, 
 
 | ID | Requirement |
 |---|---|
-| FR-F2-01 | Browser captures microphone audio (MediaRecorder/AudioWorklet), sends 250–500 ms chunks over WebSocket (Socket.IO, already in ClinicOS) to the Python ASR service. |
+| FR-F2-01 | Browser captures microphone audio (MediaRecorder/AudioWorklet), sends 250–500 ms chunks over WebSocket (Socket.IO library, as in ClinicOS, but a **separate authenticated namespace**; ADR-D10) to the Python ASR service. |
 | FR-F2-02 | Voice-activity detection (Silero VAD) trims silence before ASR. |
 | FR-F2-03 | Primary ASR is Sarvam Saaras V4 in code-mix mode with up to 50 NLEM medicine names as biasing keyterms **[Source: MarkTechPost summary; verify on Sarvam docs]**. |
 | FR-F2-04 | Baseline ASR (IndicConformer-600M and/or faster-whisper) is selectable for evaluation runs. |
@@ -306,7 +320,7 @@ Routes assume a React Router app. Priority: **P0** must-have for the viva demo, 
 |---|---|
 | FR-F7-01 | The sign-off page shows a diff between AI-proposed content and the doctor's final content. |
 | FR-F7-02 | Signing requires all 🔴 alerts resolved or overridden with reason, and all unconfirmed facts either confirmed or dropped. |
-| FR-F7-03 | On sign: visit status `draft → signed`; record becomes immutable except via a logged amendment with reason (matches ClinicOS visit rules). |
+| FR-F7-03 | On sign: VaaniEHR visit-record status `draft → signed`; the record becomes immutable except via a logged amendment with reason. This state lives in VaaniEHR because ClinicOS has only `isComplete`; ClinicOS receives content only after sign-off (ADR-D11). |
 | FR-F7-04 | Audit log entries (append-only, hash-chained) for: consent, record start/stop, transcript edits, fact edits, suggestion accept/reject, override, sign, amendment, FHIR generation, WhatsApp send. |
 
 ### F8 — FHIR record builder and validator (M6) — **P0**
@@ -351,8 +365,10 @@ Routes assume a React Router app. Priority: **P0** must-have for the viva demo, 
 
 | ID | Requirement |
 |---|---|
-| FR-F13-01 | A single documented REST contract (§9.4): read patient (id, phone, allergies, history) and write a signed visit with coded fields. |
-| FR-F13-02 | VaaniEHR can run with a mock ClinicOS adapter so it works standalone. |
+| FR-F13-01 | A single documented REST contract (§9.4) using the **real** ClinicOS endpoints: read patient and visit history; after VaaniEHR sign-off, write the visit with the doctor's own token (create, autosave, complete). Allergies come from VaaniEHR, not ClinicOS. |
+| FR-F13-02 | VaaniEHR runs standalone with a mock ClinicOS adapter that **mirrors the verified ClinicOS response shapes** (e.g. lookup returns HTTP 200 `{found:false}`, `/me` includes `status`). Contract tests run against it. |
+| FR-F13-03 | `ClinicOSTokenAuth` validates the user's ClinicOS bearer token via `GET /api/auth/me`, caches the result briefly, and rejects any user whose `status` is not `approved` (ClinicOS `/me` and login do not check status). The ClinicOS `JWT_SECRET` is never shared. |
+| FR-F13-04 | Every ClinicOS write is preceded by a VaaniEHR sign-off check and followed by a VaaniEHR audit entry. Completing a ClinicOS visit also marks its token `served` and recalculates the queue; the integration must expect and test this side effect. |
 
 ### F14 — HIP care-context linking (M2 in ABDM terms) — **P2**
 Link signed visits to the patient's ABHA as care contexts. Only attempted after F9 and F8 are stable; some V3 HIP-initiated endpoints were reported as returning 403 in community tests **[Unverified]**.
@@ -398,7 +414,7 @@ flowchart TD
 
 | Step | Doctor does | System does | Pain relieved | Touchpoint |
 |---|---|---|---|---|
-| 1 | Opens next token | Loads patient history and allergies | No searching | PG-02 → PG-06 |
+| 1 | Marks the current token served and the next token `now` in ClinicOS (two status calls), then opens the consultation | Loads patient history from ClinicOS and allergies from the VaaniEHR clinical profile | No searching | PG-02 → PG-06 |
 | 2 | Confirms consent | Blocks recording until consent exists | Ethical start | PG-05 |
 | 3 | Talks naturally | Streams transcript, tags language, separates speakers | No typing | PG-06 |
 | 4 | Glances at panel | Shows facts (negations marked), asks "what next?" | Nothing forgotten | PG-06 |
@@ -417,8 +433,8 @@ flowchart TD
 
 ### 6.3 Journey C — Staff registration and ABHA
 
-1. Staff types phone number → ClinicOS lookup (existing).
-2. New patient: minimal form; allergies captured as chips.
+1. Staff types a phone number → ClinicOS lookup (existing; 10-digit, returns HTTP 200 `{found:false}` when missing; may auto-create a clinic patient from a matching portal user).
+2. New patient: minimal form (ClinicOS fields only); allergies are captured as chips in the **VaaniEHR clinical profile**, not in ClinicOS.
 3. Staff opens ABHA step → enters ABHA number/address (sandbox test identity) → OTP → status "verified (sandbox)".
 4. Consent captured; token issued.
 
@@ -488,7 +504,7 @@ flowchart TD
 
 | Rule type | Logic | Data source | Severity |
 |---|---|---|---|
-| Allergy | Patient allergen (ingredient or class) matches suggested ingredient/class | Patient `allergies` + hand-written cross-reactivity table (e.g., penicillin ↔ some cephalosporins) | 🔴 |
+| Allergy | Patient allergen (ingredient or class) matches suggested ingredient/class | VaaniEHR `patient_clinical_profile.allergies` + hand-written cross-reactivity table (e.g., penicillin ↔ some cephalosporins) | 🔴 |
 | Max daily dose | `dose × frequency` > max daily dose for adult | Hand-curated table for ~40–60 NLEM drugs used in the five pathways; **source cited per row** (National Formulary of India or product label) | 🔴 above max; 🟠 above usual |
 | Duplicate class | Two active items share ATC/therapeutic class | Class from medicine master (ATC licence terms: **[Unverified]**) | 🟠 |
 | Drug–drug interaction | Pair appears as *Major* in the interaction table | DDInter 2.0 (CC BY-NC-SA 4.0 — **non-commercial**) | 🔴 major, 🟠 moderate |
@@ -514,8 +530,8 @@ flowchart TD
 
 ## 8. Data model and FHIR mapping
 
-### 8.1 Reused ClinicOS tables (no change in v1)
-`clinic`, `users`, `patient`, `doctor`, `token`, `visit`, `prescription_template`, `consent_record`, `audit_log`, `message_log`, `message_template` **[Source]**.
+### 8.1 ClinicOS tables VaaniEHR refers to (read through REST only; no direct DB access)
+VaaniEHR does **not** read or write the ClinicOS database. It stores ClinicOS ids (UUID strings) as plain references to these tables **[Code-verified names]**: `clinics`, `users` (doctors are `users` with `role='doctor'`), `patients`, `tokens`, `visits`. Also exist but unused by v1: `prescription_templates`, `medicines`, `audit_logs`, `message_logs`, `message_templates`. **Not present in ClinicOS:** `doctor`, `consent_record`, any allergy field, any sign-off state.
 
 ### 8.2 New VaaniEHR tables
 
@@ -524,7 +540,11 @@ flowchart TD
 | `medicine_master` | id, generic_name, strength, dose_form, route, category, snomed_code, nlem_year, source, reviewed_on | Seed from NLEM 2022 |
 | `medicine_brand` | id, medicine_id, brand_name, manufacturer, source | Optional |
 | `med_template` / `med_template_item` | template_id, owner, visibility; item: medicine_id, dose, frequency, duration, instructions | Supersedes free-text templates |
-| `consultation_session` | id, visit_id, patient_id, doctor_id, started_at, ended_at, language_mix, status | One per recording session |
+| `consultation_session` | id, clinicos_visit_id (nullable until Phase 12), clinicos_token_id, clinicos_patient_id, clinicos_doctor_id (= `users.id`), clinicos_clinic_id, started_at, ended_at, language_mix, status | One per recording session; ClinicOS ids are plain references |
+| `patient_clinical_profile` | clinicos_patient_id (PK), allergies (coded + text), conditions, pregnancy_flag, updated_by, updated_at | VaaniEHR-owned; ClinicOS has no allergy field (ADR-D11) |
+| `doctor_profile` | clinicos_user_id (PK), registration_no, hpr_id, signature_ref, researcher_flag | VaaniEHR-owned; ClinicOS has no doctor table |
+| `visit_record` | id, session_id, status (draft/signed/amended), signed_at, signed_by, content_json, version | Holds sign-off state and amendments (FR-F7-03) |
+| `app_user_dev` | id, role, clinic_id, display_name | Seeded **fake** users for the dev `AuthProvider` only |
 | `consent_event` | id, session_id, scope (audio/ai/whatsapp), granted, notice_version, source, ts | Append-only |
 | `audio_asset` | id, session_id, storage_key, duration_s, retention_until, deleted_at | Encrypted at rest; auto-delete |
 | `transcript_segment` | id, session_id, speaker, start_ms, end_ms, text_original, text_edited, lang_tags, asr_engine, asr_version, confidence | |
@@ -535,42 +555,40 @@ flowchart TD
 | `suggestion` | id, session_id, medicine_id, reason, pathway_node_id, status (shown/accepted/edited/rejected) | |
 | `safety_alert` | id, suggestion_id, rule_id, severity, message, resolved_by, override_reason | |
 | `ddi_rule`, `max_dose_rule`, `allergy_rule` | ids, drug refs, value, source, reviewed_on | Source mandatory |
-| `abha_link` | patient_id, abha_number_hash, abha_address, verified_at, mode (sandbox) | Store minimal; hash number if possible |
-| `fhir_bundle` | id, visit_id, json, profile_version, validated_at, validator_output, valid | |
-| `whatsapp_summary` | id, visit_id, text_gu, approved_by, sent_at, provider_message_id, status | |
+| `abha_link` | clinicos_patient_id, abha_number_hash, abha_address, verified_at, mode (sandbox) | Store minimal; hash number if possible |
+| `fhir_bundle` | id, visit_record_id, json, profile_version, validated_at, validator_output, valid | |
+| `whatsapp_summary` | id, visit_record_id, text_gu, approved_by, sent_at, provider_message_id, status | |
 | `eval_case` / `eval_run` / `eval_metric` | case gold fields; run config; per-case per-metric values | Research only |
 
-### 8.3 Mapping ClinicOS → FHIR (NRCeS IG 6.5.0 — confirm each profile against the IG)
+### 8.3 Mapping source data → FHIR (NRCeS IG 6.5.0 — confirm each profile against the IG)
 
-| ClinicOS source | FHIR resource / profile | Notes |
+| Source | FHIR resource / profile | Notes |
 |---|---|---|
-| `patient` | Patient | Identifier for ABHA number/address; phone as telecom |
-| `doctor` | Practitioner | Registration number; HPR identifier needed (ClinicOS has none) |
-| `clinic` | Organization | |
-| `visit` | Encounter + Composition (OPConsultRecord) | Composition sections: chief complaint, medical history, investigations, medications, follow-up |
-| `visit.vitals` (JSONB) | Observation (one per vital) | Needs LOINC/SNOMED codes (ClinicOS has none) |
-| `visit.diagnosis` (free text) | Condition | Needs SNOMED code; v1 keeps selected pathway condition + free text |
-| `visit.prescriptions` (JSONB) | MedicationRequest (+ PrescriptionRecord Bundle) | Needs SNOMED CT drug code, dose, timing, route |
-| `patient.allergies` | AllergyIntolerance | |
-| `visit.tests_ordered` | ServiceRequest | |
-| `visit.follow_up_date` | Composition section / Appointment | |
+| ClinicOS `patients` (+ VaaniEHR `abha_link`) | Patient | `name`, `phone` (telecom), `dob`; `gender` is **free text ≤10 chars** in ClinicOS, so a mapping table with an `unknown` fallback is required; `dob` may be null, so age is not guaranteed; ABHA identifier from `abha_link` |
+| ClinicOS `users` (role doctor) + VaaniEHR `doctor_profile` | Practitioner | Registration number and HPR id come from VaaniEHR (ClinicOS has neither) |
+| ClinicOS `clinics` | Organization | |
+| VaaniEHR `visit_record` (+ ClinicOS visit id) | Encounter + Composition (OPConsultRecord) | Sections: chief complaint, medical history, investigations, medications, follow-up |
+| Vitals captured in VaaniEHR (ClinicOS UI uses free-text `{bp,temp,weight,height}`) | Observation (one per vital) | Needs LOINC/SNOMED codes and numeric parsing; free-text strings are not valid values |
+| Selected pathway condition + free text | Condition | Needs SNOMED code (licence pending); v1 keeps the pathway condition + free text |
+| VaaniEHR prescription (from `medicine_master`) | MedicationRequest (+ PrescriptionRecord Bundle) | SNOMED CT drug code, dose, timing, route; **not** the ClinicOS free-form items |
+| VaaniEHR `patient_clinical_profile.allergies` | AllergyIntolerance | ClinicOS has no allergy data |
+| Tests ordered | ServiceRequest | |
+| Follow-up date | Composition section / Appointment | |
 | Signature | Provenance / DocumentReference | Confirm profile requirement |
 
-### 8.4 Required ClinicOS schema changes at integration (Phase B)
+### 8.4 ClinicOS schema changes at integration
 
-1. `patient`: add `abha_number`, `abha_address`, `abha_verified_at`.
-2. `doctor`: add `hpr_id`.
-3. `visit`: add `diagnosis_snomed`, `vitals_coded` (or keep JSONB with code fields), `session_id`.
-4. `visit.prescriptions` JSONB items: add `medicine_id`, `snomed_code`, `dose_value`, `dose_unit`, `frequency_code`, `duration_days`.
-5. `consent_record`: add scopes `audio`, `ai_processing`.
-6. Add `medicine_master` and migrate `prescription_template` items to reference it.
+**None in v1.** All extra fields (ABHA, HPR id, allergies, consent, sign-off, coded fields) live in VaaniEHR side tables keyed by ClinicOS ids (ADR-D11). ClinicOS is read-only until the owner types "Phase 12 integration approved". The only ClinicOS changes that may be proposed in Phase 12, each needing separate approval, are:
+
+1. Exempt `GET /api/auth/me` from the `authLimiter`, or add a dedicated token-verify endpoint (ADR-D12).
+2. Optionally, authenticate Socket.IO connections and room joins (a ClinicOS hardening item, not required by VaaniEHR).
 
 ---
 
 ## 9. API surface
 
 ### 9.1 Conventions
-REST + JSON, JWT bearer auth (ClinicOS), UUID ids, ISO-8601 UTC timestamps, `{ "success": bool, "data": ..., "error": ... }` envelope (matches the ClinicOS `apiResponse` helper), WebSocket (Socket.IO) for live streams. OpenAPI 3 spec generated and kept in the repository.
+REST + JSON, bearer-token auth through the `AuthProvider` interface (dev provider in standalone phases; ClinicOS token validated via `/api/auth/me` in Phase 12), UUID ids, camelCase JSON, ISO-8601 UTC timestamps. Responses follow the ClinicOS shape: success `{ "success": true, "data": ... }`, failure `{ "success": false, "error": { "code", "message" } }` (ClinicOS returns a plain string in `error`; VaaniEHR uses a structured object, a compatible superset). Socket.IO for live streams, **authenticated at handshake**, room names derived server-side. Inside PostgreSQL, columns are snake_case and mapped to camelCase. OpenAPI 3 spec generated and kept in the repository.
 
 ### 9.2 Core endpoints (VaaniEHR service)
 
@@ -603,11 +621,22 @@ REST + JSON, JWT bearer auth (ClinicOS), UUID ids, ISO-8601 UTC timestamps, `{ "
 - **asr-py** (FastAPI): audio ingestion, VAD, ASR adapters, diarization, extraction, entity linking, summary generation.
 - **rules** (inside api-node or separate module): pathway evaluation, safety engine.
 
-### 9.4 ClinicOS integration contract (Phase B)
-- `GET /clinicos/patients/{id}` → id, name, age, sex, allergies, phone, prior visits (summary).
-- `POST /clinicos/visits` → create or update a `visit` with coded fields and `session_id`, status `signed`.
-- `POST /clinicos/events/visit-signed` (webhook) → triggers billing/messaging in ClinicOS.
-- All calls use the ClinicOS JWT and write to `audit_log`.
+### 9.4 ClinicOS integration contract (Phase 12) — real endpoints **[Code-verified]**
+
+All calls are made by VaaniEHR's server with the **doctor's own ClinicOS bearer token** (visit writes are doctor-only and bound to the owning doctor). Base path `/api/`.
+
+| Purpose | ClinicOS call | Notes |
+|---|---|---|
+| Validate user | `GET /api/auth/me` → `{ success, data:{ user:{ id, name, email, role, status, clinicId, clinicName, clinicCode } } }` | Check `status === 'approved'` (not checked by ClinicOS here). 401 on bad/expired token. Rate-limited (ADR-D12) |
+| Find patient | `POST /api/patients/lookup { phone }` | 10 digits kept; HTTP 200 `{ found:false }` when missing |
+| Read patient | `GET /api/patients/:id` → `{ patient }` | Fields: `id, userId, clinicId, phone, email, name, dob, gender, optInMsg, createdAt, updatedAt`. No age, no allergies |
+| Read history | `GET /api/visits/patients/:id/visits` | Doctor/admin/staff; note private `notes` are returned to all three roles |
+| Queue steps | `PATCH /api/tokens/:id/status { status }` (`served`, then `now`) | No "call next" endpoint; no transition rules |
+| Open visit | `POST /api/visits { patientId, tokenId? }` | Doctor only; returns the existing visit if the token already has one |
+| Save draft | `PATCH /api/visits/:id` | Only fields `complaint, complaintTags, vitals, diagnosis, notes, prescriptions, testsOrdered, followUpDate`; no validation; 400 after complete |
+| Finish | `PATCH /api/visits/:id/complete` | Sets `isComplete`; **side effects:** token `served`, `avgConsultMins` recomputed, queue recalculated, socket update |
+
+Rules: VaaniEHR writes to ClinicOS **only after sign-off** and writes its own audit entry for every call. There is **no webhook or event-intake endpoint** in ClinicOS, so the earlier `visit-signed` webhook is removed; VaaniEHR calls ClinicOS, not the reverse.
 
 ---
 
@@ -619,7 +648,7 @@ REST + JSON, JWT bearer auth (ClinicOS), UUID ids, ISO-8601 UTC timestamps, `{ "
 | NFR-PERF-02 | Latency | Next-question suggestion after a confirmed fact | ≤ 1.5 s (rules) / ≤ 4 s (with LLM phrasing) |
 | NFR-PERF-03 | Latency | Safety re-check after prescription edit | ≤ 500 ms |
 | NFR-PERF-04 | Latency | FHIR build + validate | ≤ 10 s |
-| NFR-SEC-01 | Auth | JWT with refresh, RBAC enforced on every endpoint | 100% |
+| NFR-SEC-01 | Auth | Every endpoint and socket connection authenticated through `AuthProvider` and RBAC-enforced. Standalone mode: VaaniEHR-signed short-lived access token (about 1 h), no refresh token. Integrated mode: ClinicOS token validated via `/api/auth/me`; `JWT_SECRET` never shared | 100% |
 | NFR-SEC-02 | Transport | TLS everywhere | TLS 1.2+ (1.3 preferred) |
 | NFR-SEC-03 | At rest | Audio and PHI encrypted at rest | AES-256 |
 | NFR-SEC-04 | Secrets | No keys in code; env/secret manager | Enforced in CI (secret scan) |
@@ -663,21 +692,21 @@ flowchart LR
   API <--> DB[(PostgreSQL 16 + pgvector)]
   API --> WA[WhatsApp Cloud API]
   API --> ABDM[ABDM V3 sandbox]
-  API -. Phase B .-> CL[ClinicOS API]
+  API -. Phase 12, REST + doctor token .-> CL[ClinicOS API - MySQL]
 ```
 
 | Layer | Choice | Why |
 |---|---|---|
-| Frontend | React 18, Vite, Tailwind, TanStack Query, Zustand, Socket.IO client, i18next | Already used in ClinicOS |
-| Backend | Node 20, Express, Socket.IO | Same as ClinicOS |
+| Frontend | React 18, Vite, TypeScript, Tailwind, TanStack Query, Zustand, Socket.IO client, i18next | ClinicOS uses React 19 / JavaScript / Context; VaaniEHR's choices are its own and are listed in the SBOM. Visual identity (fonts, radii, cream background) reuses ClinicOS tokens; the primary action colour is **not** crimson, which is reserved to avoid clashing with the red "blocked" safety state (ADR-D7) |
+| Backend | Node 20, Express, TypeScript, Socket.IO, node-pg-migrate | Node/Express family as ClinicOS (Express version aligned where practical); typed for safety-critical code |
 | AI service | Python 3.11, FastAPI | Best ecosystem for ASR/NLP |
-| Database | PostgreSQL 16 + pgvector (JSONB, full-text, vector search) | Matches the ClinicOS PRD/data dictionary; removes the need for a separate vector store |
+| Database | PostgreSQL 16 + pgvector (JSONB, full-text, vector search), VaaniEHR-owned | ClinicOS is MySQL, so there is no shared database; separate store gives pgvector and JSONB and keeps ClinicOS safe |
 | ASR | Sarvam Saaras V4 (primary), IndicConformer-600M (baseline) | Accuracy on Indic code-mix; open baseline for fair comparison |
 | LLM | One API model with a no-training setting, Instructor + Pydantic for structured output | Fast to build; schema-constrained |
 | Rules | json-rules-engine (ISC) | Pathways and safety rules as versioned JSON |
 | FHIR | NRCeS IG 6.5.0, HL7 validator_cli, TypeScript FHIR types | Validity is a measured outcome |
-| Messaging | WhatsApp Cloud API | Matches ClinicOS plan |
-| Deploy | Docker Compose (`web`, `api-node`, `asr-py`, `postgres`), GitHub Actions CI | Reproducible demo |
+| Messaging | WhatsApp Cloud API, VaaniEHR's own sender | ClinicOS's engine cannot send WhatsApp today |
+| Deploy | Docker Compose (`web`, `api-node`, `asr-py`, `postgres`), GitHub Actions CI | Reproducible demo. Developer machine is Windows: all scripts are Node/Python, commands documented for PowerShell |
 
 ---
 
@@ -856,15 +885,15 @@ flowchart LR
 
 ---
 
-## 15. Delivery plan (about 16 weeks, about 300–340 hours)
+## 15. Delivery plan (about 16 weeks, about 300–350 hours)
 
 | Phase | Weeks | Deliverables | Hours (est.) |
 |---|---|---|---|
-| **Week 0–1 (start now)** | 1 | Apply for ABDM sandbox, SNOMED licence, WhatsApp test number and template, Sarvam key, LLM key, ethics approval; secure a clinician reviewer; settle D1/D2 | 10 |
+| **Week 0–1 (start now)** | 1 | Apply for ABDM sandbox, SNOMED licence, WhatsApp test number and template, Sarvam key, LLM key, ethics approval; secure a clinician reviewer; D1/D2 already settled (ADR-D1, D2) | 10 |
 | **Review-I (≈ week 4)** | 1–4 | This PRD + SRS; use cases, DFD, block and micro-level block diagrams, flowcharts; ERD; medicine master seeded from NLEM; consent + session skeleton; ASR baseline WER on 20 acted clips; 2 pathways encoded; schema plan for FHIR | 90 |
 | **Review-II (≈ week 8)** | 5–8 | Live transcript → extraction → 3–5 pathways; question engine v1; safety rules v1; first FHIR bundle passing validator; ABHA verify in sandbox (if credentials arrived); first results table; copyright deposit prepared | 110 |
 | **Integration + evaluation** | 9–13 | Doctor sign-off flow, Gujarati summary, evaluation console, 100-case benchmark recorded, ablations, doctor usability trial | 90 |
-| **Final viva (≈ week 16)** | 14–16 | Demo script, paper draft, threat model, DPDP consent log, test report, SBOM, ClinicOS adapter, release of dataset and scripts | 50 |
+| **Final viva (≈ week 16)** | 14–16 | Demo script, paper draft, threat model, DPDP consent log, test report, SBOM, ClinicOS adapter (needs "Phase 12 integration approved"), release of dataset and scripts | 50 |
 
 **Syllabus deliverables mapped:** engineering standards (29148, FHIR, OWASP), design (architecture + UML), analysis (error-propagation study), modelling and simulation (acted data and seeded safety suite), experimentation (ablations), prototyping (working module), software development (full stack), research (benchmark + paper), IP (copyright; patent is weak).
 
@@ -894,13 +923,32 @@ flowchart LR
 
 | ID | Decision | Options | Recommendation |
 |---|---|---|---|
-| D1 | Database | MySQL (checklist) vs PostgreSQL 16 (PRD, tech stack, data dictionary) | PostgreSQL 16 (JSONB + pgvector) |
-| D2 | Real ClinicOS build status | Which phases are actually done? | Author to confirm (auth, reception, doctor dashboard, queue, billing, messaging) |
+| D1 | Database | **Closed.** ClinicOS is MySQL (code-verified). VaaniEHR uses its own PostgreSQL 16 + pgvector (ADR-D1) | — |
+| D2 | Real ClinicOS build status | **Closed.** See §3.5 (ADR-D2) | — |
 | D3 | Final five conditions | From STW volumes | Choose with the faculty guide and the clinician reviewer |
 | D4 | LLM provider | Hosted API vs local model | Hosted API with no-training setting |
 | D5 | Patient pre-visit questionnaire | In v1 or stretch | Stretch |
 | D6 | Dataset licence | CC-BY vs more restricted | CC-BY if actors consent |
 | D7 | Paper venue | Health-informatics workshop / COMPASS / INDICON / arXiv first | Decide by Review-II |
+
+**Settled architecture decisions (ADR-D1 … D14, in `docs/DECISIONS.md`; the PRD's own D1–D7 above are written PRD-D1…PRD-D7 in the repository)**
+
+| ADR | Decision |
+|---|---|
+| D1 | ClinicOS = MySQL/Sequelize (code is truth). VaaniEHR = own PostgreSQL 16 + pgvector; REST only |
+| D2 | ClinicOS real status per the audit |
+| D3 | Separate service calling ClinicOS REST |
+| D4 | No shared `JWT_SECRET`. `AuthProvider` interface: dev provider now, `ClinicOSTokenAuth` (via `/api/auth/me`, short cache) in Phase 12 |
+| D5 | Code wins for ClinicOS facts; this PRD wins for VaaniEHR scope |
+| D6 | ClinicOS `medicines` table is not a clinical source |
+| D7 | UI reuses ClinicOS fonts/radii/cream background; primary colour not crimson |
+| D8 | ClinicOS documents are not edited; Phase 13 writes a docs-vs-code errata page |
+| D9 | Windows dev machine: cross-platform scripts only |
+| D10 | VaaniEHR sockets authenticate at handshake; no PHI over ClinicOS sockets |
+| D11 | VaaniEHR owns clinical profile (allergies), doctor profile (registration, HPR), consent, draft/signed state |
+| D12 | ClinicOS `/api/auth/*` is rate-limited (10 per 15 min per IP); Phase 12 needs an approved ClinicOS change |
+| D13 | A historical secret exposure exists in ClinicOS git history; owner is handling it; details withheld. VaaniEHR never reads ClinicOS `.env` files |
+| D14 | Writing a visit to ClinicOS = create, autosave, complete with the doctor's own token after sign-off; `complete` has queue side effects |
 
 ### 16.3 Accounts and approvals to start now
 
@@ -920,11 +968,11 @@ flowchart LR
 Copy this block into your coding assistant together with the PRD.
 
 ```
-ROLE: You are building VaaniEHR per PRD v1.0. Follow requirement IDs. Do not add features not listed.
+ROLE: You are building VaaniEHR per PRD v1.1 and docs/DECISIONS.md (ADR-D1..D14). Follow requirement IDs. Do not add features not listed.
 
-STACK: React 18 + Vite + Tailwind + TanStack Query + Zustand + Socket.IO client + i18next (frontend);
-Node 20 + Express + Socket.IO (api-node); Python 3.11 + FastAPI (asr-py); PostgreSQL 16 + pgvector;
-Docker Compose; GitHub Actions CI.
+STACK: React 18 + Vite + TypeScript + Tailwind + TanStack Query + Zustand + Socket.IO client + i18next (frontend);
+Node 20 + Express + TypeScript + Socket.IO (api-node); Python 3.11 + FastAPI (asr-py); own PostgreSQL 16 + pgvector
+(ClinicOS is MySQL and is reached over REST only); Docker Compose; GitHub Actions CI. Developer OS: Windows (cross-platform scripts only).
 
 HARD RULES
 1. Acted/simulated data only. No real patient data anywhere. Show a persistent banner.
@@ -1045,6 +1093,34 @@ vaaniehr/
 - No published Gujarati medical ASR accuracy was found; this is a gap, not proof that none exists.
 - Metric targets are hypotheses chosen for planning.
 - This is not legal or regulatory advice; confirm the CDSCO and DPDP readings with the university's IPR/legal cell before any real-patient use.
-- ClinicOS build status in §3.5 reflects the documents provided (checklist dated 18 March 2026); update it with the actual state.
+- ClinicOS facts in §3.5, §8 and §9.4 are **code-verified** (read, not run) at commit `32f1cea` on 14 Oct 2026. Controller bodies were only partly read; rows marked INFERRED in `docs/CLINICOS_AUDIT.md` remain unconfirmed.
+- Rate-limit behaviour behind a proxy (`trust proxy` unset) is inferred, not tested.
 
 **Primary sources:** CDSCO MDSW guidance (link in §12.8); NRCeS FHIR IG (§12.6); ICMR STWs (§12.4); Vistaar (§12.2); MediQ (§12.4); Eka KARMA (§12.8); ABDM community docs (§12.6); DPDP timeline summaries (secondary).
+
+### F. Changelog v1.0 → v1.1 (reconciliation with the ClinicOS code audit, 14 Oct 2026)
+
+| # | Section | v1.0 said | v1.1 says | Basis |
+|---|---|---|---|---|
+| 1 | Header, §3.3 A5, §16.2 D1 | ClinicOS on PostgreSQL 16; database decision open | ClinicOS is MySQL/Sequelize 6; VaaniEHR has its own PostgreSQL 16 + pgvector; REST only | Audit; ADR-D1, D3 |
+| 2 | §3.5, §16.2 D2 | Only website and tokens built; status to confirm | Code-verified build status table | Audit; ADR-D2 |
+| 3 | §1.2, §3.5 | ClinicOS has no medicine table | It has a clinic-entered `medicines` list, not a clinical source | Audit; ADR-D6 |
+| 4 | §2.2 | `researcher` role extends ClinicOS RBAC | `researcher` is a VaaniEHR-local flag; `staff`, not `receptionist` | Audit |
+| 5 | §3.4 | ClinicOS reuse saves about 60 h; 300–340 h | Saving unverified; table sums to about 350 h | Audit; DOC_INDEX C4 |
+| 6 | PG-01, NFR-SEC-01, §9.1 | ClinicOS JWT with refresh; OTP at login | ClinicOS JWT is `{userId}`, no refresh, no OTP at login; `AuthProvider` interface; `ClinicOSTokenAuth` via `/me` in Phase 12 | Audit; ADR-D4 |
+| 7 | FR-F2-01 | Socket.IO "already in ClinicOS" | Library reused; separate authenticated namespace | Audit; ADR-D10 |
+| 8 | FR-F7-03 | Visit status `draft → signed → amended` matches ClinicOS | ClinicOS has only `isComplete`; state lives in VaaniEHR `visit_record` | Audit; ADR-D11 |
+| 9 | FR-F13-01…04 | Contract with allergies and coded fields; mock adapter | Real endpoints; mock mirrors verified shapes; status check; `complete` side effects | Facts Q1–Q5; ADR-D4, D14 |
+| 10 | §6.1, §6.3 | "Opens next token"; allergies from ClinicOS | Two status calls; lookup shape; allergies from VaaniEHR profile | Facts Q4, Q5 |
+| 11 | §7.2 | Allergies from patient record | From `patient_clinical_profile` | Audit |
+| 12 | §8.1 | Reused tables incl. `doctor`, `consent_record` (singular names) | Real plural names; `doctor` and `consent_record` do not exist; no direct DB access | Audit |
+| 13 | §8.2 | Session keyed to ClinicOS `visit_id` | ClinicOS ids as plain references; new `patient_clinical_profile`, `doctor_profile`, `visit_record`, `app_user_dev` | ADR-D11 |
+| 14 | §8.3 | Maps ClinicOS `doctor`, `patient.allergies`, typed vitals | Corrected sources; gender free-text and null-dob fallbacks; vitals need parsing and codes | Facts Q3f, Q4 |
+| 15 | §8.4 | Six ClinicOS schema changes | None in v1; only two optional Phase 12 changes (rate-limit exemption, socket auth) | ADR-D3, D12 |
+| 16 | §9.4 | `/clinicos/...` endpoints and a `visit-signed` webhook | Real `/api/...` calls with the doctor's token; webhook removed (none exists) | Facts Q1–Q5 |
+| 17 | §11 | Stack "same as ClinicOS" | ClinicOS stack stated correctly; VaaniEHR uses TypeScript; WhatsApp sender is VaaniEHR's own | Audit |
+| 18 | §16.2 | D1, D2 open | D1, D2 closed; ADR-D1…D14 listed | DECISIONS.md |
+| 19 | §17 | PRD v1.0 stack block | v1.1 stack block and Windows rule | ADR-D9 |
+| 20 | Header | Example ID `FR-M3-02` | Real ID `FR-F4-02` | DOC_INDEX C6 |
+
+**Not changed on purpose:** F1–F15 scope and priorities, metrics M-01…M-17, the safety and pathway designs, the regulatory section. **Still open:** PRD-D3 (final five conditions), PRD-D4 (LLM provider), PRD-D5…D7, the NLEM 384/386 count, the EkaScribe–Gujarati claim, the 150-vs-300 benchmark size, the safety suite floor (50 cases; the earlier phase-plan figure of 30 is superseded).
