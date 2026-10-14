@@ -22,7 +22,7 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 
 ## SOURCE OF TRUTH
 
-- `VaaniEHR/DOCUMENTS` holds the PRD, phase plan and research dossier. The PRD defines requirement IDs (F1...F15, FR-F#-##, NFR-*-##, PG-##, M-##). Cite these IDs in code comments, tests and commit messages. `docs/DOC_INDEX.md` lists them exactly.
+- **PRD v1.1** is the source of truth (ADR-D15): `DOCUMENTS/VaaniEHR_PRD.md`; v1.0 is archived in `DOCUMENTS/archive/`. `VaaniEHR/DOCUMENTS` also holds the phase plan (v1.0, not updated for v1.1/ADRs; ADRs and the PRD win) and the research dossier. The PRD defines requirement IDs (F1...F15, FR-F#-##, NFR-*-##, PG-##, M-##). Cite these IDs in code comments, tests and commit messages. `docs/DOC_INDEX.md` lists them exactly (regenerate with `npm run docs:index`).
 - ClinicOS facts: **code wins** over ClinicOS documents. VaaniEHR scope: **the PRD wins** (ADR-D5). Known contradictions: `docs/PRD_ERRATA.md`.
 - If a document is missing, ambiguous or conflicts with another, STOP and ask the owner. Do not guess.
 
@@ -37,7 +37,7 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 7. Prefer reuse over rewriting (see the Build-vs-Reuse table in the PRD). Do not add features not in the PRD.
 8. Keep changes small. One logical change per commit with message `<phase>: <what> [FR-ids]`.
 
-## SETTLED DECISIONS (ADR-D1 to D14) - do not reopen without asking the owner (full ADRs in `docs/DECISIONS.md`, all 2026-10-14)
+## SETTLED DECISIONS (ADR-D1 to D16) - do not reopen without asking the owner (full ADRs in `docs/DECISIONS.md`, all 2026-10-14)
 
 - **D1** ClinicOS = MySQL/Sequelize (code is truth). VaaniEHR = its own PostgreSQL 16 + pgvector, integrating over REST only.
 - **D2** ClinicOS real status = `docs/CLINICOS_AUDIT.md`.
@@ -53,6 +53,8 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 - **D12** ClinicOS rate-limits `/api/auth/*` (10 req/15 min/IP), so `ClinicOSTokenAuth` cannot rely on `/me` at volume; Phase 12 needs an approved ClinicOS change (exempt `/me` or add a verify endpoint). Do nothing about it now.
 - **D13** A historical secret exposure exists in ClinicOS git history; owner is handling it; details withheld. VaaniEHR never copies or reads ClinicOS `.env` files.
 - **D14** Writing a visit to ClinicOS = `POST /visits`, `PATCH /visits/:id`, `PATCH /visits/:id/complete`, the doctor's own token, only after VaaniEHR sign-off; `complete` has side effects (token served, queue recalculated) that Phase 12 must handle.
+- **D15** PRD v1.1 is the source of truth (`DOCUMENTS/VaaniEHR_PRD.md`); v1.0 archived.
+- **D16** The `SIMULATED_DATA_ONLY=false` refusal (api-node and asr-py) stays; Phase 12 must not weaken it without owner approval.
 
 ## WORKING STYLE
 

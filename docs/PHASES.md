@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
+Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
 ## Phase map (plan §0.5)
 
@@ -99,7 +99,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 
 ## Phase 12 - ClinicOS integration and hardening (prompts 12.1, 12.2)
 - **Goal:** plug VaaniEHR into ClinicOS through one API, then harden security and accessibility.
-- **PRD references:** F13, section 8.4, 9.4, NFR-SEC-*, NFR-UX-01, NFR-COMP-02.
+- **PRD references (v1.1):** F13 (FR-F13-01...04; FR-F13-03/04 are new in v1.1), section 9.4 (real endpoints), section 8.4 (**no ClinicOS schema changes in v1**; only the optional rate-limit and socket-auth proposals), NFR-SEC-*, NFR-UX-01, NFR-COMP-02.
 - **Preconditions (do not start without):** ClinicOS runs locally for you; you have a git branch/backup of ClinicOS; `docs/DECISIONS.md` D1 and D2 are resolved; you have typed the approval phrase "Phase 12 integration approved".
 - **Deliverables:** `ClinicOSVisitRepository` adapter, migration scripts proposed as *files for your review*, integration contract tests, feature flag, threat-model document, security test report, accessibility audit, SBOM, release notes.
 - **Exit criteria:** with the flag off, ClinicOS behaves exactly as before (regression tests); with the flag on, a signed VaaniEHR visit appears in ClinicOS's visit history with coded fields; all migrations reversible.
@@ -118,7 +118,9 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 | Phase 2 prompt 2.1: copy ClinicOS patient columns (`phone_normalized`, `allergies text[]`), "JWT claims identical to ClinicOS", refresh tokens | ClinicOS has no such columns; JWT is `{userId}` only; ADR-D4, ADR-D11 | Store ClinicOS ids as references; `AuthProvider`; VaaniEHR owns allergies, doctor profile, consent, signed state |
 | Phase 2 deliverable "login with ClinicOS-style JWT" | ADR-D4 | Dev provider now, `ClinicOSTokenAuth` in Phase 12 |
 | Phase 4/8 socket relay | ADR-D10 | Authenticate at handshake; no PHI via ClinicOS sockets |
-| Phase 7 prompt 7.1 "30+ test cases" | PRD §7.2 / M-09 say at least 50 | At least 50 |
+| Phase 7 prompt 7.1 "30+ test cases" | PRD v1.1 (§7.2 / M-09 / App. F) says at least 50 | At least 50 |
 | Phase 8 "re-enters password or PIN to sign" | Under `ClinicOSTokenAuth` there is no password in VaaniEHR | Decide in Phase 8 (open question) |
 | Phase 10 "reuse the ClinicOS message_log table shape" | ClinicOS shape is `patientId, channel, template, status(sent/failed/delivered)`; PRD §8.2 `whatsapp_summary` is richer | Use the PRD §8.2 shape; do not depend on ClinicOS messaging |
+| Phase 12 prompt 12.1 step 1 proposes ClinicOS schema changes (ABHA, HPR, coded visit fields, consent scopes) | PRD v1.1 §8.4: none in v1; those fields live in VaaniEHR tables (ADR-D11) | Propose only the two changes in §8.4 (rate-limit exemption, optional socket auth), each needing approval |
 | Phase 12 prompt 12.1 step 2 edits ClinicOS | Only after the approval phrase (AGENTS.md) | Unchanged |
+| Phase 12 hardening | ADR-D16: the `SIMULATED_DATA_ONLY=false` refusal must not be weakened | Keep the guard |

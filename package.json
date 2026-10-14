@@ -33,7 +33,9 @@
     "sbom:reasons": "node scripts/sbom.mjs --reasons-only",
     "dev:api": "npm run dev -w apps/api-node",
     "dev:web": "npm run dev -w apps/web",
-    "dev:asr": "node scripts/py.mjs dev"
+    "dev:asr": "node scripts/py.mjs dev",
+    "docs:index": "node scripts/py.mjs exec ../../scripts/build_doc_index.py",
+    "prd:diff": "node scripts/py.mjs exec ../../scripts/prd_id_diff.py ../../DOCUMENTS/archive/VaaniEHR_PRD_v1.0.md ../../DOCUMENTS/VaaniEHR_PRD.md"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

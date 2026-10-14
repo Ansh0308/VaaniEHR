@@ -1,6 +1,6 @@
 # CONTEXT.md - VaaniEHR in one read (re-read at every session start)
 
-Updated 2026-10-14. Sources: `DOCUMENTS/VaaniEHR_PRD.md` (requirements), `CLINICOS_AUDIT.md` + `CLINICOS_INTEGRATION_FACTS.md` (what ClinicOS really is), `DECISIONS.md` (ADR-D1..D11, settled), `PHASES.md`. Where the PRD and the audit disagree, see `PRD_ERRATA.md`; ClinicOS facts follow the code, VaaniEHR scope follows the PRD (ADR-D5).
+Updated 2026-10-14. Sources: `DOCUMENTS/VaaniEHR_PRD.md` (**PRD v1.1**, ADR-D15; requirements; v1.0 archived), `CLINICOS_AUDIT.md` + `CLINICOS_INTEGRATION_FACTS.md` (what ClinicOS really is), `DECISIONS.md` (ADR-D1..D16, settled), `PHASES.md`. PRD v1.1 already reflects the audit; `PRD_ERRATA.md` records which v1.0 statements it fixed (rows 28-29 still open); ClinicOS facts follow the code, VaaniEHR scope follows the PRD (ADR-D5).
 
 ## What VaaniEHR is
 A web module (final-year B.Tech capstone, Marwadi University, course 01CT2801) for a **general-medicine OPD doctor**. It listens to a consultation in Gujarati/Hindi/English (code-switched), turns speech into **structured facts** (with negation and transcript evidence), shows **guideline-grounded follow-up questions** (ICMR STW pathways; rules choose, LLM only maps and phrases), suggests **essential medicines (NLEM)** with **fail-closed safety checks**, and only after **doctor sign-off** builds an **ABDM-ready FHIR R4 record** (NRCeS IG 6.5.0, validated) and a **doctor-approved Gujarati WhatsApp summary**. It also ships a research evaluation console and the acted benchmark "VaaniBench-Gu".

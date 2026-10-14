@@ -1,23 +1,21 @@
 # DOC_INDEX.md - documents in `VaaniEHR/DOCUMENTS` (Phase 0.3)
 
-Read on 2026-10-14. Folder name on disk: `DOCUMENTS` (uppercase). Sections 2 (requirements digest) is **extracted by script from the PRD text, not retyped**, so it is exact. Section 3 conflicts include everything in `PRD_ERRATA.md` by reference.
-ADR numbering note: the PRD has its own open decisions "D1-D7" (§16.2). To avoid confusion this repo writes **PRD-D1..PRD-D7** for those and **ADR-D1..ADR-D11** (`DECISIONS.md`) for ours.
+**Generated** by `npm run docs:index` (`scripts/build_doc_index.py`, template `docs/templates/DOC_INDEX.template.md`). Sections 2 and 3.0-3.1/3.3 are extracted by script from `DOCUMENTS/VaaniEHR_PRD.md` (**PRD v1.1**, ADR-D15), so requirement text is exact. Edit the template, not this file.
+Numbering: the PRD's own open decisions are **PRD-D1..PRD-D7** (§16.2); our architecture decisions are **ADR-D1..ADR-D16** (`DECISIONS.md`).
 
 ## 1. Files
 
 | File | What it is | Key facts relied on | Version / date |
 |---|---|---|---|
-| `VaaniEHR_PRD.md` | The PRD: source of truth for requirement IDs and scope. 1,049 lines, 18 sections. | Product = voice-assisted, guideline-grounded, ABDM-ready consultation module for a general-medicine OPD; research prototype, acted/simulated data only, not for clinical use (§1.6 intended-use). Five P0 novelty/safety pillars: consent gate, guided questions, safety checks, sign-off, FHIR. v1 scope: adults, about 5 conditions (list not final), Gujarati/Hindi/English. Stack §11. Build-vs-reuse §12. Delivery plan §15 (about 16 weeks, 300-340 h). Build brief §17. | v1.0 "build-ready draft", 14 Oct 2026, author Ansh Raythatha, status "Faculty-approved concept; pre-build" |
-| `VaaniEHR_PRD.docx` | Word copy of the PRD | Text identical to the `.md` (word-level comparison: 1 differing token of 8,181) | same |
-| `VaaniEHR_Phase_Plan_and_AI_Prompts.md` | Phase-wise build plan (Phases 0-13) with copy-paste prompts, recovery prompts, review prompt, checklists | Phase map with weeks, goals, PRD refs, deliverables, exit criteria; "what only you can supply" table (§16.2); cut order if late | v1.0, 14 Oct 2026 |
-| `VaaniEHR_Phase_Plan_and_AI_Prompts.docx` | Word copy | Identical to the `.md` (1 differing token of 8,716) | same |
-| `compass_artifact_wf-34413097-...text_markdown.md` | **Research dossier**, SRS inputs and an earlier shorter PRD ("Build-vs-Reuse Edition"); 84 numbered sources | Build only M3 question engine, M4 safety rules, Gujarati benchmark; reuse the rest. Licence traps (DDInter CC BY-NC-SA 4.0, Parrotlet-e CC-BY-SA-4.0, SNOMED affiliate licence, Kaggle brand data). Regulatory framing (CDSCO MDSW guidance 21 Jul 2026, DPDP Rules timeline). Accounts to apply for. No public Gujarati medical WER found. | Dossier dated 14 Oct 2026 (per PRD App. E) |
-| `Researchdoc.pdf` | 14-page Microsoft "Print to PDF" of the same dossier (PDF metadata title matches; creator author "ANSH"; created 2026-10-14 16:09 +05:30) | **No text layer** (image-only, so not searchable/copyable). I viewed pages 1 and 14 as images; they match the `.md` (summary, key findings, closing PRD sections, caveats). It **stops after "Caveats" and has no Sources list**. Pages 2-13 were not viewed. | 2026-10-14 |
+| `VaaniEHR_PRD.md` | **The PRD, v1.1 - source of truth (ADR-D15).** 18 sections + Appendix F changelog | Voice-assisted, guideline-grounded, ABDM-ready consultation module for a general-medicine OPD; research prototype, acted/simulated data only, not for clinical use (§1.6). ClinicOS facts are code-verified (§3.5, §9.4); VaaniEHR has its own PostgreSQL 16 + pgvector and talks to ClinicOS over REST only; `AuthProvider` seam; VaaniEHR-owned side tables (§8.2). Stack §11, build-vs-reuse §12, delivery plan §15, build brief §17 | v1.1, 14 Oct 2026, reconciled with the code audit; status "Phase 0 complete; building" |
+| `archive/VaaniEHR_PRD_v1.0.md` (+ `.docx`) | Superseded PRD v1.0 | Kept for traceability; `PRD_ERRATA.md` rows refer to its line numbers | v1.0, 14 Oct 2026 |
+| `VaaniEHR_Phase_Plan_and_AI_Prompts.md` (+ `.docx`) | Phase-wise build plan (Phases 0-13) with prompts, recovery prompts, checklists | Phase map, goals, exit criteria (copied to `PHASES.md`). **Not updated for v1.1/ADRs**: where it conflicts, ADRs and the PRD win | v1.0, 14 Oct 2026 |
+| `compass_artifact_wf-34413097-...text_markdown.md` | Research dossier, SRS inputs and an early PRD (Build-vs-Reuse edition), 84 sources | Build only M3, M4, benchmark; reuse the rest; licence traps; regulatory framing; accounts to apply for. Not updated for the ClinicOS audit | dossier dated 14 Oct 2026 |
+| `Researchdoc.pdf` | 14-page "Print to PDF" of the dossier | **No text layer** (image-only); pages 1 and 14 viewed and match; ends at "Caveats", no Sources list; pages 2-13 not viewed. Use the `.md` | 2026-10-14 |
 
-Other files in `docs/` already written (not part of `DOCUMENTS`): `SKILLS.md`, `CLINICOS_AUDIT.md`, `CLINICOS_INTEGRATION_FACTS.md`, `DECISIONS.md`, `PRD_ERRATA.md`.
-The five ClinicOS documents are **not** in `VaaniEHR/DOCUMENTS` (they are in `AWT-Project/Documents`); the Phase Plan §16.1 suggests copying them in. Not done: ClinicOS stays untouched and a copy adds nothing now.
+Other docs already in `docs/`: `AGENTS.md` (repo root), `CONTEXT.md`, `PHASES.md`, `DECISIONS.md`, `SKILLS.md`, `CLINICOS_AUDIT.md`, `CLINICOS_INTEGRATION_FACTS.md`, `PRD_ERRATA.md`, `SBOM.md` (generated), `OPEN_CLINICAL_ITEMS.md`. The five ClinicOS documents stay in `AWT-Project/Documents` (ClinicOS is read-only).
 
-## 2. Requirements digest (copied exactly from `VaaniEHR_PRD.md`)
+## 2. Requirements digest (copied exactly from PRD v1.1)
 
 ### 2.1 Features F1-F15 (priority from each heading; summary table is PRD §5.1)
 
@@ -42,7 +40,7 @@ PRD §5.1 priority summary:
 - **P1**: F9 ABHA, F10 WhatsApp, F11 templates UI, F12 evaluation console, F13 ClinicOS link
 - **P2**: F14 care-context linking, F15 PDF, patient pre-visit questionnaire, offline mode
 
-(Note: PRD F-numbers are VaaniEHR's. ClinicOS documents use their own F1-F25 with different meanings, e.g. ClinicOS F5 = one-tap controls. Always write "VaaniEHR F5" or "FR-F5-xx".)
+(PRD F-numbers are VaaniEHR's. ClinicOS documents use their own F1-F25 with different meanings, e.g. ClinicOS F5 = one-tap controls. Always write "VaaniEHR F5" or "FR-F5-xx".)
 
 ### 2.2 Functional requirements FR-*
 
@@ -53,7 +51,7 @@ PRD §5.1 priority summary:
 | FR-F1-03 | WhatsApp sending needs a separate `whatsapp` consent scope. |
 | FR-F1-04 | Withdrawal is possible at any time; withdrawing stops recording and marks audio for deletion. |
 | FR-F1-05 | Every consent event is written to the append-only consent log and audit log. |
-| FR-F2-01 | Browser captures microphone audio (MediaRecorder/AudioWorklet), sends 250–500 ms chunks over WebSocket (Socket.IO, already in ClinicOS) to the Python ASR service. |
+| FR-F2-01 | Browser captures microphone audio (MediaRecorder/AudioWorklet), sends 250–500 ms chunks over WebSocket (Socket.IO library, as in ClinicOS, but a **separate authenticated namespace**; ADR-D10) to the Python ASR service. |
 | FR-F2-02 | Voice-activity detection (Silero VAD) trims silence before ASR. |
 | FR-F2-03 | Primary ASR is Sarvam Saaras V4 in code-mix mode with up to 50 NLEM medicine names as biasing keyterms **[Source: MarkTechPost summary; verify on Sarvam docs]**. |
 | FR-F2-04 | Baseline ASR (IndicConformer-600M and/or faster-whisper) is selectable for evaluation runs. |
@@ -87,7 +85,7 @@ PRD §5.1 priority summary:
 | FR-F6-06 | Nothing is written to the final record until sign-off (F7). |
 | FR-F7-01 | The sign-off page shows a diff between AI-proposed content and the doctor's final content. |
 | FR-F7-02 | Signing requires all 🔴 alerts resolved or overridden with reason, and all unconfirmed facts either confirmed or dropped. |
-| FR-F7-03 | On sign: visit status `draft → signed`; record becomes immutable except via a logged amendment with reason (matches ClinicOS visit rules). |
+| FR-F7-03 | On sign: VaaniEHR visit-record status `draft → signed`; the record becomes immutable except via a logged amendment with reason. This state lives in VaaniEHR because ClinicOS has only `isComplete`; ClinicOS receives content only after sign-off (ADR-D11). |
 | FR-F7-04 | Audit log entries (append-only, hash-chained) for: consent, record start/stop, transcript edits, fact edits, suggestion accept/reject, override, sign, amendment, FHIR generation, WhatsApp send. |
 | FR-F8-01 | On sign, build a FHIR R4 (4.0.1) Bundle conforming to NRCeS IG for ABDM **v6.5.0** (OPConsultRecord, with PrescriptionRecord content). |
 | FR-F8-02 | Validate with the HL7 validator against the `ndhm.in` package before storing; store the validation output with the bundle. |
@@ -105,14 +103,16 @@ PRD §5.1 priority summary:
 | FR-F12-02 | Run the same case through three pipelines: rules-only, LLM-only, hybrid. |
 | FR-F12-03 | Compute and display the metrics in §14; export CSV for the paper. |
 | FR-F12-04 | Store engine versions and prompts for every run (reproducibility). |
-| FR-F13-01 | A single documented REST contract (§9.4): read patient (id, phone, allergies, history) and write a signed visit with coded fields. |
-| FR-F13-02 | VaaniEHR can run with a mock ClinicOS adapter so it works standalone. |
+| FR-F13-01 | A single documented REST contract (§9.4) using the **real** ClinicOS endpoints: read patient and visit history; after VaaniEHR sign-off, write the visit with the doctor's own token (create, autosave, complete). Allergies come from VaaniEHR, not ClinicOS. |
+| FR-F13-02 | VaaniEHR runs standalone with a mock ClinicOS adapter that **mirrors the verified ClinicOS response shapes** (e.g. lookup returns HTTP 200 `{found:false}`, `/me` includes `status`). Contract tests run against it. |
+| FR-F13-03 | `ClinicOSTokenAuth` validates the user's ClinicOS bearer token via `GET /api/auth/me`, caches the result briefly, and rejects any user whose `status` is not `approved` (ClinicOS `/me` and login do not check status). The ClinicOS `JWT_SECRET` is never shared. |
+| FR-F13-04 | Every ClinicOS write is preceded by a VaaniEHR sign-off check and followed by a VaaniEHR audit entry. Completing a ClinicOS visit also marks its token `served` and recalculates the queue; the integration must expect and test this side effect. |
 
 ### 2.3 Pages PG-01..PG-20 (PRD §4)
 
 | ID | Page | Route | Roles | Purpose | Key components | Pri |
 |---|---|---|---|---|---|---|
-| PG-01 | Login | `/login` | all | Authenticate (ClinicOS JWT) | Email/password, OTP optional, role redirect | P0 |
+| PG-01 | Login | `/login` | all | Authenticate via the configured `AuthProvider` (dev provider now; ClinicOS token in Phase 12) | Email/password, role redirect (no OTP at login in ClinicOS) | P0 |
 | PG-02 | Doctor dashboard | `/doctor` | doctor | Today's tokens, drafts awaiting sign-off, quick start | Token list, "Start consultation", draft counter | P0 |
 | PG-03 | Patient lookup / register | `/patients` | staff, admin | Phone lookup, quick-create | Phone box, patient card, allergy chips | P0 |
 | PG-04 | ABHA verification | `/patients/:id/abha` | staff, admin | Verify or link ABHA (sandbox) | ABHA number/address input, OTP step, status badge | P1 |
@@ -141,7 +141,7 @@ PRD §5.1 priority summary:
 | NFR-PERF-02 | Latency | Next-question suggestion after a confirmed fact | ≤ 1.5 s (rules) / ≤ 4 s (with LLM phrasing) |
 | NFR-PERF-03 | Latency | Safety re-check after prescription edit | ≤ 500 ms |
 | NFR-PERF-04 | Latency | FHIR build + validate | ≤ 10 s |
-| NFR-SEC-01 | Auth | JWT with refresh, RBAC enforced on every endpoint | 100% |
+| NFR-SEC-01 | Auth | Every endpoint and socket connection authenticated through `AuthProvider` and RBAC-enforced. Standalone mode: VaaniEHR-signed short-lived access token (about 1 h), no refresh token. Integrated mode: ClinicOS token validated via `/api/auth/me`; `JWT_SECRET` never shared | 100% |
 | NFR-SEC-02 | Transport | TLS everywhere | TLS 1.2+ (1.3 preferred) |
 | NFR-SEC-03 | At rest | Audio and PHI encrypted at rest | AES-256 |
 | NFR-SEC-04 | Secrets | No keys in code; env/secret manager | Enforced in CI (secret scan) |
@@ -211,12 +211,12 @@ PRD §5.1 priority summary:
 | R10 | API cost overruns | Low | Low | Budget cap; cache; batch evaluation runs |
 | R11 | Vendor/model change mid-project (new model version) | Medium | Medium | Pin versions used in evaluation; store engine version per segment |
 
-**Open decisions (§16.2) - these are PRD-D1..PRD-D7**
+**Open decisions (§16.2) - PRD-D1..PRD-D7**
 
 | ID | Decision | Options | Recommendation |
 |---|---|---|---|
-| D1 | Database | MySQL (checklist) vs PostgreSQL 16 (PRD, tech stack, data dictionary) | PostgreSQL 16 (JSONB + pgvector) |
-| D2 | Real ClinicOS build status | Which phases are actually done? | Author to confirm (auth, reception, doctor dashboard, queue, billing, messaging) |
+| D1 | Database | **Closed.** ClinicOS is MySQL (code-verified). VaaniEHR uses its own PostgreSQL 16 + pgvector (ADR-D1) | — |
+| D2 | Real ClinicOS build status | **Closed.** See §3.5 (ADR-D2) | — |
 | D3 | Final five conditions | From STW volumes | Choose with the faculty guide and the clinician reviewer |
 | D4 | LLM provider | Hosted API vs local model | Hosted API with no-training setting |
 | D5 | Patient pre-visit questionnaire | In v1 or stretch | Stretch |
@@ -225,60 +225,78 @@ PRD §5.1 priority summary:
 
 ## 3. Conflicts and gaps
 
-### 3.1 ClinicOS-related contradictions
-See **`PRD_ERRATA.md`** (26 items; PRD not edited). Headlines: ClinicOS is MySQL not PostgreSQL; no `allergies`, `doctor`, `consent_record`; visit has only `isComplete`; ClinicOS JWT has no refresh; contract in PRD §9.4 does not match real endpoints.
+### 3.0 Changes from PRD v1.0 to v1.1 by requirement ID (script: `scripts/prd_id_diff.py`)
+
+| ID family | v1.0 | v1.1 | Added | Removed | Reworded |
+|---|---|---|---|---|---|
+| F (feature headings) | 15 | 15 | - | - | - |
+| FR (functional requirements) | 59 | 61 | FR-F13-03, FR-F13-04 | - | FR-F13-01, FR-F13-02, FR-F2-01, FR-F7-03 |
+| PG (pages) | 20 | 20 | - | - | PG-01 |
+| NFR (non-functional) | 23 | 23 | - | - | NFR-SEC-01 |
+| M (metrics) | 17 | 17 | - | - | - |
+| G (goals) | 6 | 6 | - | - | - |
+| R (risks) | 11 | 11 | - | - | - |
+| PRD-D (open decisions) | 7 | 7 | - | - | D1, D2 |
+
+### 3.1 ClinicOS-related contradictions: status of `PRD_ERRATA.md` under v1.1
+
+`PRD_ERRATA.md` has 29 rows: **26 applied in PRD v1.1**, 1 needing no change, **2 partly covered / not yet covered**.
+
+- **Row 28**: **PARTLY covered** - data model applied (§3.5, §8.3: no age, dob may be null); **NOT covered**: FR-F6-03(5) and §7.2 still say only 'Age < 18' with no rule for unknown age
+- **Row 29**: **PARTLY covered** - exposure documented (§9.4 'Read history'); **NOT covered**: no adapter rule to drop/ignore ClinicOS `notes` or to never write VaaniEHR content into it
 
 ### 3.2 Conflicts between the VaaniEHR documents themselves
 
-| # | Conflict | Where | Handling |
+| # | Conflict | Where | Status under PRD v1.1 / handling |
 |---|---|---|---|
-| C1 | **NLEM count 384 vs 386** | PRD FR-F5-01 and dossier §4 (committee report text says both) | Use 384 as the PRD says; the import script must report the number actually extracted and flag any difference |
-| C2 | **EkaScribe and Gujarati** | PRD §1.3 "supports Gujarati"; §1.7 "10+ Indian languages incl. Gujarati"; dossier Key Finding 1 says Eka's medical scribe lists Indian English, Hindi, Marathi, Kannada, Telugu but **not** Gujarati | Treat as unresolved/[Unverified]; do not state either claim as fact in any deliverable until checked on Eka's own pages |
-| C3 | **Benchmark size vs ASR budget** | PRD §7.3: 100 final + up to 50 dev (about 150). PRD §3.4 and dossier: "300 acted consultations", about 50 audio hours for ₹2,500 budget | The 300 figure does not match the 100-150 case plan; confirm intended number (arithmetic in dossier: 300 x 10 min = 50 h = about ₹1,500, or ₹2,250 with diarization) |
-| C4 | **Hours** | PRD §3.4 "about 300-340 hours"; the §15 table sums to 10+90+110+90+50 = **350** | Note only; ask owner if the table should be re-balanced |
-| C5 | **"M1/M2" means two things** | PRD module tags M1-M8 (M1 = medicine library, M2 = capture/ASR); dossier and PRD F14 also use "M1/M2" for ABDM milestones ("M1 only", "M2 care-context linking") | In our docs write "module M2" vs "ABDM M2"; metrics are "M-01..M-17" (hyphenated) |
-| C6 | **Requirement-ID examples** | PRD header (l.14) cites `FR-M3-02`; actual IDs are `FR-F<n>-<nn>` (e.g. `FR-F4-01`) and `NFR-<CAT>-<nn>` | Use only the IDs that exist in section 2.2 and 2.4 |
-| C7 | **Decision numbering** | PRD-D1..D7 vs ADR-D1..D11 | Use the prefixes stated at the top of this file |
-| C8 | **PRD-D3..PRD-D7 still open** (final five conditions, LLM provider, pre-visit questionnaire, dataset licence, paper venue). PRD-D1 and PRD-D2 are resolved by ADR-D1/ADR-D2 | PRD §16.2 | Track in `OPEN_CLINICAL_ITEMS.md` / questions to owner |
-| C9 | **JWT / refresh** | PRD NFR-SEC-01 "JWT with refresh" vs ClinicOS (no refresh) vs ADR-D4 | ADR-D4 governs; VaaniEHR issues sessions only in standalone mode |
-| C10 | **OWASP edition** | Dossier: 2025 LLM Top 10 list plus a "2026 edition published 4 Aug 2026" that re-orders it; PRD NFR-SEC-05 names four items; Phase Plan 12B lists five incl. unbounded consumption; ASVS level: PRD L1 (L2 where time allows) vs dossier "L2 (unverified version)" | Decide edition and ASVS level before Phase 12 (does not block Phase 1) |
-| C11 | **Safety test-suite size** | PRD §7.2 and M-09: "at least 50 cases"; Phase Plan prompt 7.1: "30+ test cases" | PRD wins (>= 50) |
-| C12 | **Phase 2 plan vs decisions** | Phase Plan prompt 2.1 copies ClinicOS patient columns (`phone_normalized`, `allergies text[]`) into VaaniEHR tables and says "JWT claims identical to ClinicOS" | Superseded by audit facts (ClinicOS has no such columns; JWT = `{userId}` only), ADR-D4 and ADR-D11 |
-| C13 | **Workspace layout in the plan** | Plan §0.1 assumes sibling folders and `Documents/`; real layout is `ClinicOS/AWT-Project` + `ClinicOS/VaaniEHR`, folder `DOCUMENTS` | Real layout is in `AGENTS.md` |
-| C14 | **Dossier says ClinicOS audit is hash-chained** ("ClinicOS `audit_log`, append-only, hash-chained") | Dossier §(a) row "Sign-off + audit" | False for ClinicOS code; VaaniEHR builds its own hash chain (PRD NFR-REL-01) |
-| C15 | **PDF vs markdown dossier** | `Researchdoc.pdf` has no Sources list and no text layer | Use the `.md` as authoritative; PDF is a printout |
-| C16 | **Phase Plan Phase 0 deliverables** list `DECISIONS.md` "D1/D2 OPEN" | Plan prompt 0.3 | Now filled; D1/D2 closed (ADR-D1, ADR-D2) |
+| C1 | NLEM count 384 vs 386 | FR-F5-01; dossier §4 | **Open** (v1.1 keeps "use 384 and note it"). The import must report the number actually extracted |
+| C2 | EkaScribe and Gujarati | PRD §1.3/§1.7 "supports Gujarati"; dossier Key Finding 1 says it does not | **Open** (v1.1 App. F lists it). Do not state either claim as fact until checked |
+| C3 | Benchmark size vs ASR budget (about 150 cases in §7.3 vs "300 consultations" in §3.4 and dossier) | §7.3, §3.4 | **Open** (v1.1 App. F). Confirm the intended number |
+| C4 | Hours: 300-340 stated, §15 table sums to about 350 | §3.4, §15 | Acknowledged in v1.1 (App. F #5) |
+| C5 | "M1/M2" used for modules and for ABDM milestones | PRD module tags vs dossier / F14 | **Open** (naming only): write "module M2" vs "ABDM M2"; metrics are "M-01" |
+| C6 | Example ID `FR-M3-02` in the header | v1.0 header | **Resolved** in v1.1 (`FR-F4-02`) |
+| C7 | PRD-D vs ADR-D numbering | PRD §16.2 | Handled: v1.1 §16.2 lists the ADRs; this repo writes PRD-D#/ADR-D# |
+| C8 | PRD-D3..D7 still open (final five conditions, LLM provider, questionnaire, dataset licence, paper venue); PRD-D1, PRD-D2 closed | PRD §16.2 | **Open** except D1/D2 |
+| C9 | "JWT with refresh" vs ClinicOS has no refresh | NFR-SEC-01 | **Resolved** in v1.1 (AuthProvider; no refresh in standalone mode) |
+| C10 | OWASP LLM Top 10 edition (2025 vs 2026 list) and ASVS level (L1 vs L2) | NFR-SEC-05/06 vs dossier | **Open**; decide before Phase 12 |
+| C11 | Safety test-suite size: PRD >= 50, plan "30+" | §7.2/M-09 vs plan 7.1 | **Resolved** in the PRD (v1.1 App. F: floor 50); the plan text is still wrong (see `PHASES.md`) |
+| C12 | Plan Phase 2 copies ClinicOS columns and "JWT claims identical to ClinicOS" | Phase Plan 2.1 | **Open in the plan** (ADR-D4/D11 and PRD v1.1 supersede); see `PHASES.md` |
+| C13 | Plan assumes sibling folders and `Documents/` | Phase Plan 0.1 | Real layout in `AGENTS.md` |
+| C14 | Dossier says ClinicOS audit is hash-chained | Dossier (a) | **Open in the dossier**; PRD v1.1 states ClinicOS audit is append-only by convention only |
+| C15 | `Researchdoc.pdf` vs markdown dossier | PDF | Printout without Sources; use the `.md` |
+| C16 | Plan Phase 0 says DECISIONS D1/D2 "OPEN" | Phase Plan 0.3 | Resolved (ADR-D1, ADR-D2) |
 
-### 3.3 Items the PRD itself marks [Assumption] or [Unverified]
+### 3.3 Items the PRD itself marks [Assumption] or [Unverified] (PRD v1.1 line numbers)
 - l.19: - **[Assumption]** = a decision or number proposed by this PRD that you must confirm.
 - l.20: - **[Unverified]** = reported by a secondary source and not yet confirmed first-hand. Re-check before presenting it as fact.
-- l.150: - [Assumption] Candidate set: acute fever (undifferentiated), acute respiratory infection/cough, acute gastroenteritis, hypertension follow-up, urinary tract infection (uncomplicated). **Final list must be chosen from conditions t...
-- l.254: *Acceptance:* A 2-minute acted clip produces a first partial transcript within 3 seconds [Assumption] and a final transcript within 10 seconds of stopping.
-- l.358: Link signed visits to the patient's ABHA as care contexts. Only attempted after F9 and F8 are stable; some V3 HIP-initiated endpoints were reported as returning 403 in community tests **[Unverified]**.
-- l.478: **Parameters [Assumption]:** `k = 3`, `N_max = 8`, `τ_abstain` tuned on development cases, never on test cases.
-- l.493: | Duplicate class | Two active items share ATC/therapeutic class | Class from medicine master (ATC licence terms: **[Unverified]**) | 🟠 |
-- l.504: | Size | 100 consultations for final evaluation (plus up to 50 for development); about 3–10 minutes each; roughly 50 audio hours at most **[Assumption]** |
-- l.510: | Release | Dataset card, consent forms, licence (CC-BY suggested **[Assumption]**), evaluation scripts |
-- l.618: | NFR-PERF-01 | Latency | First partial transcript after speech starts | ≤ 3 s (95th percentile) [Assumption] |
-- l.628: | NFR-PRIV-01 | Retention | Audio deleted after evaluation window | Default 90 days [Assumption] |
-- l.637: | NFR-MAINT-01 | Quality | Unit tests (Jest, PyTest); API tests; CI on every push | Coverage target 70% core modules [Assumption] |
-- l.686: > Licence and activity notes come from the research dossier and search snippets. **Re-check each licence on the repository or model card before adopting it.** Items marked [Unverified] were not confirmed first-hand.
-- l.717: | pyannote-audio | Diarization alternative | https://github.com/pyannote/pyannote-audio | MIT code; pretrained pipelines may need terms acceptance [Unverified] |
-- l.766: | HL7 FHIR validator / core | CI validation | https://github.com/hapifhir/org.hl7.fhir.core | Apache-2.0 [Unverified] |
-- l.767: | HAPI FHIR JPA starter | Optional test server | https://github.com/hapifhir/hapi-fhir-jpaserver-starter | Apache-2.0 [Unverified] |
-- l.789: | jiwer | WER/CER | https://github.com/jitsi/jiwer [Unverified] |
-- l.812: | Prescribing rules | Generic-first by design; do not assert the current legal status of NMC generic-prescribing rules | **[Unverified]** |
-- l.821: > Targets below are **proposed hypotheses [Assumption]**, not published benchmarks. Freeze test cases before tuning; tune only on the development set.
-- l.839: | M-13 | Doctor usability | System Usability Scale (SUS) and NASA-TLX from 5–10 doctor testers | SUS ≥ 70 [Assumption] | Questionnaire |
+- l.159: - [Assumption] Candidate set: acute fever (undifferentiated), acute respiratory infection/cough, acute gastroenteritis, hypertension follow-up, urinary tract infection (uncomplicated). **Final list must be chosen from conditions t...
+- l.183: - Solo developer, about 20 hours/week for about 16 weeks (**about 300–350 hours**; the earlier "ClinicOS reuse saves about 60 hours" estimate is **[Unverified]**, because the audit found much of the assumed reuse — consent, doctor...
+- l.268: *Acceptance:* A 2-minute acted clip produces a first partial transcript within 3 seconds [Assumption] and a final transcript within 10 seconds of stopping.
+- l.374: Link signed visits to the patient's ABHA as care contexts. Only attempted after F9 and F8 are stable; some V3 HIP-initiated endpoints were reported as returning 403 in community tests **[Unverified]**.
+- l.494: **Parameters [Assumption]:** `k = 3`, `N_max = 8`, `τ_abstain` tuned on development cases, never on test cases.
+- l.509: | Duplicate class | Two active items share ATC/therapeutic class | Class from medicine master (ATC licence terms: **[Unverified]**) | 🟠 |
+- l.520: | Size | 100 consultations for final evaluation (plus up to 50 for development); about 3–10 minutes each; roughly 50 audio hours at most **[Assumption]** |
+- l.526: | Release | Dataset card, consent forms, licence (CC-BY suggested **[Assumption]**), evaluation scripts |
+- l.647: | NFR-PERF-01 | Latency | First partial transcript after speech starts | ≤ 3 s (95th percentile) [Assumption] |
+- l.657: | NFR-PRIV-01 | Retention | Audio deleted after evaluation window | Default 90 days [Assumption] |
+- l.666: | NFR-MAINT-01 | Quality | Unit tests (Jest, PyTest); API tests; CI on every push | Coverage target 70% core modules [Assumption] |
+- l.715: > Licence and activity notes come from the research dossier and search snippets. **Re-check each licence on the repository or model card before adopting it.** Items marked [Unverified] were not confirmed first-hand.
+- l.746: | pyannote-audio | Diarization alternative | https://github.com/pyannote/pyannote-audio | MIT code; pretrained pipelines may need terms acceptance [Unverified] |
+- l.795: | HL7 FHIR validator / core | CI validation | https://github.com/hapifhir/org.hl7.fhir.core | Apache-2.0 [Unverified] |
+- l.796: | HAPI FHIR JPA starter | Optional test server | https://github.com/hapifhir/hapi-fhir-jpaserver-starter | Apache-2.0 [Unverified] |
+- l.818: | jiwer | WER/CER | https://github.com/jitsi/jiwer [Unverified] |
+- l.841: | Prescribing rules | Generic-first by design; do not assert the current legal status of NMC generic-prescribing rules | **[Unverified]** |
+- l.850: > Targets below are **proposed hypotheses [Assumption]**, not published benchmarks. Freeze test cases before tuning; tune only on the development set.
+- l.868: | M-13 | Doctor usability | System Usability Scale (SUS) and NASA-TLX from 5–10 doctor testers | SUS ≥ 70 [Assumption] | Questionnaire |
 
 ### 3.4 Gaps (needed but missing or not yet supplied)
 - Final five conditions and the clinician reviewer (PRD §3.1, A3, PRD-D3). Nothing clinical can be encoded without them.
-- NLEM 2022 PDF file in `data/medicines/raw/`; SNOMED/CDCI release files (licence pending); DDInter export; National Formulary pages / product labels for dose limits.
+- NLEM 2022 PDF in `data/medicines/raw/`; SNOMED/CDCI release files (licence pending); DDInter export; National Formulary pages / product labels for dose limits.
 - ABDM sandbox credentials, Sarvam key, LLM key (+ no-training setting), WhatsApp test number and approved Gujarati template, ethics/faculty approval (PRD §16.3).
 - Gujarati wording review by a native speaker (consent notice, UI strings, summary template).
-- SRS (companion to the PRD) does not exist yet (Phase 13).
-- No SQL/ERD, OpenAPI file or diagrams yet (PRD §15 Review-I lists them).
-- Licence terms for ICMR STW reuse are not stated (PRD §12.4).
+- SRS (companion to the PRD) does not exist yet (Phase 13). No ERD/OpenAPI/diagrams yet (PRD §15 Review-I).
+- ICMR STW reuse terms are not stated (PRD §12.4).
+- Safety-rule behaviour for **unknown age** and the **ClinicOS `notes` adapter rule** are not in the PRD yet (errata rows 28 and 29).
 
 ## 4. Clinical content I must not invent
 
