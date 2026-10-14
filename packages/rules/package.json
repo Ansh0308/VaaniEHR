@@ -1,0 +1,20 @@
+{
+  "name": "@vaaniehr/rules",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pathway and safety engines (pure functions). Phase 1.1: empty stub with one test.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "vitest": "4.1.11"
+  }
+}
