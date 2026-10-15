@@ -8,6 +8,7 @@ const steps = [
   ['typecheck (all workspaces)', () => npm(['run', 'typecheck'])],
   ['unit tests (all workspaces)', () => npm(['run', 'test'])],
   ['guard: no shell scripts', () => run(node, ['scripts/check-no-shell-scripts.mjs'])],
+  ['guard: no data/audio files tracked', () => run(node, ['scripts/check-no-data-files.mjs'])],
   [
     'guard: dependency reasons (docs/DECISIONS.md)',
     () => run(node, ['scripts/sbom.mjs', '--reasons-only']),

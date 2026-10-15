@@ -34,11 +34,13 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Local data that must not be committed (audio, raw licensed downloads, DB volumes)
-infra/pgdata/
-data/bench/audio/
-data/medicines/raw/
-data/safety/*.local.csv
+# Data and audio never go to git (owner decision 2026-10-15; enforced by scripts/check-no-data-files.mjs and CI).
+# NOTE: PRD section 17 plans data/pathways, data/medicines and data/bench label files in the repo. This rule blocks
+# them; a later owner decision must carve out specific paths (and update the guard) before they can be committed.
+data/
+audio/
 *.wav
 *.mp3
 *.m4a
+*.webm
+infra/pgdata/
