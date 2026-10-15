@@ -173,3 +173,12 @@ Runtime rules (apply to every new service): non-root user; no secrets in images 
 - **Data and audio are never tracked**: `.gitignore` blocks `data/`, `audio/`, `*.wav`, `*.mp3`, `*.m4a`, `*.webm`; `scripts/check-no-data-files.mjs` (part of `npm run check` and a CI job) fails if any such file is tracked. **Conflict to resolve later:** PRD §17 puts versioned pathways, medicine CSVs and benchmark labels under `data/`; those cannot be committed until the owner decides which paths are allowed and updates the rule.
 - **ClinicOS secret-exposure details are withheld** from every tracked file and from git history (ADR-D13). The full original wording is kept privately outside the repository.
 - A gitleaks-style scan over all commits runs before each first push of new history (done 2026-10-15) and in CI on every push.
+
+---
+
+## CI tooling (not shipped)
+
+| Tool | Version | Licence | Reason |
+|---|---|---|---|
+| gitleaks CLI | 8.30.1 (Linux x64 tarball, SHA-256 pinned in `.github/workflows/ci.yml`) | MIT | Secret scan over every commit (Hard Rule 5). Replaced `gitleaks/gitleaks-action@v2`, whose first CI run on the public repo failed with "Unexpected exit code [1]" while the same scan run locally with this CLI found nothing (11 commits). The same command is documented in the README. |
+

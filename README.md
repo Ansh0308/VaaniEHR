@@ -85,6 +85,14 @@ Invoke-RestMethod http://localhost:4000/auth/whoami -Headers @{ Authorization = 
 - Auth: `AuthProvider` interface. `DevAuthProvider` (standalone) issues a ~1 h token signed with a VaaniEHR-only secret, claims `{ sub, role, clinicId, devUser: true }`, no refresh token; `POST /auth/dev-login` exists only when `AUTH_PROVIDER=dev`. `ClinicOSTokenAuth` is a Phase 12 stub that throws `NOT_IMPLEMENTED`.
 - Sockets: namespace `/vaani`; connections are authenticated at the handshake; rooms are chosen by the server only.
 
+## Secret scan (same as CI)
+
+CI runs the official gitleaks CLI (pinned, checksum-verified) over every commit. To run it yourself, download the same release (v8.30.1) for Windows, verify its SHA-256 against the release's `checksums.txt`, and run from the repo root:
+
+```powershell
+gitleaks git . --log-opts="--all" --redact --no-banner -v
+```
+
 ## Troubleshooting
 
 - `docker compose failed`: start Docker Desktop and wait for the engine (`docker info` must succeed).
