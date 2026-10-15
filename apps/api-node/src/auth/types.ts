@@ -1,6 +1,8 @@
 // Auth seam (ADR-D4). Phase 1.1 ships DevAuthProvider; ClinicOSTokenAuth is a Phase 12 stub.
 
-export const ROLES = ['doctor', 'staff', 'admin', 'researcher'] as const;
+// `patient` exists in ClinicOS but is unused in VaaniEHR (passive recipient of the WhatsApp summary): it has no
+// permissions and cannot log in. `researcher` is VaaniEHR-local (PRD 2.2); Phase 12 maps it from doctor_profile.researcher_flag.
+export const ROLES = ['doctor', 'staff', 'admin', 'researcher', 'patient'] as const;
 export type Role = (typeof ROLES)[number];
 
 /** Identity attached to a request or socket after authentication. */
@@ -11,6 +13,10 @@ export interface AuthContext {
   clinicId: string;
   /** True for tokens issued by the standalone dev provider. Must never be true in production. */
   devUser?: boolean;
+  /** Token id, used for logout/revocation (standalone tokens only). */
+  jti?: string;
+  /** Expiry as seconds since epoch (standalone tokens only). */
+  exp?: number;
 }
 
 export interface AuthProvider {

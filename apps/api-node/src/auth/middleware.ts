@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { errors } from '../http/errors.js';
+import { roleHasPermission, type PermissionId } from './permissions.js';
 import type { AuthProvider, Role } from './types.js';
 
 /** Extract the token from "Authorization: Bearer <token>". */
@@ -30,6 +31,15 @@ export function requireRole(...allowed: Role[]): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.auth) return next(errors.unauthenticated());
     if (!allowed.includes(req.auth.role)) return next(errors.forbidden());
+    next();
+  };
+}
+
+/** Permission gate driven by the single table in permissions.ts. Must run after authenticate(). */
+export function requirePermission(permission: PermissionId): RequestHandler {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.auth) return next(errors.unauthenticated());
+    if (!roleHasPermission(req.auth.role, permission)) return next(errors.forbidden());
     next();
   };
 }
