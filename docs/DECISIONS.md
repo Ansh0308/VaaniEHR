@@ -167,6 +167,15 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | httpx | Required by FastAPI's TestClient for API tests (dev only). |
 | pytest | Python test runner (NFR-MAINT-01). |
 | ruff | Python linter and formatter (one fast tool for lint + format). |
+| react-router-dom | Client-side routing for the app shell and the /design page (PRD §4 page routes). |
+| i18next | Internationalisation core: English and Gujarati namespaces, no hard-coded UI strings (NFR-UX-02). |
+| react-i18next | React bindings for i18next (hooks, language switching). |
+| lucide-react | Icon set (already used by ClinicOS); every safety state pairs an icon with a text label, never colour alone. |
+| @fontsource-variable/dm-sans | Self-hosted body font (ClinicOS body font, OFL-1.1); no runtime requests to Google Fonts. |
+| @fontsource-variable/fredoka | Self-hosted page-title font (ClinicOS display font, OFL-1.1). Latin only, so every stack falls back to Noto Sans Gujarati. |
+| @fontsource-variable/noto-sans-gujarati | Self-hosted Gujarati font (OFL-1.1); ClinicOS fonts have no Gujarati glyphs. Loaded by unicode-range only when Gujarati text appears. |
+| axe-core | Automated accessibility rules (WCAG) run against the real /design page and in jsdom tests (NFR-UX-01). MPL-2.0, dev only. |
+| playwright-core | Drives the Chrome already installed (CI runner and developer machine) to run axe and measure touch targets on /design. Apache-2.0, dev only; no browser binaries are downloaded, so it stays light. |
 <!-- DEP-REASONS:END -->
 
 ---

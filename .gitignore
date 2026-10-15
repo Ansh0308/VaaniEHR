@@ -44,3 +44,6 @@ audio/
 *.m4a
 *.webm
 infra/pgdata/
+
+# Microsoft Office lock files (created while a .docx is open in Word)
+~$*
