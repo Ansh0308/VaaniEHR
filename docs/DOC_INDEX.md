@@ -244,6 +244,9 @@ PRD §5.1 priority summary:
 
 - **Row 28**: **PARTLY covered** - data model applied (§3.5, §8.3: no age, dob may be null); **NOT covered**: FR-F6-03(5) and §7.2 still say only 'Age < 18' with no rule for unknown age
 - **Row 29**: **PARTLY covered** - exposure documented (§9.4 'Read history'); **NOT covered**: no adapter rule to drop/ignore ClinicOS `notes` or to never write VaaniEHR content into it
+- **Row 30**: open (PRD v1.1 not edited)
+- **Row 31**: open
+- **Row 32**: open
 
 ### 3.2 Conflicts between the VaaniEHR documents themselves
 

@@ -53,6 +53,14 @@ The PRD itself is **not edited**. "What is true" cites `CLINICOS_AUDIT.md` (A) o
 - §3.5 "Patient: phone-first lookup" and "Audio/ASR/LLM/rules/FHIR: None" in ClinicOS.
 - ClinicOS messaging channel set (whatsapp, sms, email) as a data field exists in `message_logs` (A §1).
 
+## F. Inconsistencies inside PRD v1.1 found while building Phase 2A (owner decisions 2026-10-15)
+
+| # | PRD section | What it says | What is true | Proposed fix | PRD v1.1 status |
+|---|---|---|---|---|---|
+| 30 | §2.2 table (consent row "Register patient, capture consent, verify ABHA") vs §4 PG-05 and §6.1 Journey A step 2 | §2.2: consent is captured by **staff and admin** only. §4 PG-05 lists roles **staff, doctor**; Journey A step 2 has the **doctor** confirming consent | The PRD disagrees with itself. Owner decision: grant, read and withdraw consent are allowed for **staff, admin and doctor** (union of both readings; the doctor must see and be able to withdraw consent mid-consultation) | Edit §2.2 so the consent capability lists doctor; keep PG-05 as written (add admin). Recorded in ADR-D20 | open (PRD v1.1 not edited) |
+| 31 | §5 NFR-SEC-01 "JWT with refresh" vs §10 NFR-SEC-01 text "no refresh token" in standalone mode | Two different statements of the same requirement | Standalone mode has **no refresh token** (ADR-D4 amendment, kept in Phase 2A); logout revokes the token server-side | Remove "with refresh" for standalone mode | open |
+| 32 | §9.2 / ClinicOS Facts Q4b | Phone numbers are normalised like ClinicOS ("first 10 digits") | Taking the first 10 digits of `+91 98765 43210` silently stores the wrong number `9198765432`. VaaniEHR requires **exactly 10 digits** after removing spaces and dashes and rejects anything else | Document the 10-digit rule in §8.2 / §9.2; ClinicOS keeps its own behaviour until Phase 12 | open |
+
 ## E. Not verified (so not listed as errata)
 - PRD claims about ClinicOS **UI pages** (PG-xx routes) beyond role names, and whether ClinicOS's frontend roles/layouts can host VaaniEHR screens.
 - Whether VaaniEHR's Phase 12 token validation will remain viable under the `/api/auth/*` rate limit (decision recorded in D4; needs Phase 12 approval to change ClinicOS).

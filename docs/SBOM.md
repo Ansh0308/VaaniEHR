@@ -24,11 +24,14 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | @types/react-dom | 18.3.7 | dev | apps/web/package.json | MIT | Type declarations for react-dom 18. |
 | npm | @types/supertest | 7.2.1 | dev | apps/api-node/package.json | MIT | Type declarations for supertest. |
 | npm | @vitejs/plugin-react | 5.2.0 | dev | apps/web/package.json | MIT | Vite plugin for React (JSX transform, fast refresh). 5.x is the line that supports Vite 7. |
+| npm | @vitest/coverage-v8 | 4.1.11 | dev | apps/api-node/package.json | MIT | Coverage report for the Phase 2A auth, audit and consent modules (NFR-MAINT-01). Pinned to 4.1.11 to match vitest. |
 | npm | axe-core | 4.14.0 | dev | apps/web/package.json | MPL-2.0 | Automated accessibility rules (WCAG) run against the real /design page and in jsdom tests (NFR-UX-01). MPL-2.0, dev only. |
+| npm | bcryptjs | 3.0.3 | runtime | apps/api-node/package.json | BSD-3-Clause | Password hashing for the standalone login (Phase 2A, NFR-SEC-01). Pure JavaScript (no native build on Windows or Node 20/24); same scheme and cost 12 as ClinicOS. 3.0.3. |
 | npm | cors | 2.8.6 | runtime | apps/api-node/package.json | MIT | Restricts browser origins for the HTTP API to CORS_ORIGIN (NFR-SEC-06). |
 | npm | eslint | 10.12.0 | dev | package.json | MIT | Linting for all TypeScript/JavaScript (NFR-MAINT-01). v10 (supports Node 20.19+; v9 is flagged as unsupported by npm). |
 | npm | eslint-config-prettier | 10.1.8 | dev | package.json | MIT | Disables ESLint rules that conflict with Prettier so the two tools never fight. |
 | npm | express | 5.3.0 | runtime | apps/api-node/package.json | MIT | HTTP framework named in the PRD stack (§11: Node 20 + Express). Version 5 for native async error handling. |
+| npm | express-rate-limit | 8.7.1 | runtime | apps/api-node/package.json | MIT | Per-IP login rate limiting (Phase 2A); same library and 10-per-15-minutes policy as ClinicOS. 8.7.1. |
 | npm | globals | 17.13.0 | dev | package.json | MIT | Declares Node/browser global names for ESLint so no-undef style rules work. |
 | npm | helmet | 8.3.0 | runtime | apps/api-node/package.json | MIT | Sets standard security headers (NFR-SEC-06 / ASVS L1); ClinicOS lacks it. |
 | npm | i18next | 26.4.5 | runtime | apps/web/package.json | MIT | Internationalisation core: English and Gujarati namespaces, no hard-coded UI strings (NFR-UX-02). |
@@ -76,7 +79,7 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 
 ## 2. Licence review summary
 
-- npm packages in lockfile: 507; pip distributions installed: 26
+- npm packages in lockfile: 522; pip distributions installed: 26
 - Packages needing review or with unverified licence: 3
 
 | Ecosystem | Package | Version | Declared licence | Status |
@@ -146,6 +149,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | @babel/template | 7.29.7 | MIT | dev | ok (permissive) |
 | @babel/traverse | 7.29.10 | MIT | dev | ok (permissive) |
 | @babel/types | 7.29.8 | MIT | dev | ok (permissive) |
+| @bcoe/v8-coverage | 1.0.2 | MIT | dev | ok (permissive) |
 | @cacheable/memory | 2.2.0 | MIT | dev | ok (permissive) |
 | @cacheable/utils | 2.5.0 | MIT | dev | ok (permissive) |
 | @csstools/color-helpers | 6.1.2 | MIT-0 | dev | ok (permissive) |
@@ -294,6 +298,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | @typescript-eslint/utils | 8.71.2 | MIT | dev | ok (permissive) |
 | @typescript-eslint/visitor-keys | 8.71.2 | MIT | dev | ok (permissive) |
 | @vitejs/plugin-react | 5.2.0 | MIT | dev | ok (permissive) |
+| @vitest/coverage-v8 | 4.1.11 | MIT | dev | ok (permissive) |
 | @vitest/expect | 4.1.11 | MIT | dev | ok (permissive) |
 | @vitest/mocker | 4.1.11 | MIT | dev | ok (permissive) |
 | @vitest/pretty-format | 4.1.11 | MIT | dev | ok (permissive) |
@@ -314,10 +319,12 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | aria-query | 5.3.0 | Apache-2.0 | dev | ok (permissive) |
 | asap | 2.0.6 | MIT | dev | ok (permissive) |
 | assertion-error | 2.0.1 | MIT | dev | ok (permissive) |
+| ast-v8-to-istanbul | 1.0.7 | MIT | dev | ok (permissive) |
 | asynckit | 0.4.0 | MIT | dev | ok (permissive) |
 | axe-core | 4.14.0 | MPL-2.0 | dev | ok (permissive) |
 | balanced-match | 4.0.4 | MIT | dev | ok (permissive) |
 | baseline-browser-mapping | 2.11.28 | Apache-2.0 | dev | ok (permissive) |
+| bcryptjs | 3.0.3 | BSD-3-Clause | runtime | ok (permissive) |
 | bidi-js | 1.1.0 | MIT | dev | ok (permissive) |
 | body-parser | 2.3.0 | MIT | runtime | ok (permissive) |
 | brace-expansion | 5.0.12 | MIT | dev | ok (permissive) |
@@ -388,6 +395,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | etag | 1.8.1 | MIT | runtime | ok (permissive) |
 | expect-type | 1.4.0 | Apache-2.0 | dev | ok (permissive) |
 | express | 5.3.0 | MIT | runtime | ok (permissive) |
+| express-rate-limit | 8.7.1 | MIT | runtime | ok (permissive) |
 | fast-deep-equal | 3.1.3 | MIT | dev | ok (permissive) |
 | fast-json-stable-stringify | 2.1.0 | MIT | dev | ok (permissive) |
 | fast-levenshtein | 2.0.6 | MIT | dev | ok (permissive) |
@@ -414,6 +422,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | globals | 17.13.0 | MIT | dev | ok (permissive) |
 | gopd | 1.2.0 | MIT | runtime | ok (permissive) |
 | graceful-fs | 4.2.11 | ISC | dev | ok (permissive) |
+| has-flag | 4.0.0 | MIT | dev | ok (permissive) |
 | has-symbols | 1.1.0 | MIT | runtime | ok (permissive) |
 | has-tostringtag | 1.0.2 | MIT | dev | ok (permissive) |
 | hashery | 1.5.1 | MIT | dev | ok (permissive) |
@@ -422,6 +431,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | hookified | 1.15.1 | MIT | dev | ok (permissive) |
 | hookified | 2.2.0 | MIT | dev | ok (permissive) |
 | html-encoding-sniffer | 6.0.0 | MIT | dev | ok (permissive) |
+| html-escaper | 2.0.2 | MIT | dev | ok (permissive) |
 | html-parse-stringify | 4.0.1 | MIT | runtime | ok (permissive) |
 | http-errors | 2.0.1 | MIT | runtime | ok (permissive) |
 | http-proxy-agent | 7.0.2 | MIT | dev | ok (permissive) |
@@ -432,6 +442,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | ignore | 7.0.12 | MIT | dev | ok (permissive) |
 | imurmurhash | 0.1.4 | MIT | dev | ok (permissive) |
 | inherits | 2.0.4 | ISC | runtime | ok (permissive) |
+| ip-address | 10.7.4 | MIT | runtime | ok (permissive) |
 | ipaddr.js | 1.9.1 | MIT | runtime | ok (permissive) |
 | is-extglob | 2.1.1 | MIT | dev | ok (permissive) |
 | is-fullwidth-code-point | 3.0.0 | MIT | dev | ok (permissive) |
@@ -439,9 +450,13 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | is-potential-custom-element-name | 1.0.1 | MIT | dev | ok (permissive) |
 | is-promise | 4.0.0 | MIT | runtime | ok (permissive) |
 | isexe | 2.0.0 | ISC | dev | ok (permissive) |
+| istanbul-lib-coverage | 3.2.2 | BSD-3-Clause | dev | ok (permissive) |
+| istanbul-lib-report | 3.0.1 | BSD-3-Clause | dev | ok (permissive) |
+| istanbul-reports | 3.2.0 | BSD-3-Clause | dev | ok (permissive) |
 | jackspeak | 4.2.3 | BlueOak-1.0.0 | dev | ok (permissive) |
 | jiti | 2.7.0 | MIT | dev | ok (permissive) |
 | jose | 6.2.12 | MIT | runtime | ok (permissive) |
+| js-tokens | 10.0.0 | MIT | dev | ok (permissive) |
 | js-tokens | 4.0.0 | MIT | runtime | ok (permissive) |
 | jsdom | 27.4.0 | MIT | dev | ok (permissive) |
 | jsesc | 3.1.0 | MIT | dev | ok (permissive) |
@@ -472,6 +487,8 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | lucide-react | 1.57.0 | ISC | runtime | ok (permissive) |
 | lz-string | 1.5.0 | MIT | dev | ok (permissive) |
 | magic-string | 0.30.21 | MIT | dev | ok (permissive) |
+| magicast | 0.5.5 | MIT | dev | ok (permissive) |
+| make-dir | 4.0.0 | MIT | dev | ok (permissive) |
 | math-intrinsics | 1.1.0 | MIT | runtime | ok (permissive) |
 | mdn-data | 2.27.1 | CC0-1.0 | dev | ok (permissive) |
 | media-typer | 1.1.1 | MIT | runtime | ok (permissive) |
@@ -579,6 +596,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | strip-ansi | 6.0.1 | MIT | dev | ok (permissive) |
 | superagent | 10.4.1 | MIT | dev | ok (permissive) |
 | supertest | 7.3.1 | MIT | dev | ok (permissive) |
+| supports-color | 7.2.0 | MIT | dev | ok (permissive) |
 | symbol-tree | 3.2.4 | MIT | dev | ok (permissive) |
 | tailwindcss | 4.3.3 | MIT | dev | ok (permissive) |
 | tapable | 2.3.3 | MIT | dev | ok (permissive) |

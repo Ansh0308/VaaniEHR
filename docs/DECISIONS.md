@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D19 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D20 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -116,6 +116,22 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 
 ---
 
+## D20 - Phase 2A: standalone identity, consent and audit
+**Date 2026-10-15, Status: Accepted, Decider: Ansh (owner).** Where the Phase 2A brief and earlier decisions differed, the owner chose as below.
+- **ClinicOS stand-ins.** Tables `mock_clinicos_clinic`, `mock_clinicos_user`, `mock_clinicos_patient` imitate the ClinicOS data VaaniEHR needs while standalone. They are reached **only** through the `ClinicOSAdapter` interface (`src/clinicos/`), have **no foreign keys** from any VaaniEHR table, and are **dropped in Phase 12**. Two tests enforce this (only the adapter implementation and the seed script may name them; no migration may reference them). Columns mirror ClinicOS: UUID `id`, 10-digit `phone` (no E.164, no `phone_normalized`), `name`, `dob`, free-text `gender`, `opt_in_msg`. There is no `blood_group` (not in the PRD). `is_simulated` is kept on every stand-in table.
+- **VaaniEHR-owned tables:** `doctor_profile` (registration number, HPR id, `researcher_flag`), `patient_clinical_profile` (allergies as a list of free-text entries), `consultation_session`, `consent_event`, `audit_log`, `login_lockout`, `revoked_token`.
+- **Researcher.** The seed contains a researcher user. In the stand-in table `researcher` is an allowed role (ClinicOS has none). In **Phase 12 the role is mapped from `doctor_profile.researcher_flag`** and is never written to ClinicOS (PRD 2.2).
+- **Tokens.** Kept from ADR-D4: about 1 hour, claims `{ sub, role, clinicId, devUser, jti }`, HS256, VaaniEHR-only secret, **no refresh token** (the brief's "refresh" and "claims identical to ClinicOS" were not followed: ClinicOS tokens carry only `userId`). `POST /api/v1/auth/logout` revokes the `jti` server-side. Every request also re-checks the user in the directory (approved, same role and clinic), as ClinicOS `rbac` does. The passwordless `/auth/dev-login` was removed.
+- **Passwords:** `bcryptjs`, cost 12 (minimum 10 outside tests), same scheme as ClinicOS. Login failures give one identical message for wrong password and unknown e-mail, and always run one bcrypt comparison. Rate limiting: 10 attempts per 15 minutes per IP (`express-rate-limit`) and a database-backed lockout of 5 failures for 15 minutes per hashed e-mail (mirrors ClinicOS).
+- **Consent permissions (deviation from PRD 2.2, see PRD_ERRATA row 30):** grant, read and withdraw are allowed for **staff, admin and doctor**, because PRD section 4 (PG-05: staff, doctor) and Journey A step 2 (doctor confirms consent) disagree with section 2.2. The single permissions table (`src/auth/permissions.ts`) is checked against a separate hand-written copy of the PRD in the tests.
+- **Audit log:** append-only table with a SHA-256 hash chain (canonical JSON, genesis hash, app-assigned `seq` under an advisory lock). The runtime role `vaani_app` has SELECT and INSERT only on `audit_log` and `consent_event`; triggers also refuse UPDATE, DELETE and TRUNCATE for the owner. Every non-GET route runs in one transaction and **must** write an audit row there (the route wrapper turns a missing row into a 500 and rolls back). Audit metadata may hold identifiers and counts only (a key guard rejects names, phones, e-mails, allergies, tokens). `npm run verify:audit` reports the first broken row; deleting the **last** rows cannot be seen from the chain alone, so the script also accepts `--expect-head` / `--expect-count` from a copy kept elsewhere.
+- **Two database roles.** Migrations and the seed run as the owner (`MIGRATION_DATABASE_URL`); the API runs as `vaani_app` (`DATABASE_URL`, password `APP_DB_PASSWORD`, set by `npm run db:migrate`, never inside a migration because node-pg-migrate echoes SQL). `npm run setup:env` upgrades an existing `.env` once.
+- **Real-data guard:** the API (and the seed) refuse to start if any stand-in row has `is_simulated=false`, in every mode (ADR-D16 is not weakened).
+- **Tests.** Database tests (`*.db.test.ts`) run on real PostgreSQL (Docker locally, a service container in CI). `npm run check` includes them; **`npm run check:unit`** runs everything except them (no Docker) and says so in its summary.
+- **Not in Phase 2A:** any UI, a refresh token, `ClinicOSTokenAuth`, final consent wording (the notices are bracketed placeholders; Gujarati is `needsReview`), real allergens (the seed uses `Drug-A (FAKE)` style labels until Phase 7).
+
+---
+
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
 - **Docker:** installed with WSL2 (daemon must be running to use compose).
 - **ADR-D4 amendment - standalone dev auth:** `DevAuthProvider` issues its **own access token, about 1 hour**, signed with a **VaaniEHR-only secret**, claims `{ sub, role, clinicId, devUser: true }`. **No refresh token in standalone mode** (PRD NFR-SEC-01 "JWT with refresh" is deliberately not met in standalone mode; recorded as a deviation).
@@ -140,6 +156,9 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | prettier | Single code formatter (NFR-MAINT-01); checked in `npm run lint`. |
 | typescript | Strict typing for api-node, web, rules (PRD §17). 5.9.3 because typescript-eslint 8.x does not yet support TypeScript 6.1+/7. |
 | typescript-eslint | TypeScript parser and rules for ESLint. |
+| bcryptjs | Password hashing for the standalone login (Phase 2A, NFR-SEC-01). Pure JavaScript (no native build on Windows or Node 20/24); same scheme and cost 12 as ClinicOS. 3.0.3. |
+| express-rate-limit | Per-IP login rate limiting (Phase 2A); same library and 10-per-15-minutes policy as ClinicOS. 8.7.1. |
+| @vitest/coverage-v8 | Coverage report for the Phase 2A auth, audit and consent modules (NFR-MAINT-01). Pinned to 4.1.11 to match vitest. |
 | cors | Restricts browser origins for the HTTP API to CORS_ORIGIN (NFR-SEC-06). |
 | express | HTTP framework named in the PRD stack (§11: Node 20 + Express). Version 5 for native async error handling. |
 | helmet | Sets standard security headers (NFR-SEC-06 / ASVS L1); ClinicOS lacks it. |
