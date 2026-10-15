@@ -33,6 +33,8 @@
     "db:migrate": "node scripts/db.mjs migrate",
     "db:reset": "node scripts/db.mjs reset",
     "seed:dev": "node scripts/seed-dev.mjs",
+    "licences:web": "node scripts/web-licences.mjs",
+    "e2e": "node scripts/e2e.mjs",
     "verify:audit": "node scripts/verify-audit-chain.mjs",
     "guard:shell": "node scripts/check-no-shell-scripts.mjs",
     "guard:data": "node scripts/check-no-data-files.mjs",

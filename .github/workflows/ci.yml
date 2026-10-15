@@ -111,6 +111,43 @@ jobs:
         env:
           CHROME_PATH: /usr/bin/google-chrome
 
+  e2e:
+    name: end-to-end (real API, Postgres and browser; fake data only)
+    runs-on: ubuntu-24.04
+    # Real PostgreSQL. Throwaway values only; nothing here is a real secret.
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg16-bookworm@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+        env:
+          POSTGRES_USER: vaani
+          POSTGRES_PASSWORD: ci-throwaway-owner-password
+          POSTGRES_DB: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U vaani"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      MIGRATION_DATABASE_URL: postgres://vaani:ci-throwaway-owner-password@localhost:5433/postgres
+      APP_DB_PASSWORD: ci-throwaway-app-password-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      # migrations as the owner role, then the least-privilege role gets its password
+      - run: npm run db:migrate
+      # generates RANDOM fake logins into data/dev-credentials.json (git-ignored); the values are never printed
+      - run: npm run seed:dev
+      # uses the Chrome that is preinstalled on the runner; no browser download
+      - run: npm run e2e
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+
   docker-build:
     name: docker build ${{ matrix.image }} (no push)
     runs-on: ubuntu-24.04

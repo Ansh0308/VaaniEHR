@@ -20,6 +20,10 @@ const steps = [
   ],
   ['guard: seed/ rows carry a source', () => run(node, ['scripts/check-seed-sources.mjs'])],
   [
+    'guard: Settings-page licence list is up to date',
+    () => run(node, ['scripts/web-licences.mjs', '--check']),
+  ],
+  [
     'guard: dependency reasons (docs/DECISIONS.md)',
     () => run(node, ['scripts/sbom.mjs', '--reasons-only']),
   ],

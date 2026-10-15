@@ -30,8 +30,8 @@ export function requireEnvFiles(files = [infraEnv, apiEnv]) {
  * the password of the runtime role vaani_app from APP_DB_PASSWORD. The running API never uses the owner role.
  */
 export function migrate(direction = 'up') {
-  requireEnvFiles();
-  process.loadEnvFile(apiEnv);
+  // Locally the values come from the git-ignored apps/api-node/.env; in CI they are already in the environment.
+  if (existsSync(apiEnv)) process.loadEnvFile(apiEnv);
   const ownerUrl = process.env.MIGRATION_DATABASE_URL;
   if (!ownerUrl || !process.env.APP_DB_PASSWORD) {
     console.error(
