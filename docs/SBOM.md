@@ -9,6 +9,9 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | Ecosystem | Package | Version | Kind | Declared in | Licence | Reason |
 |---|---|---|---|---|---|---|
 | npm | @eslint/js | 10.0.1 | dev | package.json | MIT | ESLint's recommended JavaScript rule set (flat config); official companion of eslint. |
+| npm | @fontsource-variable/dm-sans | 5.3.0 | runtime | apps/web/package.json | OFL-1.1 | Self-hosted body font (ClinicOS body font, OFL-1.1); no runtime requests to Google Fonts. |
+| npm | @fontsource-variable/fredoka | 5.3.0 | runtime | apps/web/package.json | OFL-1.1 | Self-hosted page-title font (ClinicOS display font, OFL-1.1). Latin only, so every stack falls back to Noto Sans Gujarati. |
+| npm | @fontsource-variable/noto-sans-gujarati | 5.3.0 | runtime | apps/web/package.json | OFL-1.1 | Self-hosted Gujarati font (OFL-1.1); ClinicOS fonts have no Gujarati glyphs. Loaded by unicode-range only when Gujarati text appears. |
 | npm | @tailwindcss/vite | 4.3.3 | dev | apps/web/package.json | MIT | Official Tailwind 4 integration for Vite (replaces the PostCSS + autoprefixer setup, so those two are no longer dependencies). |
 | npm | @testing-library/dom | 10.4.2 | dev | apps/web/package.json | MIT | Peer dependency of @testing-library/react. |
 | npm | @testing-library/react | 16.3.3 | dev | apps/web/package.json | MIT | Component tests for the web app (banner test now, more in Phase 1.2). |
@@ -21,19 +24,25 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | @types/react-dom | 18.3.7 | dev | apps/web/package.json | MIT | Type declarations for react-dom 18. |
 | npm | @types/supertest | 7.2.1 | dev | apps/api-node/package.json | MIT | Type declarations for supertest. |
 | npm | @vitejs/plugin-react | 5.2.0 | dev | apps/web/package.json | MIT | Vite plugin for React (JSX transform, fast refresh). 5.x is the line that supports Vite 7. |
+| npm | axe-core | 4.14.0 | dev | apps/web/package.json | MPL-2.0 | Automated accessibility rules (WCAG) run against the real /design page and in jsdom tests (NFR-UX-01). MPL-2.0, dev only. |
 | npm | cors | 2.8.6 | runtime | apps/api-node/package.json | MIT | Restricts browser origins for the HTTP API to CORS_ORIGIN (NFR-SEC-06). |
 | npm | eslint | 10.12.0 | dev | package.json | MIT | Linting for all TypeScript/JavaScript (NFR-MAINT-01). v10 (supports Node 20.19+; v9 is flagged as unsupported by npm). |
 | npm | eslint-config-prettier | 10.1.8 | dev | package.json | MIT | Disables ESLint rules that conflict with Prettier so the two tools never fight. |
 | npm | express | 5.3.0 | runtime | apps/api-node/package.json | MIT | HTTP framework named in the PRD stack (§11: Node 20 + Express). Version 5 for native async error handling. |
 | npm | globals | 17.13.0 | dev | package.json | MIT | Declares Node/browser global names for ESLint so no-undef style rules work. |
 | npm | helmet | 8.3.0 | runtime | apps/api-node/package.json | MIT | Sets standard security headers (NFR-SEC-06 / ASVS L1); ClinicOS lacks it. |
+| npm | i18next | 26.4.5 | runtime | apps/web/package.json | MIT | Internationalisation core: English and Gujarati namespaces, no hard-coded UI strings (NFR-UX-02). |
 | npm | jose | 6.2.12 | runtime | apps/api-node/package.json | MIT | Signs/verifies the dev provider's HS256 JWT (ADR-D4 amendment): pure ESM, no native build, strict algorithm and claim checks. |
 | npm | jsdom | 27.4.0 | dev | apps/web/package.json | MIT | Browser-like DOM for Vitest component tests. 27.x chosen: 30.x needs Node 22+. |
+| npm | lucide-react | 1.57.0 | runtime | apps/web/package.json | ISC | Icon set (already used by ClinicOS); every safety state pairs an icon with a text label, never colour alone. |
 | npm | node-pg-migrate | 8.0.4 | dev | apps/api-node/package.json | MIT | SQL-first migration tool (migration 0001: schema_info + vector extension); standard, Postgres-only, no ORM lock-in. |
 | npm | pg | 8.23.1 | runtime | apps/api-node/package.json | MIT | PostgreSQL client for api-node (ADR-D1); used for the readiness check and, later, all data access. |
+| npm | playwright-core | 1.64.1 | dev | apps/web/package.json | Apache-2.0 | Drives the Chrome already installed (CI runner and developer machine) to run axe and measure touch targets on /design. Apache-2.0, dev only; no browser binaries are downloaded, so it stays light. |
 | npm | prettier | 3.9.10 | dev | package.json | MIT | Single code formatter (NFR-MAINT-01); checked in `npm run lint`. |
 | npm | react | 18.3.1 | runtime | apps/web/package.json | MIT | UI library named in the PRD stack (§11). 18.3.1 per PRD (not 19). |
 | npm | react-dom | 18.3.1 | runtime | apps/web/package.json | MIT | DOM renderer for react. |
+| npm | react-i18next | 17.0.16 | runtime | apps/web/package.json | MIT | React bindings for i18next (hooks, language switching). |
+| npm | react-router-dom | 7.18.4 | runtime | apps/web/package.json | MIT | Client-side routing for the app shell and the /design page (PRD §4 page routes). |
 | npm | socket.io | 4.8.4 | runtime | apps/api-node/package.json | MIT | Realtime server named in the PRD stack (§11, FR-F2-01); authenticated at handshake (ADR-D10). |
 | npm | socket.io-client | 4.8.4 | dev | apps/api-node/package.json | MIT | Test-only: connects real sockets to verify handshake auth and room isolation. |
 | npm | supertest | 7.3.1 | dev | apps/api-node/package.json | MIT | Test-only: HTTP assertions against the Express app without opening a port. |
@@ -67,8 +76,14 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 
 ## 2. Licence review summary
 
-- npm packages in lockfile: 493; pip distributions installed: 26
-- Packages needing review or with unverified licence: 0
+- npm packages in lockfile: 507; pip distributions installed: 26
+- Packages needing review or with unverified licence: 3
+
+| Ecosystem | Package | Version | Declared licence | Status |
+|---|---|---|---|---|
+| npm | @fontsource-variable/dm-sans | 5.3.0 | OFL-1.1 | REVIEW (other) |
+| npm | @fontsource-variable/fredoka | 5.3.0 | OFL-1.1 | REVIEW (other) |
+| npm | @fontsource-variable/noto-sans-gujarati | 5.3.0 | OFL-1.1 | REVIEW (other) |
 
 ## 3. Docker base images (pinned by tag and digest; checked on Docker Hub 2026-10-14)
 
@@ -127,7 +142,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | @babel/parser | 7.29.9 | MIT | dev | ok (permissive) |
 | @babel/plugin-transform-react-jsx-self | 7.29.7 | MIT | dev | ok (permissive) |
 | @babel/plugin-transform-react-jsx-source | 7.29.7 | MIT | dev | ok (permissive) |
-| @babel/runtime | 7.29.10 | MIT | dev | ok (permissive) |
+| @babel/runtime | 7.29.10 | MIT | runtime | ok (permissive) |
 | @babel/template | 7.29.7 | MIT | dev | ok (permissive) |
 | @babel/traverse | 7.29.10 | MIT | dev | ok (permissive) |
 | @babel/types | 7.29.8 | MIT | dev | ok (permissive) |
@@ -174,6 +189,9 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | @eslint/object-schema | 3.0.5 | Apache-2.0 | dev | ok (permissive) |
 | @eslint/plugin-kit | 0.7.3 | Apache-2.0 | dev | ok (permissive) |
 | @exodus/bytes | 1.16.0 | MIT | dev | ok (permissive) |
+| @fontsource-variable/dm-sans | 5.3.0 | OFL-1.1 | runtime | REVIEW (other) |
+| @fontsource-variable/fredoka | 5.3.0 | OFL-1.1 | runtime | REVIEW (other) |
+| @fontsource-variable/noto-sans-gujarati | 5.3.0 | OFL-1.1 | runtime | REVIEW (other) |
 | @humanfs/core | 0.19.2 | Apache-2.0 | dev | ok (permissive) |
 | @humanfs/node | 0.16.8 | Apache-2.0 | dev | ok (permissive) |
 | @humanfs/types | 0.15.0 | Apache-2.0 | dev | ok (permissive) |
@@ -297,6 +315,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | asap | 2.0.6 | MIT | dev | ok (permissive) |
 | assertion-error | 2.0.1 | MIT | dev | ok (permissive) |
 | asynckit | 0.4.0 | MIT | dev | ok (permissive) |
+| axe-core | 4.14.0 | MPL-2.0 | dev | ok (permissive) |
 | balanced-match | 4.0.4 | MIT | dev | ok (permissive) |
 | baseline-browser-mapping | 2.11.28 | Apache-2.0 | dev | ok (permissive) |
 | bidi-js | 1.1.0 | MIT | dev | ok (permissive) |
@@ -318,6 +337,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | content-type | 2.1.0 | MIT | runtime | ok (permissive) |
 | convert-source-map | 2.0.0 | MIT | dev | ok (permissive) |
 | cookie | 0.7.2 | MIT | runtime | ok (permissive) |
+| cookie | 1.1.1 | MIT | runtime | ok (permissive) |
 | cookie-signature | 1.2.2 | MIT | runtime | ok (permissive) |
 | cookiejar | 2.1.4 | MIT | dev | ok (permissive) |
 | cors | 2.8.6 | MIT | runtime | ok (permissive) |
@@ -402,9 +422,11 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | hookified | 1.15.1 | MIT | dev | ok (permissive) |
 | hookified | 2.2.0 | MIT | dev | ok (permissive) |
 | html-encoding-sniffer | 6.0.0 | MIT | dev | ok (permissive) |
+| html-parse-stringify | 4.0.1 | MIT | runtime | ok (permissive) |
 | http-errors | 2.0.1 | MIT | runtime | ok (permissive) |
 | http-proxy-agent | 7.0.2 | MIT | dev | ok (permissive) |
 | https-proxy-agent | 7.0.6 | MIT | dev | ok (permissive) |
+| i18next | 26.4.5 | MIT | runtime | ok (permissive) |
 | iconv-lite | 0.7.3 | MIT | runtime | ok (permissive) |
 | ignore | 5.3.2 | MIT | dev | ok (permissive) |
 | ignore | 7.0.12 | MIT | dev | ok (permissive) |
@@ -447,6 +469,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | lru-cache | 11.5.3 | BlueOak-1.0.0 | dev | ok (permissive) |
 | lru-cache | 11.5.3 | BlueOak-1.0.0 | dev | ok (permissive) |
 | lru-cache | 5.1.1 | ISC | dev | ok (permissive) |
+| lucide-react | 1.57.0 | ISC | runtime | ok (permissive) |
 | lz-string | 1.5.0 | MIT | dev | ok (permissive) |
 | magic-string | 0.30.21 | MIT | dev | ok (permissive) |
 | math-intrinsics | 1.1.0 | MIT | runtime | ok (permissive) |
@@ -499,6 +522,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | pgpass | 1.0.5 | MIT | runtime | ok (permissive) |
 | picocolors | 1.1.1 | ISC | dev | ok (permissive) |
 | picomatch | 4.0.7 | MIT | dev | ok (permissive) |
+| playwright-core | 1.64.1 | Apache-2.0 | dev | ok (permissive) |
 | postcss | 8.5.30 | MIT | dev | ok (permissive) |
 | postgres-array | 2.0.0 | MIT | runtime | ok (permissive) |
 | postgres-bytea | 1.0.1 | MIT | runtime | ok (permissive) |
@@ -515,8 +539,11 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | raw-body | 3.0.2 | MIT | runtime | ok (permissive) |
 | react | 18.3.1 | MIT | runtime | ok (permissive) |
 | react-dom | 18.3.1 | MIT | runtime | ok (permissive) |
+| react-i18next | 17.0.16 | MIT | runtime | ok (permissive) |
 | react-is | 17.0.2 | MIT | dev | ok (permissive) |
 | react-refresh | 0.18.0 | MIT | dev | ok (permissive) |
+| react-router | 7.18.4 | MIT | runtime | ok (permissive) |
+| react-router-dom | 7.18.4 | MIT | runtime | ok (permissive) |
 | require-directory | 2.1.1 | MIT | dev | ok (permissive) |
 | require-from-string | 2.0.2 | MIT | dev | ok (permissive) |
 | rollup | 4.64.6 | MIT | dev | ok (permissive) |
@@ -529,6 +556,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | semver | 7.8.5 | ISC | dev | ok (permissive) |
 | send | 1.2.1 | MIT | runtime | ok (permissive) |
 | serve-static | 2.2.1 | MIT | runtime | ok (permissive) |
+| set-cookie-parser | 2.7.2 | MIT | runtime | ok (permissive) |
 | setprototypeof | 1.2.0 | ISC | runtime | ok (permissive) |
 | shebang-command | 2.0.0 | MIT | dev | ok (permissive) |
 | shebang-regex | 3.0.0 | MIT | dev | ok (permissive) |
@@ -573,6 +601,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | unpipe | 1.0.0 | MIT | runtime | ok (permissive) |
 | update-browserslist-db | 1.3.4 | MIT | dev | ok (permissive) |
 | uri-js | 4.4.1 | BSD-2-Clause | dev | ok (permissive) |
+| use-sync-external-store | 1.7.0 | MIT | runtime | ok (permissive) |
 | vary | 1.1.2 | MIT | runtime | ok (permissive) |
 | vite | 7.3.7 | MIT | dev | ok (permissive) |
 | vitest | 4.1.11 | MIT | dev | ok (permissive) |

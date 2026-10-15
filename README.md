@@ -11,7 +11,7 @@ Status: **Phase 1 foundation** (1.1 accepted; container stack added). No clinica
 
 | Path                | What                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
-| `apps/web`          | React 18 + Vite + TypeScript + Tailwind 4 (placeholder page with the simulated-data banner only) |
+| `apps/web`          | React 18 + Vite + TypeScript + Tailwind 4: design system, app shell and `/design` page (see `docs/DESIGN.md`) |
 | `apps/api-node`     | Node + Express 5 + TypeScript + Socket.IO: config, auth seam, `/health`, `/ready`, `/vaani` sockets |
 | `apps/asr-py`       | FastAPI (Python 3.11): `/health` only                                                            |
 | `packages/rules`    | TypeScript stub for the pathway and safety engines (one test, no clinical content)               |
@@ -63,6 +63,7 @@ npm run dev:api             # API on http://localhost:4000   (needs db:up for /r
 npm run dev:web             # web on http://localhost:5173
 npm run dev:asr             # asr-py on http://localhost:8000
 npm run build               # production builds of web and api-node
+npm run a11y                # browser accessibility check of /design (axe, 44px targets; needs Chrome)
 npm run db:down             # stop the database container (data kept)
 npm run docs:index          # regenerate docs\DOC_INDEX.md from DOCUMENTS\VaaniEHR_PRD.md (PRD v1.1)
 npm run db:reset            # DESTROY the local dev database volume, recreate, migrate

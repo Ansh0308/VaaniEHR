@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D18 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D19 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -106,6 +106,13 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 
 - **Content limits (carry into every seed file):** (1) no SNOMED CT / CDCI / ATC codes or release files until the licence terms allow redistribution; (2) no DDInter-derived rows (CC BY-NC-SA 4.0) until the licence decision in ADR-D17; (3) every value cited, otherwise `TODO(source)` (Hard Rule 3); (4) fake data only for toy pathways and golden bundles.
 - **Consequences:** PRD v1.1 §17 layout is updated; the phase plan (v1.0) still says `data/...` and is mapped in `PHASES.md`. `seed/` allows only `.csv`, `.json`, `.md` and scripts.
+
+---
+
+## D19 - Design system: Option A "Ink and Cream", light theme only; contrast is a test
+- **Decision (owner, 2026-10-15):** ClinicOS-family look (cream page, ink text and action, no crimson primary). Colour is reserved for five safety states, each with an icon and a text label. Light theme only in Phase 1.2; tokens are layered so dark can follow. Details: `docs/DESIGN.md`.
+- **Gates:** `tokens.contrast.test.ts` (real tokens, WCAG AA, in `npm run check` and CI); i18n parity and no-hard-coded-text tests; ban on `uppercase` / `tracking-*` / `italic` (Gujarati). Browser check `npm run a11y` (Playwright-core + axe + system Chrome) runs as its own CI job, not in `npm run check`, because it needs a browser.
+- **Known gaps:** all Gujarati text is placeholder and needs review by a Gujarati speaker; axe lists the Switch for manual review ("label-content-name-mismatch", not a violation); no screen-reader run with NVDA/TalkBack yet (owner or tester to do before the pilot).
 
 ---
 
