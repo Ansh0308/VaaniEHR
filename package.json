@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
+    "a11y": "node scripts/a11y.mjs",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "npm run typecheck --workspaces --if-present",
