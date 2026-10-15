@@ -15,7 +15,8 @@ export function parseCsv(text) {
   let row = [];
   let cell = '';
   let quoted = false;
-  const src = text.replace(/^﻿/, '');
+  // Strip a UTF-8 byte-order mark if present (compared by code point to keep the source ASCII-clean).
+  const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   for (let i = 0; i < src.length; i += 1) {
     const ch = src[i];
     if (quoted) {
