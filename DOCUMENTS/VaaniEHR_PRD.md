@@ -1013,9 +1013,12 @@ vaaniehr/
   apps/api-node/       # Express: auth, sessions, sign-off, FHIR, WhatsApp, audit
   apps/asr-py/         # FastAPI: VAD, ASR adapters, extraction, summary
   packages/rules/      # pathway engine, safety engine, JSON schemas
-  data/pathways/       # versioned STW JSON
-  data/medicines/      # NLEM CSV, rule tables (with sources)
-  data/bench/          # VaaniBench-Gu (audio via external storage; labels in repo)
+  seed/pathways/       # versioned STW JSON (tracked; source on every record)
+  seed/medicines/      # NLEM CSV, rule tables (tracked; source column on every row)
+  seed/safety/         # safety-rule tables (tracked; source, reviewed_by, reviewed_on on every row)
+  seed/fhir/golden/    # golden FHIR bundles from fake visits (tracked)
+  data/                # PRIVATE, git-ignored: raw/licensed downloads (NLEM PDF, SNOMED, DDInter), benchmark audio and labels
+  audio/               # PRIVATE, git-ignored
   eval/                # scripts, notebooks, result tables
   docs/                # PRD, SRS, diagrams, SBOM, threat model, test report
   docker-compose.yml
