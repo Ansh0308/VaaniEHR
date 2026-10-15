@@ -212,6 +212,7 @@ describe('axe (jsdom; colour contrast is checked by tokens.contrast.test.ts and 
         (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`,
       );
       expect(summary).toEqual([]);
-    });
+      // axe over the whole page is slow when every workspace's tests run in parallel
+    }, 30_000);
   }
 });
