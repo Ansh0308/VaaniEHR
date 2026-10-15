@@ -82,7 +82,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       className={cn(
         'inline-flex items-center justify-center rounded-md transition-colors duration-(--motion-fast)',
         'disabled:cursor-not-allowed disabled:opacity-60',
-        'size-11',
+        'size-11 shrink-0',
         VARIANT[variant],
         className,
       )}

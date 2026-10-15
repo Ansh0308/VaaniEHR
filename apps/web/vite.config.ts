@@ -8,5 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
+    // page tests render the whole app (router, i18n, shell) in jsdom; several files run in parallel
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
 });

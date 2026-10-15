@@ -13,7 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import type { Role } from '../demo/session';
+import type { Role } from '../api/types';
 
 export interface NavItem {
   to: string;

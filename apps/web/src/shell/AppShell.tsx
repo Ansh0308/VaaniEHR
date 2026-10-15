@@ -1,24 +1,24 @@
 // App shell: skip link, permanent banner, top bar (menu, language, user), left navigation by role.
 // Laptop (>= 1024px): fixed left column. Tablet and below: navigation opens in a drawer from the menu button.
-import { Menu, User } from 'lucide-react';
+import { LogOut, Menu, User } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router-dom';
-import { IconButton } from '../components/ui/Button';
+import { Button, IconButton } from '../components/ui/Button';
 import { Drawer } from '../components/ui/Overlay';
 import { cn } from '../components/ui/cn';
-import { useDemoSession } from '../demo/session';
+import { useAuth } from '../auth/AuthContext';
 import { LanguageToggle } from './LanguageToggle';
 import { navFor } from './nav';
 import { SimulatedDataBanner } from './SimulatedDataBanner';
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation('shell');
-  const { role } = useDemoSession();
+  const { user } = useAuth();
   return (
     <nav aria-label={t('shell:nav.label')}>
       <ul className="flex flex-col gap-1">
-        {navFor(role).map((item) => (
+        {navFor(user?.role ?? 'staff').map((item) => (
           <li key={item.to}>
             <NavLink
               to={item.to}
@@ -42,7 +42,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell() {
   const { t } = useTranslation('shell');
-  const { role, userName } = useDemoSession();
+  const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="flex min-h-screen flex-col bg-page">
@@ -65,13 +65,20 @@ export function AppShell() {
         <p className="text-lg font-bold text-ink">{t('common:appName')}</p>
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <LanguageToggle />
-          <p className="inline-flex items-center gap-2 text-sm text-ink">
-            <User aria-hidden="true" className="size-5" />
-            <span>
-              <span className="font-semibold">{userName}</span>
-              <span className="text-body"> ({t(`shell:role.${role}`)})</span>
-            </span>
-          </p>
+          {user ? (
+            <>
+              <p className="inline-flex items-center gap-2 text-sm text-ink">
+                <User aria-hidden="true" className="size-5" />
+                <span>
+                  <span className="font-semibold">{user.name}</span>
+                  <span className="text-body"> ({t(`shell:role.${user.role}`)})</span>
+                </span>
+              </p>
+              <Button icon={LogOut} onClick={() => void logout()}>
+                {t('shell:signOut')}
+              </Button>
+            </>
+          ) : null}
         </div>
       </header>
       <div className="flex flex-1">

@@ -40,7 +40,7 @@ export function Table<T>({
       aria-label={caption}
       // a scrollable region must be focusable so keyboard users can scroll it
       tabIndex={0}
-      className="overflow-x-auto rounded-lg border border-line bg-card"
+      className="relative overflow-x-auto rounded-lg border border-line bg-card"
     >
       <table className="w-full border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
