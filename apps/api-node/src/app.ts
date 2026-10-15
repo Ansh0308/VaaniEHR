@@ -1,31 +1,34 @@
-// Express application factory. Dependencies are injected so tests need no database or network.
+// Express application factory. Dependencies are injected so tests need no network.
 import cors from 'cors';
-import express, { type Express } from 'express';
+import express, { Router, type Express } from 'express';
 import helmet from 'helmet';
-import { createAuthRouter } from './auth/routes.js';
-import type { DevAuthProvider } from './auth/DevAuthProvider.js';
 import type { AuthProvider } from './auth/types.js';
 import type { Config } from './config/env.js';
 import { errors } from './http/errors.js';
 import { errorHandler, notFoundHandler } from './http/errorHandler.js';
 import { requestId } from './http/requestId.js';
 import { ok } from './http/respond.js';
+import { mountRoutes } from './http/routeRegistry.js';
+import { allRoutes, API_PREFIX } from './routes/index.js';
+import type { Services } from './services.js';
 
 export interface AppDeps {
   config: Config;
+  /** Used by sockets and tests that need only token checks (no database). */
   authProvider: AuthProvider;
-  /** Only when AUTH_PROVIDER=dev; enables POST /auth/dev-login. */
-  devProvider?: DevAuthProvider;
   /** Resolves if the database is reachable. */
   checkDb: () => Promise<void>;
+  /** When present, the /api/v1 routes are mounted. Unit tests that need no database omit it. */
+  services?: Services;
   /** Extra routers (used by tests to exercise middleware). */
   extend?: (app: Express) => void;
 }
 
 export function createApp(deps: AppDeps): Express {
-  const { config, authProvider, devProvider, checkDb } = deps;
+  const { config, checkDb } = deps;
   const app = express();
 
+  app.set('trust proxy', config.trustProxy);
   app.disable('x-powered-by');
   app.use(requestId);
   app.use(helmet());
@@ -53,7 +56,11 @@ export function createApp(deps: AppDeps): Express {
     ok(res, { simulatedDataOnly: config.simulatedDataOnly, authProvider: config.authProvider });
   });
 
-  app.use(createAuthRouter({ provider: authProvider, ...(devProvider ? { devProvider } : {}) }));
+  if (deps.services) {
+    const v1 = Router();
+    mountRoutes(v1, allRoutes(config), deps.services);
+    app.use(API_PREFIX, v1);
+  }
 
   deps.extend?.(app);
 

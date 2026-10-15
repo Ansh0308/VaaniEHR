@@ -1,0 +1,22 @@
+{
+  "version": "0.1",
+  "language": "en",
+  "status": "PLACEHOLDER",
+  "needsReview": true,
+  "title": "[PLACEHOLDER] Consent notice",
+  "body": "[PLACEHOLDER] The wording of this consent notice must be written and approved by the project owner and the institution. It is not legal text.",
+  "scopes": {
+    "audio": {
+      "label": "Audio recording",
+      "description": "[PLACEHOLDER] Record the audio of this consultation."
+    },
+    "ai_processing": {
+      "label": "AI processing",
+      "description": "[PLACEHOLDER] Let AI services process the transcript of this consultation."
+    },
+    "whatsapp": {
+      "label": "WhatsApp summary",
+      "description": "[PLACEHOLDER] Send the doctor-approved summary to the patient's phone on WhatsApp."
+    }
+  }
+}

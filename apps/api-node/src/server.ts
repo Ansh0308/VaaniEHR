@@ -1,16 +1,16 @@
-// Process entry point. Loads validated config (fails fast), wires dependencies, starts HTTP + Socket.IO.
+// Process entry point. Loads validated config (fails fast), checks the data is simulated, wires dependencies, and
+// starts HTTP + Socket.IO.
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
-import { ClinicOSTokenAuth } from './auth/ClinicOSTokenAuth.js';
-import { DevAuthProvider } from './auth/DevAuthProvider.js';
-import type { AuthProvider } from './auth/types.js';
-import { ConfigError, loadConfig } from './config/env.js';
+import { ConfigError, loadConfig, type Config } from './config/env.js';
+import { createServices } from './bootstrap.js';
 import { checkDatabase, createPool } from './db/pool.js';
+import { assertAllSimulated, RealDataError } from './db/simulatedGuard.js';
 import { logger } from './logger.js';
 import { createRealtime } from './realtime/socket.js';
 
-function main(): void {
-  let config;
+async function main(): Promise<void> {
+  let config: Config;
   try {
     config = loadConfig();
   } catch (err) {
@@ -21,26 +21,40 @@ function main(): void {
     throw err;
   }
 
-  let authProvider: AuthProvider;
-  let devProvider: DevAuthProvider | undefined;
-  if (config.authProvider === 'dev') {
-    // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
-    devProvider = new DevAuthProvider(config.devAuthSecret as string, config.devTokenTtlSeconds);
-    authProvider = devProvider;
-  } else {
-    authProvider = new ClinicOSTokenAuth(); // Phase 12 stub: every call throws NOT_IMPLEMENTED
+  const pool = createPool(config.databaseUrl);
+  const services = await createServices(config, pool);
+
+  // ADR-D16: refuse to start if any directory row is not simulated. Skipped only while the database is unreachable
+  // (the API still starts so /ready can report it); the check re-runs on the next start.
+  try {
+    await assertAllSimulated(services.directory);
+  } catch (err) {
+    if (err instanceof RealDataError) {
+      console.error(err.message);
+      process.exit(1);
+    }
+    logger.warn('simulated_guard_skipped', {
+      message: err instanceof Error ? err.message : String(err),
+    });
   }
 
-  const pool = createPool(config.databaseUrl);
   const app = createApp({
     config,
-    authProvider,
-    ...(devProvider ? { devProvider } : {}),
+    authProvider: services.auth,
+    services,
     checkDb: () => checkDatabase(pool),
   });
   const httpServer = createServer(app);
-  const realtime = createRealtime(httpServer, { authProvider, corsOrigin: config.corsOrigin });
+  const realtime = createRealtime(httpServer, {
+    authProvider: services.auth,
+    corsOrigin: config.corsOrigin,
+  });
 
+  httpServer.on('error', (err: NodeJS.ErrnoException) => {
+    // e.g. EADDRINUSE / EACCES: say so plainly and exit instead of an unhandled 'error' event.
+    console.error(`Cannot listen on port ${config.port}: ${err.code ?? err.message}`);
+    process.exit(1);
+  });
   httpServer.listen(config.port, () => {
     logger.info('api_listening', {
       port: config.port,
@@ -57,4 +71,7 @@ function main(): void {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-main();
+main().catch((err: unknown) => {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});
