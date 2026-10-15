@@ -1,0 +1,166 @@
+/*
+ * VaaniEHR design tokens (Phase 1.2, option A "Ink and Cream"; ADR-D7).
+ * Source of truth for colour. src/design/tokens.contrast.test.ts READS THIS FILE and fails the build if a
+ * text/background pair drops below WCAG AA, so a later colour change is checked automatically.
+ *
+ * Three layers (dark mode later = a second block overriding LAYER 2 only; light theme only for now):
+ *   1. PALETTE   --palette-*      raw values. ClinicOS cream and ink tokens are reused unchanged.
+ *   2. SEMANTIC  --surface-*, --text-*, --action-*, --state-*   what components use. Theme-able.
+ *   3. UTILITIES @theme inline    exposes layer 2 as Tailwind utilities (bg-card, text-ink, ...).
+ *
+ * Colour is reserved for the five safety states. The primary action is ink (neutral), never crimson
+ * (ClinicOS brand) and never a state hue, so red/amber/green/blue always mean something.
+ */
+
+:root {
+  /* ---------- LAYER 1: PALETTE (ClinicOS values) ---------- */
+  --palette-cream-50: #fdfaf4;
+  --palette-cream-100: #f5edd8;
+  --palette-cream-200: #ede3c8;
+  --palette-cream-300: #e0d4b5;
+  --palette-white: #ffffff;
+  --palette-ink-900: #1c0910;
+  --palette-ink-800: #3c1c28;
+  --palette-ink-700: #5c3040;
+  --palette-ink-500: #8a6070;
+
+  /* safety-state hues (new in VaaniEHR; ClinicOS has no equivalent) */
+  --palette-green-900: #14532d;
+  --palette-green-700: #15803d;
+  --palette-green-100: #dcfce7;
+  --palette-amber-900: #7c2d12;
+  --palette-amber-700: #b45309;
+  --palette-amber-100: #fef3c7;
+  --palette-red-900: #7f1d1d;
+  --palette-red-700: #b91c1c;
+  --palette-red-100: #fee2e2;
+  --palette-grey-800: #3f3f46;
+  --palette-grey-600: #52525b;
+  --palette-grey-500: #71717a;
+  --palette-grey-100: #f4f4f5;
+  --palette-blue-900: #1e3a8a;
+  --palette-blue-700: #1d4ed8;
+  --palette-blue-100: #dbeafe;
+
+  /* ---------- LAYER 2: SEMANTIC (light theme) ---------- */
+  --surface-page: var(--palette-cream-50);
+  --surface-card: var(--palette-white);
+  --surface-sunken: var(--palette-cream-100);
+  --surface-selected: var(--palette-cream-100);
+  --surface-scrim: rgb(28 9 16 / 0.5);
+
+  --border-subtle: var(--palette-cream-300); /* decorative dividers only */
+  --border-control: var(--palette-ink-500); /* inputs, buttons: 3:1 against its surface */
+
+  --text-primary: var(--palette-ink-900);
+  --text-secondary: var(--palette-ink-800);
+  --text-body: var(--palette-ink-700);
+  --text-muted: var(--palette-ink-500);
+  --text-on-action: var(--palette-white);
+
+  --action-primary: var(--palette-ink-900);
+  --action-primary-hover: var(--palette-ink-800);
+
+  --focus-ring: var(--palette-ink-900);
+  --focus-ring-offset: var(--palette-cream-50);
+
+  /* safety states: fg = text, bg = tint, accent = icon / bar (non-text, 3:1), border = outline */
+  --state-clear-fg: var(--palette-green-900);
+  --state-clear-bg: var(--palette-green-100);
+  --state-clear-accent: var(--palette-green-700);
+  --state-acknowledge-fg: var(--palette-amber-900);
+  --state-acknowledge-bg: var(--palette-amber-100);
+  --state-acknowledge-accent: var(--palette-amber-700);
+  --state-blocked-fg: var(--palette-red-900);
+  --state-blocked-bg: var(--palette-red-100);
+  --state-blocked-accent: var(--palette-red-700);
+  --state-unconfirmed-fg: var(--palette-grey-800);
+  --state-unconfirmed-bg: var(--palette-grey-100);
+  --state-unconfirmed-accent: var(--palette-grey-600);
+  --state-ai-fg: var(--palette-blue-900);
+  --state-ai-bg: var(--palette-blue-100);
+  --state-ai-accent: var(--palette-blue-700);
+
+  /* ---------- non-colour tokens (not theme-dependent) ---------- */
+  --target-min: 2.75rem; /* 44px minimum interactive target */
+  --lh-script-scale: 1; /* raised for Gujarati, see :lang(gu) in index.css */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ---------- LAYER 3: Tailwind utilities ---------- */
+@theme {
+  /* remove Tailwind's default colour palette: only VaaniEHR tokens exist as utilities */
+  --color-*: initial;
+
+  --font-sans:
+    'DM Sans Variable', 'Noto Sans Gujarati Variable', ui-sans-serif, system-ui, 'Nirmala UI',
+    'Segoe UI', sans-serif;
+  --font-display:
+    'Fredoka Variable', 'Noto Sans Gujarati Variable', 'DM Sans Variable', ui-sans-serif, system-ui,
+    'Nirmala UI', 'Segoe UI', sans-serif;
+
+  /* type scale (base 16px; line-heights scale up for Gujarati via --lh-script-scale) */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: calc(1.25rem * var(--lh-script-scale));
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: calc(1.4rem * var(--lh-script-scale));
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.55rem * var(--lh-script-scale));
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.6rem * var(--lh-script-scale));
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75rem * var(--lh-script-scale));
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(1.9rem * var(--lh-script-scale));
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25rem * var(--lh-script-scale));
+
+  /* radius: ClinicOS values kept (16/12/8); no pills, no 32px blobs in a dense clinical UI */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  /* shadows: flat and quiet; the focus ring is an outline, not a shadow */
+  --shadow-card: 0 1px 2px rgb(28 9 16 / 0.06), 0 4px 12px rgb(28 9 16 / 0.06);
+  --shadow-overlay: 0 12px 32px rgb(28 9 16 / 0.18);
+
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem; /* tablet portrait 768px */
+  --breakpoint-lg: 64rem; /* laptop / tablet landscape 1024px */
+}
+
+@theme inline {
+  --color-page: var(--surface-page);
+  --color-card: var(--surface-card);
+  --color-sunken: var(--surface-sunken);
+  --color-selected: var(--surface-selected);
+  --color-scrim: var(--surface-scrim);
+  --color-line: var(--border-subtle);
+  --color-control: var(--border-control);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-body: var(--text-body);
+  --color-muted: var(--text-muted);
+  --color-on-action: var(--text-on-action);
+  --color-action: var(--action-primary);
+  --color-action-hover: var(--action-primary-hover);
+  --color-focus: var(--focus-ring);
+  --color-focus-offset: var(--focus-ring-offset);
+  --color-clear-fg: var(--state-clear-fg);
+  --color-clear-bg: var(--state-clear-bg);
+  --color-clear-accent: var(--state-clear-accent);
+  --color-acknowledge-fg: var(--state-acknowledge-fg);
+  --color-acknowledge-bg: var(--state-acknowledge-bg);
+  --color-acknowledge-accent: var(--state-acknowledge-accent);
+  --color-blocked-fg: var(--state-blocked-fg);
+  --color-blocked-bg: var(--state-blocked-bg);
+  --color-blocked-accent: var(--state-blocked-accent);
+  --color-unconfirmed-fg: var(--state-unconfirmed-fg);
+  --color-unconfirmed-bg: var(--state-unconfirmed-bg);
+  --color-unconfirmed-accent: var(--state-unconfirmed-accent);
+  --color-ai-fg: var(--state-ai-fg);
+  --color-ai-bg: var(--state-ai-bg);
+  --color-ai-accent: var(--state-ai-accent);
+}

@@ -1,3 +1,109 @@
 @import 'tailwindcss';
 
-/* Phase 1.1: no design tokens yet. Phase 1.2 adds @theme tokens (ADR-D7) via ui-ux-pro-max. */
+/* Self-hosted fonts (OFL-1.1). Each @font-face has a unicode-range, so Noto Sans Gujarati only downloads when
+   Gujarati text is on the page. No requests to Google Fonts at runtime. */
+@import '@fontsource-variable/dm-sans/index.css';
+@import '@fontsource-variable/fredoka/index.css';
+@import '@fontsource-variable/noto-sans-gujarati/index.css';
+
+@import './design/tokens.css';
+
+@layer base {
+  html {
+    background-color: var(--surface-page);
+    color: var(--text-body);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--text-primary);
+  }
+
+  /* Visible keyboard focus everywhere (WCAG 2.4.7); ink on cream/white is 18:1 (checked by the token test). */
+  :focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary,
+  [role='button'],
+  [role='tab'],
+  [role='switch'] {
+    touch-action: manipulation;
+  }
+
+  /* Script safeguards for Gujarati: no case transforms, no tracking, no italics, no synthetic styles.
+     Gujarati has no letter case; tracking breaks conjuncts; italics are not part of the script.
+     Line height grows (see --lh-script-scale in tokens.css) so vowel signs are not clipped. */
+  /* :lang(gu) already matches every element whose effective language is Gujarati, so lang="en" islands keep their own style. */
+  :lang(gu) {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-style: normal !important;
+    font-synthesis: none;
+  }
+
+  :lang(gu) {
+    --lh-script-scale: 1.15;
+  }
+
+  /* Honour reduced motion: no transitions or animations, no smooth scrolling. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@keyframes vaani-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes vaani-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
