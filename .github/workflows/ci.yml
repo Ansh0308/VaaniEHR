@@ -19,6 +19,24 @@ jobs:
     strategy:
       matrix:
         node: ['20', '24']
+    # Real PostgreSQL for the database tests (append-only grants, hash chain, RBAC end to end). Throwaway values only.
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg16-bookworm@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+        env:
+          POSTGRES_USER: vaani
+          POSTGRES_PASSWORD: ci-throwaway-owner-password
+          POSTGRES_DB: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U vaani"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      MIGRATION_DATABASE_URL: postgres://vaani:ci-throwaway-owner-password@localhost:5433/postgres
+      APP_DB_PASSWORD: ci-throwaway-app-password-0123456789
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,6 +52,9 @@ jobs:
       - run: python -m pip install -r apps/asr-py/requirements-dev.txt
       - run: npm run check
       - run: npm run build
+      - name: api-node coverage report (core modules must meet their thresholds)
+        if: matrix.node == '24'
+        run: npm run coverage:api
 
   secret-scan:
     name: gitleaks secret scan

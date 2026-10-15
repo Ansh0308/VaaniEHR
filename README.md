@@ -36,7 +36,8 @@ npm install                 # installs all npm workspaces (exact pinned versions
 npm run py:setup            # creates apps\asr-py\.venv and installs pinned Python packages
 npm run setup:env           # creates .env files with random dev secrets (never overwrites; never prints them)
 npm run db:up               # starts PostgreSQL 16 + pgvector in Docker (waits until healthy)
-npm run db:migrate          # applies migration 0001 (schema_info + vector extension)
+npm run db:migrate          # applies migrations 0001-0005 as the owner role, then sets the app role's password
+npm run seed:dev            # loads FAKE dev data (1 clinic, 5 users, 15 patients); passwords go to data\dev-credentials.json (git-ignored)
 ```
 
 ## Run the whole stack in containers (PowerShell)
@@ -62,6 +63,10 @@ npm run check               # lint + typecheck + unit tests (all apps) + repo gu
 npm run dev:api             # API on http://localhost:4000   (needs db:up for /ready)
 npm run dev:web             # web on http://localhost:5173
 npm run dev:asr             # asr-py on http://localhost:8000
+npm run check:unit          # same as check, but WITHOUT the database tests (no Docker needed)
+npm run verify:audit        # re-computes the audit hash chain; reports the first broken row
+npm run openapi             # regenerates apps\api-node\openapi.json (a test fails if it is stale)
+npm run coverage:api        # api-node tests with a coverage report (thresholds on audit/auth/consent)
 npm run build               # production builds of web and api-node
 npm run a11y                # browser accessibility check of /design (axe, 44px targets; needs Chrome)
 npm run db:down             # stop the database container (data kept)
