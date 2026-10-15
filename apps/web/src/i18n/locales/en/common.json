@@ -1,0 +1,67 @@
+{
+  "appName": "VaaniEHR",
+  "action": {
+    "acknowledge": "Acknowledge",
+    "asked": "Asked",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "dismiss": "Dismiss",
+    "override": "Override and keep",
+    "remove": "Remove",
+    "withdraw": "Withdraw consent"
+  },
+  "diff": {
+    "added": "Added",
+    "removed": "Removed",
+    "unchanged": "Unchanged"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "gu": "ગુજરાતી"
+  },
+  "needsReview": "Needs review by a Gujarati speaker",
+  "state": {
+    "clear": {
+      "label": "Clear",
+      "desc": "No problem found by the checks"
+    },
+    "acknowledge": {
+      "label": "Acknowledge",
+      "desc": "Needs your acknowledgement before continuing"
+    },
+    "blocked": {
+      "label": "Blocked",
+      "desc": "Cannot continue until resolved or overridden with a reason"
+    },
+    "unconfirmed": {
+      "label": "Heard, unconfirmed",
+      "desc": "Heard in the conversation; not yet confirmed by the doctor"
+    },
+    "ai": {
+      "label": "AI suggested",
+      "desc": "Suggested wording or content; the doctor decides"
+    }
+  },
+  "status": {
+    "loading": "Loading",
+    "required": "required",
+    "results": "{{count}} results available",
+    "selected": "Selected"
+  },
+  "stepper": {
+    "completed": "completed",
+    "current": "current step",
+    "upcoming": "upcoming",
+    "stepOf": "step {{n}} of {{total}}"
+  },
+  "table": {
+    "sortable": "sortable",
+    "sortedAscending": "sorted ascending",
+    "sortedDescending": "sorted descending"
+  },
+  "toast": {
+    "region": "Notifications"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "alert": {
+    "acknowledged": "Acknowledged. This is recorded.",
+    "overridden": "Overridden with your reason. This is recorded.",
+    "reasonHint": "Type at least {{min}} characters. The reason is saved in the audit log.",
+    "reasonLabel": "Override reason",
+    "reasonTooShort": "Enter a reason of at least {{min}} characters.",
+    "rule": "Rule {{id}}"
+  },
+  "candidate": {
+    "against": "Evidence against",
+    "for": "Evidence for",
+    "rank": "Candidate {{rank}}:",
+    "score": "Score {{score}}%",
+    "scoreLabel": "Score for {{label}}",
+    "select": "Select as working condition",
+    "selected": "Selected as working condition"
+  },
+  "consent": {
+    "heading": "Consent",
+    "noticePlaceholder": "[PLACEHOLDER] Consent notice wording is to be supplied and approved by the owner and the institution.",
+    "noticeTitle": "Notice",
+    "off": "Off",
+    "on": "On",
+    "recordingAllowed": "Recording is allowed: audio and AI processing consent are on record.",
+    "recordingOff": "Recording is off until consent for both audio and AI processing is on record.",
+    "region": "Consent",
+    "scope": {
+      "audio": {
+        "label": "Audio recording",
+        "desc": "Record the consultation audio."
+      },
+      "aiProcessing": {
+        "label": "AI processing",
+        "desc": "Let AI services process the transcript."
+      },
+      "whatsapp": {
+        "label": "WhatsApp summary",
+        "desc": "Send the approved summary to the patient's phone."
+      }
+    },
+    "version": "Notice version {{version}}"
+  },
+  "fact": {
+    "confirmAction": "Confirm {{value}}",
+    "confirmed": "Confirmed",
+    "heard": "Heard",
+    "negated": "No",
+    "rejectAction": "Reject {{value}}",
+    "uncertain": "Uncertain"
+  },
+  "medicine": {
+    "brand": "Brand: {{brand}}",
+    "dose": "Dose",
+    "duration": "Duration",
+    "edit": "Edit {{name}}",
+    "frequency": "Frequency",
+    "remove": "Remove {{name}}",
+    "source": "Source: {{source}}"
+  },
+  "question": {
+    "aiWording": "AI suggested wording",
+    "because": "Asks because",
+    "heading": "Suggested question",
+    "page": "page {{page}}",
+    "source": "Source: {{pathway}}, node {{node}}"
+  },
+  "record": {
+    "elapsed": "Elapsed time {{time}}",
+    "engine": "Speech engine: {{engine}}",
+    "error": "Recording stopped because of an error. Check the microphone and try again.",
+    "noConsent": "Recording is off until consent for audio and AI processing is on record.",
+    "pause": "Pause",
+    "region": "Recording controls",
+    "resume": "Resume",
+    "start": "Start recording",
+    "state": {
+      "error": "Error",
+      "idle": "Ready",
+      "paused": "Paused",
+      "processing": "Processing",
+      "recording": "Recording"
+    },
+    "stop": "Stop",
+    "waveform": "Audio level display (placeholder)"
+  },
+  "transcript": {
+    "edit": "Edit {{speaker}} segment",
+    "lowConfidence": "low confidence",
+    "partial": "Listening: this text may change.",
+    "region": "Transcript",
+    "speaker": {
+      "doctor": "Doctor",
+      "patient": "Patient"
+    }
+  }
+}

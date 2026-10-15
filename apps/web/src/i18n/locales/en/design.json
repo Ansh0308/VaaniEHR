@@ -1,0 +1,182 @@
+{
+  "title": "Design system",
+  "lead": "Option A, Ink and Cream. Light theme only. Colour is kept for the safety states. Everything on this page is placeholder or fake content.",
+  "demoRole": "Demo role",
+  "demoRoleHint": "Changes the navigation only. Real sign-in comes in Phase 2.",
+  "tokens": {
+    "title": "Tokens",
+    "intro": "Colour, radius, shadow and type scale. Colour values are read from the live CSS tokens.",
+    "radius": "Radius",
+    "shadow": "Shadow",
+    "type": "Type scale"
+  },
+  "typography": {
+    "title": "Typography",
+    "intro": "DM Sans for text, Fredoka for page titles only, Noto Sans Gujarati for Gujarati. Fonts are self-hosted.",
+    "english": "English",
+    "gujarati": "Gujarati",
+    "sampleTitle": "Consultation summary",
+    "sampleBody": "The doctor reviews the facts, the guided questions and the safety checks before signing.",
+    "safeguardTitle": "Script safeguards",
+    "safeguardBody": "Both lines below are forced to uppercase, wide letter-spacing and italics. The Latin line changes. The Gujarati line ignores it, as designed.",
+    "safeguardLatin": "Forced style on Latin text",
+    "safeguardGujarati": "Forced style on Gujarati text"
+  },
+  "states": {
+    "title": "Safety states",
+    "intro": "Five states. Each has an icon and a text label, so colour is never the only signal.",
+    "exampleEn": "English example",
+    "exampleGu": "Gujarati example",
+    "examples": {
+      "clear": "Toy check T-1 found nothing. (FAKE content)",
+      "acknowledge": "Toy rule T-2 asks you to acknowledge before continuing. (FAKE content)",
+      "blocked": "Toy rule T-3 blocks this item until it is fixed or overridden with a reason. (FAKE content)",
+      "unconfirmed": "Heard in the conversation: toy symptom X, not yet confirmed. (FAKE content)",
+      "ai": "Suggested wording for a toy question. (FAKE content)"
+    }
+  },
+  "base": {
+    "title": "Base components",
+    "intro": "Every control has a visible label, a keyboard path and a focus ring. Touch targets are at least 44px.",
+    "buttons": "Buttons",
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "ghost": "Ghost",
+    "loading": "Loading",
+    "disabled": "Disabled",
+    "iconButton": "Search",
+    "fields": "Fields",
+    "input": "Text input",
+    "inputHint": "Helper text sits under the field.",
+    "inputPlaceholder": "Example value",
+    "inputError": "Input with an error",
+    "errorText": "Enter a valid value.",
+    "select": "Select",
+    "optionOne": "Option one",
+    "optionTwo": "Option two",
+    "textarea": "Text area",
+    "combobox": "Combobox (autocomplete)",
+    "comboboxLabel": "Medicine (fake list)",
+    "comboboxHint": "Type Drug- to try it. Arrow keys move, Enter selects.",
+    "comboboxEmpty": "No matching item",
+    "comboboxChosen": "Chosen: {{name}}",
+    "comboboxNone": "Nothing chosen yet",
+    "chips": "Chips and badges",
+    "chipToggle": "Toggle chip",
+    "chipRemovable": "Removable chip",
+    "chipRemoveLabel": "Remove chip",
+    "badge": "Neutral",
+    "removed": "Chip removed",
+    "tabs": "Tabs",
+    "tabsLabel": "Sample tabs",
+    "tabOne": "First",
+    "tabTwo": "Second",
+    "tabThree": "Third",
+    "tabOneBody": "Content of the first tab.",
+    "tabTwoBody": "Content of the second tab.",
+    "tabThreeBody": "Content of the third tab.",
+    "overlays": "Modal, drawer, toast, tooltip",
+    "openModal": "Open modal",
+    "openDrawer": "Open drawer",
+    "toastNeutral": "Saved (sample)",
+    "toastNeutralButton": "Show neutral toast",
+    "toastBlocked": "Blocked",
+    "toastBlockedBody": "This toast stays until dismissed.",
+    "toastBlockedButton": "Show blocked toast",
+    "tooltip": "Extra detail shown on hover or focus",
+    "tooltipTrigger": "Hover or focus me",
+    "banners": "Banners",
+    "bannerNeutral": "Neutral information banner.",
+    "bannerClear": "No problem found.",
+    "bannerAcknowledge": "Acknowledge this before you continue.",
+    "bannerBlocked": "Blocked until the problem is fixed.",
+    "bannerTitle": "Heads up",
+    "table": "Table",
+    "empty": "Empty state",
+    "emptyTitle": "Start your first item",
+    "emptyBody": "Items you create will show up here.",
+    "emptyAction": "Create item",
+    "skeleton": "Skeleton",
+    "skeletonLabel": "Loading content",
+    "stepper": "Stepper",
+    "diff": "Diff viewer"
+  },
+  "table": {
+    "caption": "Fake patients waiting (sample)",
+    "empty": "No rows",
+    "name": "Name",
+    "status": "Status",
+    "token": "Token"
+  },
+  "stepper": {
+    "label": "Consultation steps",
+    "consent": "Consent",
+    "record": "Record",
+    "review": "Review",
+    "sign": "Sign"
+  },
+  "diff": {
+    "caption": "AI proposed versus doctor final (fake sample)",
+    "before": "AI proposed",
+    "after": "Doctor final"
+  },
+  "modal": {
+    "title": "Modal dialog",
+    "description": "Focus stays inside until you close it.",
+    "field": "Sample field"
+  },
+  "drawer": {
+    "title": "Drawer",
+    "description": "A side panel for secondary tasks.",
+    "body": "Press Escape or use the close button to return."
+  },
+  "clinical": {
+    "title": "Clinical components",
+    "intro": "Stubs with realistic props. No microphone, no AI and no real rules yet.",
+    "fakeNotice": "Everything below is fake or placeholder content. There are no clinical values.",
+    "facts": "Fact chips",
+    "factType": "Symptom",
+    "medicines": "Prescription lines (fake)",
+    "asked": "Marked as asked",
+    "dismissed": "Question dismissed",
+    "editStub": "Editing arrives in a later phase",
+    "overrideLogged": "The override reason would be written to the audit log",
+    "withdrawn": "Consent withdrawn. Recording stopped."
+  },
+  "demo": {
+    "transcript": {
+      "doctor": "Let us check toy symptom X. (FAKE sample)",
+      "patient": "Yes, toy symptom X is there, but I am not sure. (FAKE sample)",
+      "unsure": "not sure",
+      "partial": "Now toy symptom Y, can you tell me when it started? (FAKE sample)"
+    },
+    "fact": {
+      "symptom": "toy symptom X"
+    },
+    "question": {
+      "text": "Is toy symptom X present?",
+      "reason": "Toy rule R1 needs this answer to rank the toy candidates. (FAKE content)"
+    },
+    "evidence": {
+      "for1": "Toy finding X present",
+      "for2": "Toy finding Y present",
+      "against1": "Toy finding Z absent",
+      "against2": "Toy finding W absent"
+    },
+    "alert": {
+      "clearTitle": "Toy check passed",
+      "clearBody": "Toy check T-1 found nothing. (FAKE content)",
+      "ackTitle": "Toy rule needs acknowledgement",
+      "ackBody": "Toy rule T-2 asks you to acknowledge before continuing. (FAKE content)",
+      "blockedTitle": "Toy rule blocks this item",
+      "blockedBody": "Toy rule T-3 blocks this item until it is fixed or overridden with a reason. (FAKE content)"
+    },
+    "diff": {
+      "l1": "Toy item one",
+      "l2": "Toy item two (AI proposed)",
+      "l2b": "Toy item two (doctor edited)",
+      "l3": "Toy item three",
+      "l4": "Toy item four (added by doctor)"
+    }
+  }
+}
