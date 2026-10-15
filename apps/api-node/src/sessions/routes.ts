@@ -2,12 +2,25 @@
 import { z } from 'zod';
 import { errors } from '../http/errors.js';
 import { permRoute, type RouteDef } from '../http/routeRegistry.js';
-import { getEffectiveConsent } from '../consent/service.js';
+import { getConsentFlagsFor, getEffectiveConsent } from '../consent/service.js';
 import { loadSession, toSession } from './service.js';
 import type { QueryResultRow } from 'pg';
 
 const createBody = z.object({ patientId: z.uuid(), tokenId: z.uuid().optional() });
 type CreateBody = z.infer<typeof createBody>;
+const MAX_LIST = 50;
+const listQuery = z.object({
+  status: z.enum(['created', 'in_progress', 'ended']).optional(),
+  /** Only "open" (not ended) sessions: what the doctor dashboard calls drafts. */
+  open: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(MAX_LIST).default(20),
+  /** Cursor: return sessions started before this ISO timestamp (newest first). */
+  before: z.iso.datetime({ offset: true }).optional(),
+});
+type ListQuery = z.infer<typeof listQuery>;
 const idParams = z.object({ id: z.uuid() });
 type IdParams = z.infer<typeof idParams>;
 
@@ -57,6 +70,58 @@ export function sessionRoutes(): RouteDef[] {
           meta: { patientId: patient.id },
         });
         return { data: session };
+      },
+    }),
+
+    permRoute<unknown, unknown, ListQuery>('session.listMine', {
+      method: 'get',
+      path: '/sessions',
+      tag: 'Sessions',
+      summary:
+        "The signed-in doctor's OWN sessions in their clinic, newest first (never another doctor's), with the patient's " +
+        'name and a consent summary.',
+      audit: [],
+      query: listQuery,
+      handler: async (ctx) => {
+        const { status, open, limit, before } = ctx.query;
+        const params: unknown[] = [ctx.auth.clinicId, ctx.auth.sub];
+        const parts = ['clinicos_clinic_id = $1', 'clinicos_doctor_id = $2'];
+        if (status) {
+          params.push(status);
+          parts.push(`status = $${params.length}`);
+        }
+        if (open === true) parts.push("status <> 'ended'");
+        if (before) {
+          params.push(before);
+          parts.push(`started_at < $${params.length}`);
+        }
+        params.push(limit);
+        const r = await ctx.db.query<QueryResultRow & Parameters<typeof toSession>[0]>(
+          `SELECT * FROM consultation_session WHERE ${parts.join(' AND ')}
+            ORDER BY started_at DESC, id DESC LIMIT $${params.length}`,
+          params,
+        );
+        const sessions = r.rows.map(toSession);
+        const consent = await getConsentFlagsFor(
+          ctx.db,
+          sessions.map((s) => s.id),
+        );
+        const names = new Map<string, string | null>();
+        for (const id of new Set(sessions.map((s) => s.patientId))) {
+          const patient = await ctx.services.directory.getPatient(ctx.auth.clinicId, id);
+          names.set(id, patient?.name ?? null);
+        }
+        const last = sessions[sessions.length - 1];
+        return {
+          data: {
+            items: sessions.map((s) => ({
+              ...s,
+              patientName: names.get(s.patientId) ?? null,
+              consent: consent.get(s.id),
+            })),
+            nextBefore: sessions.length === limit && last ? last.startedAt : null,
+          },
+        };
       },
     }),
 

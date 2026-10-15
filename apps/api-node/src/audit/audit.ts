@@ -16,6 +16,7 @@ export const AUDIT_ACTIONS = [
   'SESSION_CREATED',
   'CONSENT_GRANTED',
   'CONSENT_WITHDRAWN',
+  'AUDIT_EXPORTED',
   'SEED_APPLIED',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

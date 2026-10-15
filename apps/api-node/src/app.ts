@@ -32,7 +32,13 @@ export function createApp(deps: AppDeps): Express {
   app.disable('x-powered-by');
   app.use(requestId);
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigin }));
+  app.use(
+    cors({
+      origin: config.corsOrigin,
+      // the browser may read these on the CSV export response
+      exposedHeaders: ['Content-Disposition', 'X-Exported-Rows', 'X-Export-Truncated'],
+    }),
+  );
   app.use(express.json({ limit: '100kb' }));
 
   // Liveness: the process is up. No dependencies are touched.

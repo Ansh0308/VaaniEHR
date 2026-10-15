@@ -36,10 +36,7 @@ const withdrawBody = z.object({
 });
 type WithdrawBody = z.infer<typeof withdrawBody>;
 
-const noticeQuery = z.object({
-  version: z.string().min(1).max(20).optional(),
-  language: z.enum(NOTICE_LANGUAGES).default('en'),
-});
+const noticeQuery = z.object({ version: z.string().min(1).max(20).optional() });
 type NoticeQuery = z.infer<typeof noticeQuery>;
 
 const scopeState = z.object({
@@ -63,15 +60,17 @@ export function consentRoutes(): RouteDef[] {
       path: '/consent/notice',
       tag: 'Consent',
       summary:
-        'The consent notice text for a version and language (placeholder text until approved)',
+        'The consent notice for a version in BOTH languages in one response (en and gu), for side-by-side display. ' +
+        'Placeholder markers and the Gujarati needsReview flag are part of the payload.',
       audit: [],
       query: noticeQuery,
       handler: async (ctx) => {
         const { notices } = ctx.services;
         const version = ctx.query.version ?? notices.latestVersion();
-        const notice = notices.get(version, ctx.query.language);
-        if (!notice) throw errors.notFound('Consent notice not found');
-        return { data: notice };
+        const en = notices.get(version, 'en');
+        const gu = notices.get(version, 'gu');
+        if (!en || !gu) throw errors.notFound('Consent notice not found');
+        return { data: { version, notices: { en, gu } } };
       },
     }),
 

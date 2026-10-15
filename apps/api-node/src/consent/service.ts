@@ -100,3 +100,37 @@ export async function listConsentEvents(
     ts: row.ts.toISOString(),
   }));
 }
+
+export interface ConsentFlags {
+  audio: boolean;
+  aiProcessing: boolean;
+  whatsapp: boolean;
+  recordingAllowed: boolean;
+}
+
+/** Effective consent for many sessions in ONE query (used by list screens; avoids one query per row). */
+export async function getConsentFlagsFor(
+  db: Queryable,
+  sessionIds: readonly string[],
+): Promise<Map<string, ConsentFlags>> {
+  const out = new Map<string, ConsentFlags>();
+  for (const id of sessionIds) {
+    out.set(id, { audio: false, aiProcessing: false, whatsapp: false, recordingAllowed: false });
+  }
+  if (sessionIds.length === 0) return out;
+  const r = await db.query<{ session_id: string; scope: ConsentScope; granted: boolean }>(
+    `SELECT DISTINCT ON (session_id, scope) session_id, scope, granted
+       FROM consent_event WHERE session_id = ANY($1::uuid[])
+      ORDER BY session_id, scope, seq DESC`,
+    [sessionIds],
+  );
+  for (const row of r.rows) {
+    const flags = out.get(row.session_id);
+    if (!flags) continue;
+    if (row.scope === 'audio') flags.audio = row.granted;
+    if (row.scope === 'ai_processing') flags.aiProcessing = row.granted;
+    if (row.scope === 'whatsapp') flags.whatsapp = row.granted;
+    flags.recordingAllowed = flags.audio && flags.aiProcessing;
+  }
+  return out;
+}

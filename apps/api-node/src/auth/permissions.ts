@@ -13,6 +13,8 @@ export const PERMISSIONS = {
   // sessions (PRD 2.2: only doctors record consultations; staff and admin may open a session to capture consent)
   'session.create': ['doctor'],
   'session.read': ['doctor', 'staff', 'admin'],
+  // the signed-in doctor's OWN sessions only (the handler also filters by doctor and clinic)
+  'session.listMine': ['doctor'],
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],
@@ -20,6 +22,8 @@ export const PERMISSIONS = {
   // audit log (PRD 2.2: admin; researcher read-only and anonymised)
   'audit.read': ['admin', 'researcher'],
   'audit.verify': ['admin'],
+  // CSV export (ADR-D21): admin only. The researcher reads anonymised rows on screen but cannot take a file away.
+  'audit.export': ['admin'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type PermissionId = keyof typeof PERMISSIONS;

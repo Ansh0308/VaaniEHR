@@ -50,8 +50,18 @@ export interface PublicContext<P, B, Q> extends BaseContext<P, B, Q> {
   auth: AuthContext | undefined;
 }
 
+/** A non-JSON success response (the audit CSV export). The route must declare `responseType: 'csv'`. */
+export interface RawResponse {
+  contentType: string;
+  body: string;
+  /** Sent as Content-Disposition: attachment. */
+  filename?: string;
+  headers?: Record<string, string>;
+}
+
 export interface HandlerResult {
-  data: unknown;
+  data?: unknown;
+  raw?: RawResponse;
   status?: number;
 }
 
@@ -69,6 +79,8 @@ interface RouteBase<P, B, Q> {
   /** Shape of `data` in the success envelope (documentation only). */
   response?: ZodType;
   successStatus?: number;
+  /** 'json' (default) uses the { success, data } envelope; 'csv' means the handler returns `raw` text/csv. */
+  responseType?: 'json' | 'csv';
   /** Middleware that runs before authentication (e.g. the login rate limiter). */
   pre?: RequestHandler[];
 }
@@ -85,6 +97,7 @@ export interface RouteDef {
   query?: ZodType;
   response?: ZodType;
   successStatus: number;
+  responseType: 'json' | 'csv';
   pre: RequestHandler[];
   handler: (ctx: PublicContext<unknown, unknown, unknown>) => Promise<HandlerResult>;
 }
@@ -131,6 +144,7 @@ function finish<P, B, Q>(
     ...(def.query ? { query: def.query } : {}),
     ...(def.response ? { response: def.response } : {}),
     successStatus: def.successStatus ?? 200,
+    responseType: def.responseType ?? 'json',
     pre: def.pre ?? [],
     handler: def.handler as RouteDef['handler'],
   };
@@ -217,6 +231,22 @@ export function mountRoutes(router: Router, defs: readonly RouteDef[], services:
           });
         } else {
           result = await run(services.pool, { n: 0 }, null);
+        }
+        if (result.raw) {
+          if (def.responseType !== 'csv')
+            throw new Error(`${def.path}: raw response on a JSON route`);
+          // exports can hold audit data: never cached by browsers or proxies
+          res.setHeader('Cache-Control', 'no-store');
+          for (const [name, value] of Object.entries(result.raw.headers ?? {}))
+            res.setHeader(name, value);
+          if (result.raw.filename) {
+            res.setHeader('Content-Disposition', `attachment; filename="${result.raw.filename}"`);
+          }
+          res
+            .status(result.status ?? def.successStatus)
+            .type(result.raw.contentType)
+            .send(result.raw.body);
+          return;
         }
         ok(res, result.data, result.status ?? def.successStatus);
       } catch (err) {
