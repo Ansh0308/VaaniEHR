@@ -61,6 +61,8 @@ The PRD itself is **not edited**. "What is true" cites `CLINICOS_AUDIT.md` (A) o
 | 31 | §5 NFR-SEC-01 "JWT with refresh" vs §10 NFR-SEC-01 text "no refresh token" in standalone mode | Two different statements of the same requirement | Standalone mode has **no refresh token** (ADR-D4 amendment, kept in Phase 2A); logout revokes the token server-side | Remove "with refresh" for standalone mode | open |
 | 32 | §9.2 / ClinicOS Facts Q4b | Phone numbers are normalised like ClinicOS ("first 10 digits") | Taking the first 10 digits of `+91 98765 43210` silently stores the wrong number `9198765432`. VaaniEHR requires **exactly 10 digits** after removing spaces and dashes and rejects anything else | Document the 10-digit rule in §8.2 / §9.2; ClinicOS keeps its own behaviour until Phase 12 | open |
 
+| 33 | §4 PG-02 purpose "Today's tokens, drafts awaiting sign-off, quick start" | The dashboard is described as showing tokens and drafts awaiting sign-off | Tokens come from ClinicOS (Phase 12) and sign-off exists only from Phase 8. In Phase 2B the dashboard shows the doctor's own sessions and a quick start, and a labelled placeholder where the queue will be. "Draft" means a session that is not ended | State the phase dependency in §4 | open |
+
 ## E. Not verified (so not listed as errata)
 - PRD claims about ClinicOS **UI pages** (PG-xx routes) beyond role names, and whether ClinicOS's frontend roles/layouts can host VaaniEHR screens.
 - Whether VaaniEHR's Phase 12 token validation will remain viable under the `/api/auth/*` rate limit (decision recorded in D4; needs Phase 12 approval to change ClinicOS).

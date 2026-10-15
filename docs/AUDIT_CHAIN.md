@@ -36,6 +36,9 @@ It exits `0` only if the chain is intact **and** the values match; it exits `1` 
 ## Reading the log through the API
 `GET /api/v1/audit` returns only **your clinic's** rows (admin: full rows; researcher: anonymised). `GET /api/v1/audit/verify` (admin) answers only `{ "ok": true }` or the first broken sequence number, because the chain is shared by all clinics and counts or hashes would reveal other clinics' activity. Counts and hashes come from the command above, which only the person running the database can use.
 
+## Exporting the log
+Admins can export the clinic's audit rows as CSV from the Audit page (`POST /api/v1/audit/export`, same filters as the list). The file holds identifiers only (no IP address, no free text), is capped at 5000 rows (the page says when it was cut), every text cell is neutralised so a spreadsheet cannot run it as a formula, and the export itself is recorded as `AUDIT_EXPORTED`. The CSV is a convenience copy: it is not a substitute for the head-hash and count you record above.
+
 ## Limits worth knowing
 - Rows with no clinic (the seed run, failed logins for unknown e-mail addresses) are in the chain but not shown by the API.
 - Rate-limited login attempts (HTTP 429 from the IP limiter) are not audited, to stop an attacker from flooding the chain.

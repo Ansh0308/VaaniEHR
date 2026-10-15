@@ -247,6 +247,7 @@ PRD §5.1 priority summary:
 - **Row 30**: open (PRD v1.1 not edited)
 - **Row 31**: open
 - **Row 32**: open
+- **Row 33**: open
 
 ### 3.2 Conflicts between the VaaniEHR documents themselves
 

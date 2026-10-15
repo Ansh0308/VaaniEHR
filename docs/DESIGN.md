@@ -51,6 +51,13 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 - i18n: `common`, `shell`, `design`, `clinical` namespaces; a parity test keeps English and Gujarati keys and placeholders identical; an AST test fails on hard-coded UI text.
 - **All Gujarati text is placeholder and needs review by a Gujarati speaker** (a visible "needs review" marker is shown on `/design`). Clinical wording must be reviewed by the clinician as well (OPEN_CLINICAL_ITEMS).
 
+## Phase 2B pages (login, dashboard, patients, consent, audit, settings, errors)
+- **Authority:** this document and the approved Ink and Cream system. The `ui-ux-pro-max` skill was used only for layout, form, table and accessibility ideas; it changed no palette, font, theme or safety colour.
+- **Used from the skill:** (1) after a failed submit, a **focusable error summary** at the top of the form that links to each field, with the inline errors kept (`ErrorSummary`); (2) errors announced with `role="alert"`; (3) **loading, then success or error feedback** on every submit; (4) tables that scroll inside a labelled, focusable region and helpful empty states with an action.
+- **Safety colours on the new pages:** allergies use the "acknowledge" (amber) panel with an icon and heading; consent on record is "clear", consent missing and recording off is "blocked", the placeholder notice wording is flagged "acknowledge"; the queue placeholder is neutral. Always icon + text.
+- **Found by running a real browser, fixed:** a landmark whose name repeated its table's name (`landmark-unique`); icon buttons shrinking below 44px in flex rows (`shrink-0`); radio and checkbox targets are measured by their label, which is the thing that is clicked; accessible names must contain the visible text (WCAG 2.5.3, so "Copy link for X", not "Copy the consent link for X"); screen-reader-only text positioned inside a wide table made the whole page scroll sideways at 375px (the table's scroll region is now a positioning context).
+- **Layouts:** every page is one column of titled sections that works at 375px; tables scroll inside their own region instead of the page.
+
 ## Deliberate differences from ClinicOS
 
 - No crimson primary: crimson-like hues would read as "blocked". Ink is the action colour.

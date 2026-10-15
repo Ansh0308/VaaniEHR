@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D20 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D21 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -131,6 +131,26 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Real-data guard:** the API (and the seed) refuse to start if any stand-in row has `is_simulated=false`, in every mode (ADR-D16 is not weakened).
 - **Tests.** Database tests (`*.db.test.ts`) run on real PostgreSQL (Docker locally, a service container in CI). `npm run check` includes them; **`npm run check:unit`** runs everything except them (no Docker) and says so in its summary.
 - **Not in Phase 2A:** any UI, a refresh token, `ClinicOSTokenAuth`, final consent wording (the notices are bracketed placeholders; Gujarati is `needsReview`), real allergens (the seed uses `Drug-A (FAKE)` style labels until Phase 7).
+
+---
+
+## D21 - Phase 2B: the first pages, and the small API additions they needed
+**Date 2026-10-15, Status: Accepted, Decider: Ansh (owner).** Pages built: PG-01 login, PG-02 doctor dashboard, PG-03 patients, PG-05 consent, PG-16 audit log, PG-18 settings and about, PG-19 error pages (403, 404, 500). No new dependencies.
+- **API additions (owner-approved, each with a permissions entry, audit coverage, clinic-isolation case, OpenAPI and tests):**
+  - `GET /api/v1/audit` takes **user, action and date range** filters only (zod-validated, clinic-scoped, page size capped at 100). A researcher cannot filter by user (it would un-anonymise the view one person at a time) and gets anonymised rows.
+  - `POST /api/v1/audit/export` returns a CSV. **Admin only** (the researcher reads anonymised rows on screen but cannot take a file away). The export is itself an audit event (`AUDIT_EXPORTED`: row count, whether it was cut, which filters were used, never their values). Capped at **5000 rows**; when cut, the response says so and the page tells the admin. Columns are identifiers only (no IP address, no free-form metadata). **Every text cell is neutralised against spreadsheet formula injection** (a leading `=`, `+`, `-`, `@`, TAB, CR or LF gets a leading single quote) and quoted per RFC 4180; tests plant hostile values and read the file back like a spreadsheet would.
+  - `GET /api/v1/sessions` is the signed-in doctor's **own** sessions in their clinic (never another doctor's), with the patient's name and a consent summary, paged.
+  - `GET /api/v1/consent/notice` returns **both languages in one response**, with the placeholder markers and the Gujarati `needsReview` flag in the payload.
+- **Doctor dashboard shows only what exists:** the doctor's sessions ("open" = not ended; sign-off arrives in Phase 8, so nothing is shown as signed) and a way to start a session. The **queue and tokens are a clearly labelled placeholder** ("Not available until the ClinicOS integration"); no queue, no numbers are invented (a test checks the section contains no digits).
+- **How staff reach a doctor's session:** only doctors may open a session, and staff have no session list (owner scope). The doctor's dashboard has "Copy link" for each session; staff open the consent page from that link or by pasting the session code on the Patients page. A staff-side "sessions waiting for consent" list is a possible later addition if wanted.
+- **Token handling:** the access token lives **only in memory** (a ref inside the auth provider). It is never written to localStorage, sessionStorage, cookies or a URL (tested). Reloading the page therefore signs the person out (there is no refresh token in standalone mode, ADR-D4). It is dropped on logout (which also revokes it on the server), on a 401 and when its lifetime ends; the login page then says the session ended. ClinicOS keeps its token in localStorage; this is deliberately stricter.
+- **Errors:** people see our own plain messages chosen by status and code; server error text is never displayed. Login never says which part was wrong.
+- **Forms:** after a failed submit a focusable error summary takes focus and links to each field, with the inline errors kept (guidance taken from ui-ux-pro-max, see docs/DESIGN.md); double submits are blocked with a ref (a test found that a state flag was not enough).
+- **Consent page:** English and Gujarati notices side by side, three independent switches, "who confirmed this" is required before saving, withdraw-all asks for confirmation and who withdrew, history table. A failed save keeps the person's choices. `ConsentGate` is the component Phases 4 and 8 put in front of recording; the API already enforces the same rule (`requireConsent`).
+- **`/design` is viewable without signing in** (it shows no data) so the standalone `npm run a11y` keeps checking the design system; when signed in it uses the normal shell.
+- **Settings page:** intended-use statement quoted from PRD section 1.6 (the Gujarati version is a placeholder flagged for review); the licence list is generated from `package-lock.json` (`npm run licences:web`) and a guard in `npm run check` fails if it is stale.
+- **End-to-end test (`npm run e2e`, CI job `e2e`):** real API, PostgreSQL and system Chrome (playwright-core, no download), fake data only. Logins come from the git-ignored `data/dev-credentials.json` generated by `npm run seed:dev` (locally, and generated fresh in CI); they are never printed. It signs in with the keyboard only and runs axe (colour contrast on), the 44px target check and a 375px overflow check on every page state, in English and for the main pages in Gujarati.
+- **Known limits:** all Gujarati text is placeholder and needs review by a Gujarati speaker (docs/OWNER_ACTIONS.md); the audit user filter takes a user ID (rows offer "Filter by this user"; there is no user picker because there is no user-list endpoint); rows with no clinic (the seed run, failed logins for unknown e-mails) are not shown in the clinic view.
 
 ---
 

@@ -67,6 +67,8 @@ npm run check:unit          # same as check, but WITHOUT the database tests (no 
 npm run verify:audit        # re-computes the audit hash chain; reports the first broken row (see docs\AUDIT_CHAIN.md: record the head hash and count)
 npm run openapi             # regenerates apps\api-node\openapi.json (a test fails if it is stale)
 npm run coverage:api        # api-node tests with a coverage report (thresholds on audit/auth/consent)
+npm run e2e                 # end-to-end test: real API + database + Chrome, fake data (needs db:up, db:migrate, seed:dev)
+npm run licences:web        # regenerates the licence list shown on the Settings page
 npm run build               # production builds of web and api-node
 npm run a11y                # browser accessibility check of /design (axe, 44px targets; needs Chrome)
 npm run db:down             # stop the database container (data kept)
