@@ -2,6 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Express } from 'express';
 import { createApp } from '../src/app.js';
+import type { AuthProvider, Role } from '../src/auth/types.js';
 import { ClinicOSTokenAuth } from '../src/auth/ClinicOSTokenAuth.js';
 import { DevAuthProvider } from '../src/auth/DevAuthProvider.js';
 import { loadConfig, type Config } from '../src/config/env.js';
@@ -9,6 +10,20 @@ import { createRealtime, type Realtime } from '../src/realtime/socket.js';
 
 /** A strong-looking secret that exists only inside tests (not a real secret). */
 export const TEST_SECRET = 'unit-test-only-secret-0123456789abcdef-0123456789';
+
+export const TEST_CLINIC_ID = 'c0ffee00-0000-4000-8000-0000000000c1';
+
+/** Fixed fake identities for token-only tests (no database involved). */
+export function testIdentity(role: Role) {
+  const ids: Record<Role, string> = {
+    doctor: 'd0c70000-0000-4000-8000-000000000001',
+    staff: '57aff000-0000-4000-8000-000000000002',
+    admin: 'ad310000-0000-4000-8000-000000000003',
+    researcher: '4e5ea000-0000-4000-8000-000000000004',
+    patient: 'ba710000-0000-4000-8000-000000000005',
+  };
+  return { id: ids[role], role, clinicId: TEST_CLINIC_ID };
+}
 
 export const baseEnv = {
   NODE_ENV: 'test',
@@ -30,19 +45,24 @@ export interface TestApp {
 export function buildTestApp(
   options: {
     checkDb?: () => Promise<void>;
-    extend?: (app: Express, ctx: { dev: DevAuthProvider; config: Config }) => void;
+    extend?: (
+      app: Express,
+      ctx: { dev: DevAuthProvider; config: Config; provider: AuthProvider },
+    ) => void;
     envOverrides?: Record<string, string | undefined>;
   } = {},
 ): TestApp {
   const config = testConfig(options.envOverrides);
   const dev = new DevAuthProvider(TEST_SECRET, config.devTokenTtlSeconds);
   const isDev = config.authProvider === 'dev';
+  const provider: AuthProvider = isDev ? dev : new ClinicOSTokenAuth();
   const app = createApp({
     config,
-    authProvider: isDev ? dev : new ClinicOSTokenAuth(),
-    ...(isDev ? { devProvider: dev } : {}),
+    authProvider: provider,
     checkDb: options.checkDb ?? (() => Promise.resolve()),
-    ...(options.extend ? { extend: (a: Express) => options.extend?.(a, { dev, config }) } : {}),
+    ...(options.extend
+      ? { extend: (a: Express) => options.extend?.(a, { dev, config, provider }) }
+      : {}),
   });
   return { app, config, dev };
 }

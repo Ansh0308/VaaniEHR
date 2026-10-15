@@ -1,0 +1,195 @@
+// RBAC matrix: EVERY role x EVERY endpoint, against the real app and database.
+// Expected results come from test/prdExpectations.ts (PRD 2.2 / section 4, written by hand), not from permissions.ts,
+// so a typo in either place is caught. Also proves every successful mutating call wrote an audit row.
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ROLES, type Role } from '../src/auth/types.js';
+import { allRoutes } from '../src/routes/index.js';
+import { isMutating, type RouteDef } from '../src/http/routeRegistry.js';
+import { bearer, createHarness, SEED_EMAIL, type Harness } from './db/helpers.js';
+import { PRD_EXPECTED } from './prdExpectations.js';
+
+let h: Harness;
+let sessionId: string;
+let patientId: string;
+const tokens: Partial<Record<Role | 'anonymous', string>> = {};
+
+beforeAll(async () => {
+  h = await createHarness();
+  patientId = h.seed.patients[0]?.id as string;
+  const clinicId = h.seed.clinics[0]?.id as string;
+
+  tokens.doctor = await h.tokenFor(SEED_EMAIL.doctor1); // owns the fixture session below
+  tokens.staff = await h.tokenFor(SEED_EMAIL.staff);
+  tokens.admin = await h.tokenFor(SEED_EMAIL.admin);
+  tokens.researcher = await h.tokenFor(SEED_EMAIL.researcher);
+
+  // A patient-role account cannot log in, but a token for one must still get nothing.
+  const patientUser = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO mock_clinicos_user (name, email, password_hash, role, status, clinic_id)
+       VALUES ('Fake Patient Account', 'patientacct@example.invalid', 'x', 'patient', 'approved', $1) RETURNING id`,
+      [clinicId],
+    )
+  ).rows[0]?.id as string;
+  patientUserId = patientUser;
+  tokens.patient = await freshToken('patient');
+
+  sessionId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO consultation_session (clinicos_patient_id, clinicos_doctor_id, clinicos_clinic_id)
+       VALUES ($1, $2, $3) RETURNING id`,
+      [patientId, h.seed.users.find((u) => u.email === SEED_EMAIL.doctor1)?.id, clinicId],
+    )
+  ).rows[0]?.id as string;
+});
+afterAll(async () => {
+  await h.close();
+});
+
+interface Call {
+  path: string;
+  body?: Record<string, unknown>;
+}
+const fixture = (route: RouteDef): Call => {
+  const key = `${route.method.toUpperCase()} ${route.path}`;
+  const consentGrant = {
+    scopes: ['audio'],
+    noticeVersion: '0.1',
+    noticeLanguage: 'en',
+    source: 'staff',
+  };
+  const calls: Record<string, Call> = {
+    'POST /auth/login': {
+      path: '/auth/login',
+      body: { email: 'nobody@example.invalid', password: 'x' },
+    },
+    'POST /auth/logout': { path: '/auth/logout' },
+    'GET /auth/me': { path: '/auth/me' },
+    'GET /consent/notice': { path: '/consent/notice' },
+    'POST /patients/lookup': { path: '/patients/lookup', body: { phone: '0000000001' } },
+    'POST /patients': { path: '/patients', body: { phone: '0000000601' } },
+    'GET /patients/:id': { path: `/patients/${patientId}` },
+    'PUT /patients/:id/clinical-profile': {
+      path: `/patients/${patientId}/clinical-profile`,
+      body: { allergies: ['Drug-A (FAKE)'] },
+    },
+    'POST /sessions': { path: '/sessions', body: { patientId } },
+    'GET /sessions/:id': { path: `/sessions/${sessionId}` },
+    'GET /sessions/:id/consent': { path: `/sessions/${sessionId}/consent` },
+    'POST /sessions/:id/consent': { path: `/sessions/${sessionId}/consent`, body: consentGrant },
+    'POST /sessions/:id/consent/withdraw': {
+      path: `/sessions/${sessionId}/consent/withdraw`,
+      body: { source: 'patient' },
+    },
+    'GET /audit': { path: '/audit' },
+    'GET /audit/verify': { path: '/audit/verify' },
+  };
+  const call = calls[key];
+  if (!call) throw new Error(`rbac.db.test: no request fixture for ${key}; add one`);
+  return call;
+};
+
+const actors: Array<Role | 'anonymous'> = ['anonymous', ...ROLES];
+
+const LOGIN_EMAIL: Record<string, string> = {
+  doctor: SEED_EMAIL.doctor1,
+  staff: SEED_EMAIL.staff,
+  admin: SEED_EMAIL.admin,
+  researcher: SEED_EMAIL.researcher,
+};
+let patientUserId = '';
+/** A new token for a role: through the real login for the four login roles, issued directly for the unused patient. */
+async function freshToken(role: Role): Promise<string> {
+  const email = LOGIN_EMAIL[role];
+  if (email) return h.tokenFor(email);
+  const issued = await h.services.tokens?.issueToken({
+    sub: patientUserId,
+    role: 'patient',
+    clinicId: h.seed.clinics[0]?.id as string,
+    devUser: true,
+  });
+  return issued?.accessToken as string;
+}
+
+const send = (route: RouteDef, actor: Role | 'anonymous') => {
+  const call = fixture(route);
+  let req = request(h.app)[route.method](`/api/v1${call.path}`);
+  const token = tokens[actor];
+  if (token) req = req.set(...bearer(token));
+  return call.body ? req.send(call.body) : req;
+};
+
+const auditCount = async () =>
+  Number(
+    (await h.db.owner.query<{ n: number }>('SELECT count(*)::int AS n FROM audit_log')).rows[0]?.n,
+  );
+
+describe('role x endpoint matrix', () => {
+  // The route list is only known once the harness exists, so build the cases lazily inside one test per route.
+  for (const key of Object.keys(PRD_EXPECTED)) {
+    it(`${key}`, async () => {
+      const route = allRoutes(h.config).find((r) => `${r.method.toUpperCase()} ${r.path}` === key);
+      expect(route, `route ${key} is not registered`).toBeTruthy();
+      if (!route) return;
+      const expected = PRD_EXPECTED[key];
+      if (!expected) throw new Error(`no expectation for ${key}`);
+
+      for (const actor of actors) {
+        // a logged-out token must not be reused by the next actor: logout is checked last
+        const before = await auditCount();
+        const res = await send(route, actor);
+        const label = `${key} as ${actor} -> ${res.status}`;
+
+        if (expected === 'public') {
+          // public: nobody is refused for their ROLE (a bad login is 401, never 403)
+          expect(res.status, label).not.toBe(403);
+        } else if (actor === 'anonymous') {
+          expect(res.status, label).toBe(401);
+        } else if (expected === 'authenticated') {
+          expect([401, 403], label).not.toContain(res.status);
+        } else if (expected.includes(actor as Role)) {
+          expect([401, 403], label).not.toContain(res.status);
+        } else {
+          expect(res.status, label).toBe(403);
+          // a refused request changes nothing
+          expect(await auditCount(), `${label} must not audit`).toBe(before);
+        }
+
+        // every successful mutating call is audited (central wrapper guarantee, checked end to end)
+        if (isMutating(route.method) && res.status >= 200 && res.status < 300) {
+          expect(await auditCount(), `${label} wrote no audit row`).toBeGreaterThan(before);
+        }
+
+        if (key === 'POST /auth/logout' && res.status === 200) {
+          // that token is now revoked (correct); give this actor a fresh one so later routes keep working
+          tokens[actor as Role] = await freshToken(actor as Role);
+        }
+      }
+    });
+  }
+
+  it('the patient role (unused) gets 403 on every permission-protected endpoint', async () => {
+    for (const route of allRoutes(h.config)) {
+      if (route.access.kind !== 'permission') continue;
+      const res = await send(route, 'patient');
+      expect(res.status, `${route.method} ${route.path}`).toBe(403);
+    }
+  });
+
+  it('every registered route has an expectation, and every expectation a route', () => {
+    const registered = allRoutes(h.config).map((r) => `${r.method.toUpperCase()} ${r.path}`);
+    expect(registered.sort()).toEqual(Object.keys(PRD_EXPECTED).sort());
+  });
+
+  it('unknown /api/v1 routes are a clean 404 for anyone', async () => {
+    for (const actor of ['anonymous', 'doctor'] as const) {
+      let req = request(h.app).get('/api/v1/does-not-exist');
+      const token = tokens[actor];
+      if (token) req = req.set(...bearer(token));
+      const res = await req;
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    }
+  });
+});

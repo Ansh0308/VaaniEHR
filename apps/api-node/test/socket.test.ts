@@ -1,9 +1,8 @@
 // ADR-D10: sockets authenticate at the handshake; rooms are server-derived, never client-chosen.
 import { io as connect, type Socket } from 'socket.io-client';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { DEV_CLINIC_ID } from '../src/auth/DevAuthProvider.js';
 import { VAANI_NAMESPACE } from '../src/realtime/socket.js';
-import { startTestServer, type RunningServer } from './helpers.js';
+import { startTestServer, TEST_CLINIC_ID, testIdentity, type RunningServer } from './helpers.js';
 
 const OTHER_CLINIC_ID = 'c0ffee00-0000-4000-8000-0000000000c2';
 const OTHER_USER_ID = 'b0b00000-0000-4000-8000-000000000099';
@@ -37,7 +36,7 @@ const emitAck = <T>(s: Socket, event: string, payload?: unknown) =>
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function tokenFor(role: 'doctor' | 'staff' | 'admin') {
-  const user = server.dev.findUser(role);
+  const user = testIdentity(role);
   const { accessToken } = await server.dev.issueToken({
     sub: user.id,
     role: user.role,
@@ -72,7 +71,7 @@ describe('/vaani namespace handshake', () => {
   });
 
   it('rejects an expired token', async () => {
-    const user = server.dev.findUser('doctor');
+    const user = testIdentity('doctor');
     const { accessToken } = await server.dev.issueToken(
       { sub: user.id, role: user.role, clinicId: user.clinicId, devUser: true },
       -30,
@@ -88,7 +87,7 @@ describe('/vaani namespace handshake', () => {
       'whoami',
     );
     expect(me.ok).toBe(true);
-    expect(me.auth).toMatchObject({ role: 'doctor', clinicId: DEV_CLINIC_ID });
+    expect(me.auth).toMatchObject({ role: 'doctor', clinicId: TEST_CLINIC_ID });
   });
 
   it('the default namespace "/" is closed even with a valid token', async () => {
@@ -117,7 +116,7 @@ describe('rooms are server-derived', () => {
     a.on('test:event', (p) => gotA.push(p));
     b.on('test:event', (p) => gotB.push(p));
 
-    server.realtime.emitToClinic(DEV_CLINIC_ID, 'test:event', { n: 1 });
+    server.realtime.emitToClinic(TEST_CLINIC_ID, 'test:event', { n: 1 });
     await sleep(300);
     expect(gotA).toEqual([{ n: 1 }]);
     expect(gotB).toEqual([]);
@@ -144,7 +143,7 @@ describe('rooms are server-derived', () => {
     const a = client({ token: await tokenFor('doctor'), clinicId: OTHER_CLINIC_ID });
     expect(await connected(a)).toBe('connected');
     const me = await emitAck<{ auth: { clinicId: string } }>(a, 'whoami');
-    expect(me.auth.clinicId).toBe(DEV_CLINIC_ID);
+    expect(me.auth.clinicId).toBe(TEST_CLINIC_ID);
     const received: unknown[] = [];
     a.on('other:clinic', (p) => received.push(p));
     server.realtime.emitToClinic(OTHER_CLINIC_ID, 'other:clinic', { secret: 'fake' });
