@@ -64,7 +64,7 @@ npm run dev:api             # API on http://localhost:4000   (needs db:up for /r
 npm run dev:web             # web on http://localhost:5173
 npm run dev:asr             # asr-py on http://localhost:8000
 npm run check:unit          # same as check, but WITHOUT the database tests (no Docker needed)
-npm run verify:audit        # re-computes the audit hash chain; reports the first broken row
+npm run verify:audit        # re-computes the audit hash chain; reports the first broken row (see docs\AUDIT_CHAIN.md: record the head hash and count)
 npm run openapi             # regenerates apps\api-node\openapi.json (a test fails if it is stale)
 npm run coverage:api        # api-node tests with a coverage report (thresholds on audit/auth/consent)
 npm run build               # production builds of web and api-node
