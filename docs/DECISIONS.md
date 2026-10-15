@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D16 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D17 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -83,6 +83,12 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Decision (owner, 2026-10-14):** api-node and asr-py refuse to start when `SIMULATED_DATA_ONLY` is anything other than `true` (real-data mode is not permitted; AGENTS.md Hard Rule 1, NFR-PRIV-02).
 - **Consequences:** **Phase 12 must not weaken or bypass this guard without the owner's explicit approval.** Tests: `apps/api-node/test/config.test.ts`, `apps/asr-py/tests/test_config.py`.
 
+
+## D17 - No LICENSE file for now; licence decided later
+- **Context:** The repository `Ansh0308/VaaniEHR` is public (owner decision 2026-10-15). Without a licence file the default is "all rights reserved": others may view and fork on GitHub but may not reuse the code.
+- **Decision (owner, 2026-10-15):** No `LICENSE` file. The README states: "Research prototype. Simulated data only. All rights reserved." The licence is decided later, **after checking the share-alike and non-commercial terms** of DDInter 2.0 (CC BY-NC-SA 4.0) and Parrotlet-e (CC-BY-SA-4.0), which may constrain what can be published or relicensed (PRD §12.5, §12.3; SBOM section 5 when models/datasets are adopted).
+- **Consequences:** `package.json` files say `UNLICENSED`. Do not copy third-party licensed data (DDInter, NLEM extracts, benchmark audio) into the repository; see the repository hygiene rule below.
+
 ---
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
@@ -159,3 +165,11 @@ Base images count as third-party components (Hard Rule 6); they are listed in `d
 | `python:3.11.17-slim-bookworm` | asr-py runtime; Python 3.11 as in the PRD stack. |
 
 Runtime rules (apply to every new service): non-root user; no secrets in images or build args (`.dockerignore` excludes every `.env*`; configuration arrives from env files at run time); `cap_drop: ALL`, `no-new-privileges`, read-only root filesystem for app containers; ports bound to 127.0.0.1; every service has a healthcheck and `depends_on` waits for `service_healthy`. `NODE_ENV` is not set to `production` in the stack because the dev auth provider is refused in production (ADR-D4, config guard).
+
+---
+
+## Repository hygiene (owner decision 2026-10-15, public repository)
+
+- **Data and audio are never tracked**: `.gitignore` blocks `data/`, `audio/`, `*.wav`, `*.mp3`, `*.m4a`, `*.webm`; `scripts/check-no-data-files.mjs` (part of `npm run check` and a CI job) fails if any such file is tracked. **Conflict to resolve later:** PRD §17 puts versioned pathways, medicine CSVs and benchmark labels under `data/`; those cannot be committed until the owner decides which paths are allowed and updates the rule.
+- **ClinicOS secret-exposure details are withheld** from every tracked file and from git history (ADR-D13). The full original wording is kept privately outside the repository.
+- A gitleaks-style scan over all commits runs before each first push of new history (done 2026-10-15) and in CI on every push.

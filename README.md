@@ -1,6 +1,8 @@
 # VaaniEHR
 
 **Research prototype - acted/simulated data only. Not for clinical use.**
+
+**Research prototype. Simulated data only. All rights reserved.** (No licence file: see ADR-D17 in `docs/DECISIONS.md`.)
 Voice-assisted, guideline-grounded, ABDM-ready consultation module (B.Tech capstone). Requirements: `DOCUMENTS/VaaniEHR_PRD.md` (PRD v1.1). Project rules: `AGENTS.md`. Orientation: `docs/CONTEXT.md`. Decisions: `docs/DECISIONS.md`.
 
 Status: **Phase 1 foundation** (1.1 accepted; container stack added). No clinical features yet. The design system is Phase 1.2.

@@ -37,7 +37,7 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 7. Prefer reuse over rewriting (see the Build-vs-Reuse table in the PRD). Do not add features not in the PRD.
 8. Keep changes small. One logical change per commit with message `<phase>: <what> [FR-ids]`.
 
-## SETTLED DECISIONS (ADR-D1 to D16) - do not reopen without asking the owner (full ADRs in `docs/DECISIONS.md`, all 2026-10-14)
+## SETTLED DECISIONS (ADR-D1 to D17) - do not reopen without asking the owner (full ADRs in `docs/DECISIONS.md`, all 2026-10-14)
 
 - **D1** ClinicOS = MySQL/Sequelize (code is truth). VaaniEHR = its own PostgreSQL 16 + pgvector, integrating over REST only.
 - **D2** ClinicOS real status = `docs/CLINICOS_AUDIT.md`.
@@ -55,6 +55,7 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 - **D14** Writing a visit to ClinicOS = `POST /visits`, `PATCH /visits/:id`, `PATCH /visits/:id/complete`, the doctor's own token, only after VaaniEHR sign-off; `complete` has side effects (token served, queue recalculated) that Phase 12 must handle.
 - **D15** PRD v1.1 is the source of truth (`DOCUMENTS/VaaniEHR_PRD.md`); v1.0 archived.
 - **D16** The `SIMULATED_DATA_ONLY=false` refusal (api-node and asr-py) stays; Phase 12 must not weaken it without owner approval.
+- **D17** The repository is public with **no LICENSE file** (README: "Research prototype. Simulated data only. All rights reserved."); the licence is decided later after checking DDInter (CC BY-NC-SA) and Parrotlet-e (CC-BY-SA). No data or audio files in git (`data/`, `audio/`, `*.wav`, `*.mp3`, `*.m4a`, `*.webm`); never write ClinicOS secret-exposure details anywhere in the repo.
 
 ## WORKING STYLE
 
