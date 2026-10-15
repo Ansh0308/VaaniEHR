@@ -68,7 +68,7 @@ services:
       # Inside the compose network the database is reachable as "db:5432"; these override the host-oriented .env values.
       NODE_ENV: development
       PORT: '4000'
-      DATABASE_URL: postgres://${POSTGRES_USER:-vaani}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-vaaniehr}
+      DATABASE_URL: postgres://vaani_app:${APP_DB_PASSWORD:?APP_DB_PASSWORD is required (run npm run setup:env)}@db:5432/${POSTGRES_DB:-vaaniehr}
       CORS_ORIGIN: http://localhost:${WEB_PORT:-5173}
     read_only: true
     ports:

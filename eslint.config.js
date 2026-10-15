@@ -40,6 +40,16 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
+    // Command-line tools run by npm scripts: printing to the terminal is their job.
+    files: [
+      'apps/api-node/src/audit/verifyCli.ts',
+      'apps/api-node/src/db/provision.ts',
+      'apps/api-node/src/openapi/generate.ts',
+      'apps/api-node/src/seed/seedDev.ts',
+    ],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['apps/api-node/**/*.ts', 'apps/api-node/migrations/**/*.js', 'packages/**/*.ts'],
     languageOptions: { globals: globals.node },
   },

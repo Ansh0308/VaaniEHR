@@ -1,0 +1,152 @@
+[
+  {
+    "id": "5eed0000-0000-4000-8000-000000000100",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000001",
+    "name": "રમેશ પટેલ",
+    "dob": "1958-03-14",
+    "gender": "male",
+    "allergies": ["Drug-A (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000101",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000002",
+    "name": "સુનીતા શાહ",
+    "dob": "1971-07-02",
+    "gender": "female",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000102",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000003",
+    "name": "કિરણ મહેતા",
+    "dob": "1985-11-23",
+    "gender": "female",
+    "allergies": ["Drug-B (FAKE)", "Food-X (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000103",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000004",
+    "name": "જયેશ દેસાઈ",
+    "dob": "1993-01-30",
+    "gender": "male",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000104",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000005",
+    "name": "હેતલ ત્રિવેદી",
+    "dob": "2001-05-09",
+    "gender": "female",
+    "allergies": ["Drug-A (FAKE)", "Drug-C (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000105",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000006",
+    "name": "નીતા જોશી",
+    "dob": "1966-09-18",
+    "gender": "female",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000106",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000007",
+    "name": "મહેશ ઠક્કર",
+    "dob": "1979-12-05",
+    "gender": "male",
+    "allergies": ["Drug-D (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000107",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000008",
+    "name": "પૂજા પરમાર",
+    "dob": "1990-04-27",
+    "gender": "female",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000108",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000009",
+    "name": "અશોક સોલંકી",
+    "dob": "1948-08-11",
+    "gender": "male",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000109",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000010",
+    "name": "દીપા વ્યાસ",
+    "dob": "1988-02-16",
+    "gender": "female",
+    "allergies": ["Food-Y (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000110",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000011",
+    "name": "ભાવેશ રાવલ",
+    "dob": "1975-06-21",
+    "gender": "male",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000111",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000012",
+    "name": "કાજલ ચૌધરી",
+    "dob": "1996-10-03",
+    "gender": "female",
+    "allergies": ["Drug-B (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000112",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000013",
+    "name": "વિપુલ ભટ્ટ",
+    "dob": null,
+    "gender": "male",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000113",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000014",
+    "name": "મીના ઝાલા",
+    "dob": "1982-03-08",
+    "gender": "female",
+    "allergies": ["Drug-E (FAKE)"],
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000114",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "phone": "0000000015",
+    "name": "ધર્મેશ પંચાલ",
+    "dob": null,
+    "gender": "male",
+    "allergies": [],
+    "source": "FAKE_FOR_TEST"
+  }
+]

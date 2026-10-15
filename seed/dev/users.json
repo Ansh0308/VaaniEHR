@@ -1,0 +1,49 @@
+[
+  {
+    "id": "5eed0000-0000-4000-8000-000000000011",
+    "name": "Fake Admin",
+    "email": "admin@example.invalid",
+    "role": "admin",
+    "status": "approved",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000012",
+    "name": "Dr. Fake Doctor One",
+    "email": "doctor1@example.invalid",
+    "role": "doctor",
+    "status": "approved",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "registrationNo": "FAKE-REG-0001",
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000013",
+    "name": "Dr. Fake Doctor Two",
+    "email": "doctor2@example.invalid",
+    "role": "doctor",
+    "status": "approved",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "registrationNo": "FAKE-REG-0002",
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000014",
+    "name": "Fake Staff Member",
+    "email": "staff@example.invalid",
+    "role": "staff",
+    "status": "approved",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "source": "FAKE_FOR_TEST"
+  },
+  {
+    "id": "5eed0000-0000-4000-8000-000000000015",
+    "name": "Fake Researcher",
+    "email": "researcher@example.invalid",
+    "role": "researcher",
+    "status": "approved",
+    "clinicId": "5eed0000-0000-4000-8000-000000000001",
+    "source": "FAKE_FOR_TEST"
+  }
+]

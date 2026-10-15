@@ -12,3 +12,4 @@ package-lock.json
 skills-lock.json
 apps/asr-py
 *.md
+apps/api-node/openapi.json

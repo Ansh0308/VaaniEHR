@@ -25,16 +25,29 @@ export function requireEnvFiles(files = [infraEnv, apiEnv]) {
   }
 }
 
-/** Applies pending migrations to the database named by DATABASE_URL in apps/api-node/.env (host side). */
+/**
+ * Applies pending migrations as the database OWNER (MIGRATION_DATABASE_URL in apps/api-node/.env, host side), then sets
+ * the password of the runtime role vaani_app from APP_DB_PASSWORD. The running API never uses the owner role.
+ */
 export function migrate(direction = 'up') {
   requireEnvFiles();
   process.loadEnvFile(apiEnv);
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL missing in apps/api-node/.env');
+  const ownerUrl = process.env.MIGRATION_DATABASE_URL;
+  if (!ownerUrl || !process.env.APP_DB_PASSWORD) {
+    console.error(
+      'MIGRATION_DATABASE_URL and APP_DB_PASSWORD are required in apps/api-node/.env. Run: npm run setup:env',
+    );
     return 1;
   }
-  return npm(
+  // node-pg-migrate reads DATABASE_URL, so hand it the owner URL for this child process only.
+  const env = { ...process.env, DATABASE_URL: ownerUrl };
+  const migrated = npm(
     ['exec', '-w', 'apps/api-node', '--', 'node-pg-migrate', direction, '-m', 'migrations'],
-    { cwd: ROOT },
+    { cwd: ROOT, env },
   ).status;
+  if (migrated !== 0 || direction !== 'up') return migrated;
+  return npm(['exec', '-w', 'apps/api-node', '--', 'tsx', 'src/db/provision.ts'], {
+    cwd: ROOT,
+    env,
+  }).status;
 }
