@@ -75,6 +75,7 @@ const fixture = (route: RouteDef): Call => {
       body: { allergies: ['Drug-A (FAKE)'] },
     },
     'POST /sessions': { path: '/sessions', body: { patientId } },
+    'GET /sessions': { path: '/sessions' },
     'GET /sessions/:id': { path: `/sessions/${sessionId}` },
     'GET /sessions/:id/consent': { path: `/sessions/${sessionId}/consent` },
     'POST /sessions/:id/consent': { path: `/sessions/${sessionId}/consent`, body: consentGrant },
@@ -84,6 +85,7 @@ const fixture = (route: RouteDef): Call => {
     },
     'GET /audit': { path: '/audit' },
     'GET /audit/verify': { path: '/audit/verify' },
+    'POST /audit/export': { path: '/audit/export', body: {} },
   };
   const call = calls[key];
   if (!call) throw new Error(`rbac.db.test: no request fixture for ${key}; add one`);

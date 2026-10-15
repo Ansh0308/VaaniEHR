@@ -173,6 +173,7 @@ describe('mountRoutes guarantees', () => {
     access: { kind: 'public' },
     audit,
     successStatus: 200,
+    responseType: 'json',
     pre: [],
     handler,
   });

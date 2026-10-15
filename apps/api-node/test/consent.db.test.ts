@@ -348,39 +348,42 @@ describe('requireConsent: the server-side gate for recording routes', () => {
   });
 });
 
-describe('GET /consent/notice', () => {
-  it('returns the latest English notice by default, a placeholder with no legal claim', async () => {
-    const res = await request(h.app)
-      .get('/api/v1/consent/notice')
-      .set(...bearer(staff));
+describe('GET /consent/notice (both languages in one response)', () => {
+  const get = (query = '', token = staff) =>
+    request(h.app)
+      .get(`/api/v1/consent/notice${query}`)
+      .set(...bearer(token));
+
+  it('returns the latest version with English AND Gujarati together, for side-by-side display', async () => {
+    const res = await get();
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ version: '0.1', language: 'en', status: 'PLACEHOLDER' });
-    expect(res.body.data.body).toMatch(/PLACEHOLDER/);
+    expect(res.body.data.version).toBe('0.1');
+    expect(Object.keys(res.body.data.notices).sort()).toEqual(['en', 'gu']);
+    expect(res.body.data.notices.en).toMatchObject({ language: 'en', version: '0.1' });
+    expect(res.body.data.notices.gu).toMatchObject({ language: 'gu', version: '0.1' });
+    expect(res.body.data.notices.gu.body).toMatch(/[઀-૿]/);
   });
 
-  it('returns the Gujarati notice flagged needs-review', async () => {
-    const res = await request(h.app)
-      .get('/api/v1/consent/notice?language=gu&version=0.1')
-      .set(...bearer(staff));
-    expect(res.body.data).toMatchObject({ language: 'gu', needsReview: true });
-    expect(res.body.data.body).toMatch(/[઀-૿]/);
+  it('keeps the placeholder markers and the Gujarati needs-review flag in the payload', async () => {
+    const { en, gu } = (await get()).body.data.notices;
+    expect(en.status).toBe('PLACEHOLDER');
+    expect(en.body).toMatch(/PLACEHOLDER/);
+    expect(en.title).toMatch(/PLACEHOLDER/);
+    expect(gu.status).toBe('PLACEHOLDER');
+    expect(gu.needsReview).toBe(true);
+    for (const scope of ['audio', 'ai_processing', 'whatsapp']) {
+      expect(en.scopes[scope].description).toMatch(/PLACEHOLDER/);
+      expect(gu.scopes[scope].label.length).toBeGreaterThan(0);
+    }
   });
 
-  it('404 for an unknown version, 400 for an unknown language, 401 without a token', async () => {
-    expect(
-      (
-        await request(h.app)
-          .get('/api/v1/consent/notice?version=9.9')
-          .set(...bearer(staff))
-      ).status,
-    ).toBe(404);
-    expect(
-      (
-        await request(h.app)
-          .get('/api/v1/consent/notice?language=hi')
-          .set(...bearer(staff))
-      ).status,
-    ).toBe(400);
+  it('accepts an explicit known version; 404 for an unknown one; 401 without a token', async () => {
+    expect((await get('?version=0.1')).status).toBe(200);
+    expect((await get('?version=9.9')).status).toBe(404);
     expect((await request(h.app).get('/api/v1/consent/notice')).status).toBe(401);
+  });
+
+  it('any signed-in user may read it (it is the text the patient is shown)', async () => {
+    for (const token of [staff, doctor, admin]) expect((await get('', token)).status).toBe(200);
   });
 });

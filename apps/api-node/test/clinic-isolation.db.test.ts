@@ -230,7 +230,7 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
       do {
         const res = await call(
           'get',
-          `/audit?limit=200${cursor ? `&beforeSeq=${cursor}` : ''}`,
+          `/audit?limit=100${cursor ? `&beforeSeq=${cursor}` : ''}`,
           token,
         );
         expect(res.status).toBe(200);
@@ -259,6 +259,30 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
     const researcherRows = await readAll(x.tokens.researcher);
     expect(researcherRows).toHaveLength(mine);
     expect(JSON.stringify(researcherRows)).not.toContain(y.clinicId);
+  },
+  'GET /sessions': async (x, y) => {
+    const res = await call('get', '/sessions?limit=50', x.tokens.doctor);
+    expect(res.status).toBe(200);
+    const items = res.body.data.items as Array<{ id: string; clinicId: string; patientId: string }>;
+    expect(items.length).toBeGreaterThan(0); // the attacker has their own sessions: the list is not just empty
+    for (const item of items) {
+      expect(item.clinicId).toBe(x.clinicId);
+      expect(item.id).not.toBe(y.sessionId);
+      expect(item.patientId).not.toBe(y.patientId);
+    }
+  },
+  'POST /audit/export': async (x, y) => {
+    const mine = Number(
+      (await one('SELECT count(*)::int AS n FROM audit_log WHERE clinic_id = $1', [x.clinicId])).n,
+    );
+    const res = await call('post', '/audit/export', x.tokens.admin, {});
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(Number(res.headers['x-exported-rows'])).toBe(mine); // only this clinic's rows
+    const text = res.text;
+    for (const secret of [y.clinicId, y.patientId, y.sessionId, ...y.userIds, y.phone, y.allergy]) {
+      expect(text, String(secret)).not.toContain(String(secret));
+    }
   },
   'GET /audit/verify': async (x) => {
     const res = await call('get', '/audit/verify', x.tokens.admin);

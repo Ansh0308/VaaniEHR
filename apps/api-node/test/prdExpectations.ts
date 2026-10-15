@@ -15,10 +15,12 @@ export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenti
   'GET /patients/:id': ['doctor', 'staff', 'admin'],
   'PUT /patients/:id/clinical-profile': ['staff', 'admin'],
   'POST /sessions': ['doctor'],
+  'GET /sessions': ['doctor'], // "my sessions": PRD 2.2 only doctors record consultations (ADR-D21)
   'GET /sessions/:id': ['doctor', 'staff', 'admin'],
   'GET /sessions/:id/consent': ['doctor', 'staff', 'admin'],
   'POST /sessions/:id/consent': ['doctor', 'staff', 'admin'],
   'POST /sessions/:id/consent/withdraw': ['doctor', 'staff', 'admin'],
   'GET /audit': ['admin', 'researcher'],
   'GET /audit/verify': ['admin'],
+  'POST /audit/export': ['admin'], // PG-16 CSV export: admin only (ADR-D21)
 };

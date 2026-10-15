@@ -190,6 +190,7 @@ describe('concurrency and atomicity', () => {
       access: { kind: 'public' },
       audit: ['LOGOUT'],
       successStatus: 200,
+      responseType: 'json',
       pre: [],
       handler: async (ctx) => {
         await ctx.db.query(
