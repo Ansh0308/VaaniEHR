@@ -8,8 +8,9 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 1. Read `AGENTS.md` (this file), `docs/CONTEXT.md` and `docs/DECISIONS.md`. Skim `docs/CLINICOS_INTEGRATION_FACTS.md` if the task touches ClinicOS.
 2. List installed skills/tools and say which you will use and why (e.g. `ui-ux-pro-max` for UI work, `find-skills` to look for a missing capability). Ask before installing anything.
 3. Restate the current phase goal and exit criteria from `docs/PHASES.md`, and the PRD IDs involved.
-4. Propose a short plan: files to touch, risks, tests to write. **Wait for the owner's "go".**
-5. If context seems lost: stop, re-read these files, and summarise phase / done / not done / rules / next step in 8 lines before changing anything.
+4. Read `docs/OWNER_ACTIONS.md`. If the phase you are about to start is blocked by an item that is not `done` (or `downloaded`), warn the owner first, say what can still proceed, and ask for any credential the phase needs (never request secrets in chat).
+5. Propose a short plan: files to touch, risks, tests to write. **Wait for the owner's "go".**
+6. If context seems lost: stop, re-read these files, and summarise phase / done / not done / rules / next step in 8 lines before changing anything.
 
 ## WORKSPACE (confirmed by the owner)
 
@@ -17,7 +18,7 @@ Last updated 2026-10-14. Files marked (docs/) are in `VaaniEHR/docs/`.
 - `D:\CODES\ClinicOS\AWT-Project` - the existing ClinicOS app (`clinicOS-Backend`, `clinicOS-Frontend`, `Documents`). **READ-ONLY.**
   Never edit, move, format, install packages in, run, or run migrations against it unless the owner explicitly says **"Phase 12 integration approved"**. Do not run it at all unless asked (it needs a database and secrets). Never print secret values from its `.env`.
 - `D:\CODES\ClinicOS` itself is a plain container folder, not a repo.
-- Commit and push only inside `VaaniEHR/.git`, only when the owner asks, from the owner's account. Commit messages end with the Co-Authored-By line for the assistant.
+- Commit and push only inside `VaaniEHR/.git`, only when the owner asks, from the owner's account. Commit messages carry **no** Co-Authored-By trailer and the assistant is never added as a collaborator; use the repo-local identity `Ansh0308 <141222185+Ansh0308@users.noreply.github.com>`.
 - Windows machine: scripts are Node or Python (cross-platform); document PowerShell commands; never rely on bash-only tooling in project scripts.
 
 ## SOURCE OF TRUTH
