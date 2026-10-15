@@ -122,5 +122,6 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 | Phase 8 "re-enters password or PIN to sign" | Under `ClinicOSTokenAuth` there is no password in VaaniEHR | Decide in Phase 8 (open question) |
 | Phase 10 "reuse the ClinicOS message_log table shape" | ClinicOS shape is `patientId, channel, template, status(sent/failed/delivered)`; PRD §8.2 `whatsapp_summary` is richer | Use the PRD §8.2 shape; do not depend on ClinicOS messaging |
 | Phase 12 prompt 12.1 step 1 proposes ClinicOS schema changes (ABHA, HPR, coded visit fields, consent scopes) | PRD v1.1 §8.4: none in v1; those fields live in VaaniEHR tables (ADR-D11) | Propose only the two changes in §8.4 (rate-limit exemption, optional socket auth), each needing approval |
+| Plan paths `data/pathways`, `data/medicines`, `data/safety`, `data/fhir/golden` (prompts 3.1, 6.1, 7.1, 9.1) | ADR-D18: committed seed content lives in `seed/`; `data/` and `audio/` are private and ignored | Use `seed/pathways`, `seed/medicines`, `seed/safety`, `seed/fhir/golden`; raw NLEM PDF stays in private `data/medicines/raw/`; every seed row has a `source` |
 | Phase 12 prompt 12.1 step 2 edits ClinicOS | Only after the approval phrase (AGENTS.md) | Unchanged |
 | Phase 12 hardening | ADR-D16: the `SIMULATED_DATA_ONLY=false` refusal must not be weakened | Keep the guard |

@@ -34,9 +34,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Data and audio never go to git (owner decision 2026-10-15; enforced by scripts/check-no-data-files.mjs and CI).
-# NOTE: PRD section 17 plans data/pathways, data/medicines and data/bench label files in the repo. This rule blocks
-# them; a later owner decision must carve out specific paths (and update the guard) before they can be committed.
+# PRIVATE, never in git (owner decisions 2026-10-15; ADR-D18): raw or licensed downloads, recordings, benchmark audio.
+# Committed seed content (NLEM CSV, pathway JSON, safety tables, golden FHIR, seed scripts) lives in seed/, which is
+# tracked and must carry a source on every row. Guards: scripts/check-no-data-files.mjs, scripts/check-seed-sources.mjs.
 data/
 audio/
 *.wav

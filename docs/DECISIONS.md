@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D17 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D18 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -89,6 +89,24 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Decision (owner, 2026-10-15):** No `LICENSE` file. The README states: "Research prototype. Simulated data only. All rights reserved." The licence is decided later, **after checking the share-alike and non-commercial terms** of DDInter 2.0 (CC BY-NC-SA 4.0) and Parrotlet-e (CC-BY-SA-4.0), which may constrain what can be published or relicensed (PRD §12.5, §12.3; SBOM section 5 when models/datasets are adopted).
 - **Consequences:** `package.json` files say `UNLICENSED`. Do not copy third-party licensed data (DDInter, NLEM extracts, benchmark audio) into the repository; see the repository hygiene rule below.
 
+
+## D18 - Committed seed content goes in `seed/`; `data/` and `audio/` stay private
+- **Context:** The 2026-10-15 rule that git ignores `data/` and `audio/` conflicts with PRD §17, which planned versioned pathways, medicine CSVs and rule tables under `data/`. Those are exactly the files that must be tracked, reviewed and tested in CI.
+- **Decision (owner, 2026-10-15):** Committed seed content (NLEM medicine CSV, pathway JSON, safety-rule tables, golden FHIR bundles from fake visits, and the scripts that build or load them) lives in **`seed/`**, tracked, **with a `source` column/field on every row** (enforced by `scripts/check-seed-sources.mjs`, self-tested by `scripts/seed-sources.test.mjs`, in `npm run check` and CI). `data/` and `audio/` stay private and git-ignored (raw or licensed downloads, recordings, benchmark audio); `scripts/check-no-data-files.mjs` keeps blocking them.
+- **Path mapping** (PRD §17 and the phase plan used `data/...`):
+
+| Planned path | Now |
+|---|---|
+| `data/pathways/` (incl. `_toy/`) | `seed/pathways/` (tracked) |
+| `data/medicines/` (NLEM CSV, rule tables) | `seed/medicines/` (tracked); raw NLEM PDF stays in `data/medicines/raw/` (private) |
+| `data/safety/` | `seed/safety/` (tracked) |
+| `data/fhir/golden/` | `seed/fhir/golden/` (tracked, fake data) |
+| `data/fhir/ig/` (NRCeS package) | not committed: fetched by a script with a pinned checksum into private `data/fhir/ig/` |
+| `data/bench/` (VaaniBench-Gu audio and labels) | private `data/bench/`; whether and how labels are published is decided in Phase 11 |
+
+- **Content limits (carry into every seed file):** (1) no SNOMED CT / CDCI / ATC codes or release files until the licence terms allow redistribution; (2) no DDInter-derived rows (CC BY-NC-SA 4.0) until the licence decision in ADR-D17; (3) every value cited, otherwise `TODO(source)` (Hard Rule 3); (4) fake data only for toy pathways and golden bundles.
+- **Consequences:** PRD v1.1 §17 layout is updated; the phase plan (v1.0) still says `data/...` and is mapped in `PHASES.md`. `seed/` allows only `.csv`, `.json`, `.md` and scripts.
+
 ---
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
@@ -170,7 +188,7 @@ Runtime rules (apply to every new service): non-root user; no secrets in images 
 
 ## Repository hygiene (owner decision 2026-10-15, public repository)
 
-- **Data and audio are never tracked**: `.gitignore` blocks `data/`, `audio/`, `*.wav`, `*.mp3`, `*.m4a`, `*.webm`; `scripts/check-no-data-files.mjs` (part of `npm run check` and a CI job) fails if any such file is tracked. **Conflict to resolve later:** PRD §17 puts versioned pathways, medicine CSVs and benchmark labels under `data/`; those cannot be committed until the owner decides which paths are allowed and updates the rule.
+- **Data and audio are never tracked**: `.gitignore` blocks `data/`, `audio/`, `*.wav`, `*.mp3`, `*.m4a`, `*.webm`; `scripts/check-no-data-files.mjs` (in `npm run check` and CI) fails if any such file is tracked. Committed seed content lives in `seed/` (ADR-D18).
 - **ClinicOS secret-exposure details are withheld** from every tracked file and from git history (ADR-D13). The full original wording is kept privately outside the repository.
 - A gitleaks-style scan over all commits runs before each first push of new history (done 2026-10-15) and in CI on every push.
 

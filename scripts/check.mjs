@@ -10,6 +10,11 @@ const steps = [
   ['guard: no shell scripts', () => run(node, ['scripts/check-no-shell-scripts.mjs'])],
   ['guard: no data/audio files tracked', () => run(node, ['scripts/check-no-data-files.mjs'])],
   [
+    'guard: seed source rule (self-test)',
+    () => run(node, ['--test', 'scripts/seed-sources.test.mjs']),
+  ],
+  ['guard: seed/ rows carry a source', () => run(node, ['scripts/check-seed-sources.mjs'])],
+  [
     'guard: dependency reasons (docs/DECISIONS.md)',
     () => run(node, ['scripts/sbom.mjs', '--reasons-only']),
   ],

@@ -16,6 +16,7 @@ Status: **Phase 1 foundation** (1.1 accepted; container stack added). No clinica
 | `apps/asr-py`       | FastAPI (Python 3.11): `/health` only                                                            |
 | `packages/rules`    | TypeScript stub for the pathway and safety engines (one test, no clinical content)               |
 | `infra`             | `docker-compose.yml`: db (PostgreSQL 16 + pgvector), asr-py, api-node, web, all with healthchecks  |
+| `seed`              | Committed seed content (medicine CSV, pathway JSON, safety tables); every row has a `source` (ADR-D18) |
 | `scripts`           | Node scripts (cross-platform; no `.sh`/`.bat` allowed)                                           |
 | `docs`              | Audit, decisions, SBOM, phases                                                                   |
 

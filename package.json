@@ -30,6 +30,7 @@
     "db:reset": "node scripts/db.mjs reset",
     "guard:shell": "node scripts/check-no-shell-scripts.mjs",
     "guard:data": "node scripts/check-no-data-files.mjs",
+    "guard:seed": "node --test scripts/seed-sources.test.mjs && node scripts/check-seed-sources.mjs",
     "sbom": "node scripts/sbom.mjs",
     "sbom:reasons": "node scripts/sbom.mjs --reasons-only",
     "dev:api": "npm run dev -w apps/api-node",

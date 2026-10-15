@@ -1,6 +1,8 @@
-// Fails if data/audio files are tracked (or about to be added) in git. Owner decision 2026-10-15: no datasets,
-// recordings or raw data in this public repository. Paths: any "data/" or "audio/" directory, and *.wav, *.mp3,
-// *.m4a, *.webm files anywhere. Mirrors the .gitignore rules; this guard catches force-added files.
+// Fails if private data/audio files are tracked (or about to be added) in git. Owner decisions 2026-10-15 and
+// ADR-D18: data/ and audio/ are PRIVATE and git-ignored (raw/licensed downloads, recordings, benchmark audio).
+// Committed seed content lives in seed/ instead (checked by check-seed-sources.mjs). Blocked here: any "data/" or
+// "audio/" directory at any depth, and *.wav, *.mp3, *.m4a, *.webm files anywhere. Mirrors .gitignore; this guard
+// catches force-added files.
 import { run, ROOT } from './lib.mjs';
 
 const dirPattern = /(^|\/)(data|audio)\//i;
@@ -23,7 +25,9 @@ if (offenders.length > 0) {
     'Data/audio files must not be tracked in git (data/, audio/, *.wav, *.mp3, *.m4a, *.webm):',
   );
   for (const file of offenders) console.error(`  - ${file}`);
-  console.error('Keep them outside the repository, or ask the owner before changing this rule.');
+  console.error(
+    'Committed seed content (with a source on every row) belongs in seed/ (ADR-D18); raw data stays private.',
+  );
   process.exit(1);
 }
 console.log('OK: no data/, audio/, *.wav, *.mp3, *.m4a or *.webm files tracked');
