@@ -92,8 +92,8 @@ describe('hash chain from real operations', () => {
       .get('/api/v1/audit/verify')
       .set(...bearer(admin));
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ ok: true });
-    expect(res.body.data.count).toBe(await count());
+    // the chain is shared by all clinics, so the API says only "intact": no counts, no hashes
+    expect(res.body.data).toEqual({ ok: true });
   });
 });
 

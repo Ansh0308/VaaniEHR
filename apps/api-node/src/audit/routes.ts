@@ -30,7 +30,9 @@ export function auditRoutes(): RouteDef[] {
       method: 'get',
       path: '/audit',
       tag: 'Audit',
-      summary: 'Audit log, newest first. Admin sees full rows; researcher sees anonymised rows.',
+      summary:
+        "This clinic's audit log, newest first. Admin sees full rows; researcher sees anonymised rows. " +
+        'Rows with no clinic (seed, failed logins for unknown e-mails) are not shown.',
       audit: [],
       query: listQuery,
       response: z.object({
@@ -40,8 +42,10 @@ export function auditRoutes(): RouteDef[] {
       handler: async (ctx) => {
         const { limit, beforeSeq } = ctx.query;
         const r = await ctx.db.query<QueryResultRow & Parameters<typeof toChainRow>[0]>(
-          `SELECT * FROM audit_log WHERE ($1::bigint IS NULL OR seq < $1) ORDER BY seq DESC LIMIT $2`,
-          [beforeSeq ?? null, limit],
+          `SELECT * FROM audit_log
+            WHERE clinic_id = $3 AND ($1::bigint IS NULL OR seq < $1)
+            ORDER BY seq DESC LIMIT $2`,
+          [beforeSeq ?? null, limit, ctx.auth.clinicId],
         );
         const rows = r.rows.map(toChainRow);
         const items = ctx.auth.role === 'admin' ? rows : rows.map(anonymise);
@@ -54,13 +58,12 @@ export function auditRoutes(): RouteDef[] {
       method: 'get',
       path: '/audit/verify',
       tag: 'Audit',
-      summary: 'Re-compute the whole hash chain and report the first broken row, if any',
+      summary:
+        'Re-compute the whole hash chain and report whether it is intact. The chain is shared by all clinics, so ' +
+        'the answer carries no row counts or hashes; use `npm run verify:audit` for those.',
       audit: [],
       response: z.object({
         ok: z.boolean(),
-        count: z.number(),
-        headSeq: z.number().nullable().optional(),
-        headHash: z.string().optional(),
         firstBrokenSeq: z.number().optional(),
         reason: z.string().optional(),
       }),
@@ -71,13 +74,18 @@ export function auditRoutes(): RouteDef[] {
           const page = await readChainRows(ctx.db, after, 2000);
           for (const row of page) {
             const failure = verifier.push(row);
-            if (failure) return { data: failure };
+            if (failure) {
+              return {
+                data: { ok: false, firstBrokenSeq: failure.firstBrokenSeq, reason: failure.reason },
+              };
+            }
           }
           const last = page[page.length - 1];
           if (!last || page.length < 2000) break;
           after = last.seq;
         }
-        return { data: verifier.finish() };
+        verifier.finish();
+        return { data: { ok: true } };
       },
     }),
   ];

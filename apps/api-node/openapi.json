@@ -2227,7 +2227,7 @@
         "tags": [
           "Audit"
         ],
-        "summary": "Audit log, newest first. Admin sees full rows; researcher sees anonymised rows.",
+        "summary": "This clinic's audit log, newest first. Admin sees full rows; researcher sees anonymised rows. Rows with no clinic (seed, failed logins for unknown e-mails) are not shown.",
         "operationId": "getAudit",
         "parameters": [
           {
@@ -2344,7 +2344,7 @@
         "tags": [
           "Audit"
         ],
-        "summary": "Re-compute the whole hash chain and report the first broken row, if any",
+        "summary": "Re-compute the whole hash chain and report whether it is intact. The chain is shared by all clinics, so the answer carries no row counts or hashes; use `npm run verify:audit` for those.",
         "operationId": "getAuditVerify",
         "responses": {
           "200": {
@@ -2370,16 +2370,6 @@
                         "ok": {
                           "type": "boolean"
                         },
-                        "count": {
-                          "type": "number"
-                        },
-                        "headSeq": {
-                          "nullable": true,
-                          "type": "number"
-                        },
-                        "headHash": {
-                          "type": "string"
-                        },
                         "firstBrokenSeq": {
                           "type": "number"
                         },
@@ -2388,8 +2378,7 @@
                         }
                       },
                       "required": [
-                        "ok",
-                        "count"
+                        "ok"
                       ],
                       "additionalProperties": false
                     }

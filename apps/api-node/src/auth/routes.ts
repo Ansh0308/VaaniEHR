@@ -1,6 +1,6 @@
 // /api/v1/auth/*: login, logout, me. Standalone mode (AUTH_PROVIDER=dev) - ADR-D4 and its 2026-10-14 amendment:
 // own ~1 h access token, no refresh token. Logout revokes the token's jti server-side.
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import type { Config } from '../config/env.js';
@@ -33,8 +33,12 @@ const loginResponse = z.object({
   user: userView,
 });
 
-const emailHash = (email: string): string =>
-  createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+/**
+ * Non-reversible reference for the login lockout table: HMAC-SHA256 of the normalised e-mail with a server-side key.
+ * A plain hash of an e-mail could be reversed by guessing addresses; without the key it cannot be.
+ */
+export const emailReference = (key: string, email: string): string =>
+  createHmac('sha256', key).update(email.trim().toLowerCase()).digest('hex');
 
 export function authRoutes(config: Config): RouteDef[] {
   const loginLimiter = rateLimit({
@@ -63,7 +67,7 @@ export function authRoutes(config: Config): RouteDef[] {
           throw errors.notImplemented('Password login is only available with AUTH_PROVIDER=dev');
         }
         const { email, password } = ctx.body;
-        const key = emailHash(email);
+        const key = emailReference(ctx.services.lockoutKey, email);
 
         const failed = async (
           reason: string,

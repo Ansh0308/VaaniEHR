@@ -1,4 +1,5 @@
 // Builds the dependency container used by route handlers (standalone mode: ADR-D4).
+import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import { DbBackedAuthProvider } from './auth/DbBackedAuthProvider.js';
 import { DevAuthProvider } from './auth/DevAuthProvider.js';
@@ -27,6 +28,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       tokens,
       auth,
       notices,
+      lockoutKey: `lockout:${config.devAuthSecret as string}`,
       dummyPasswordHash,
     };
   }
@@ -39,6 +41,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     tokens: null,
     auth: new ClinicOSTokenAuth(),
     notices,
+    lockoutKey: randomBytes(32).toString('hex'), // password login does not exist in this mode
     dummyPasswordHash,
   };
 }

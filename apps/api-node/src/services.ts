@@ -18,6 +18,8 @@ export interface Services {
   /** Verifies tokens on every request (token + revocation + user status). */
   auth: AuthProvider;
   notices: NoticeStore;
+  /** Server-side key for the non-reversible e-mail reference used by the login lockout table. */
+  lockoutKey: string;
   /** bcrypt hash used to equalise timing when the e-mail is unknown. */
   dummyPasswordHash: string;
 }
