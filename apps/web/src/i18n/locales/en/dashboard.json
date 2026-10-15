@@ -1,0 +1,44 @@
+{
+  "title": "Doctor dashboard",
+  "welcome": "Signed in as {{name}}.",
+  "start": {
+    "heading": "Start a session",
+    "intro": "Find the patient by phone number, start a session, then record consent on the next page.",
+    "notFoundTitle": "No patient with this number",
+    "notFoundBody": "Ask staff to register the patient first, then search again.",
+    "button": "Start session"
+  },
+  "queue": {
+    "heading": "Today's queue",
+    "unavailableTitle": "Not available until the ClinicOS integration",
+    "unavailableBody": "The queue and tokens come from ClinicOS. Nothing is shown here until that integration exists."
+  },
+  "sessions": {
+    "heading": "My sessions",
+    "loading": "Loading your sessions",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Sessions you start will appear here, newest first.",
+    "openCount": "Open sessions in this list: {{count}}",
+    "caption": "Sessions, newest first",
+    "draftNote": "Open means not ended. Doctor sign-off arrives in a later phase, so nothing here is signed.",
+    "patient": "Patient",
+    "started": "Started",
+    "status": "Status",
+    "consent": "Consent",
+    "actions": "Actions",
+    "noName": "(no name on record)",
+    "openConsent": "Open consent page",
+    "forPatient": "for {{name}}",
+    "copyLink": "Copy link",
+    "copyLinkFor": "Copy link for {{name}}",
+    "copied": "Consent link copied",
+    "copyFailed": "Could not copy. The link is shown here:",
+    "consentOn": "Recording consent on record",
+    "consentNeeded": "Consent needed",
+    "statusValue": {
+      "created": "Created",
+      "in_progress": "In progress",
+      "ended": "Ended"
+    }
+  }
+}

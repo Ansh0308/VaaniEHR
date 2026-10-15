@@ -9,7 +9,9 @@
     "dismiss": "Dismiss",
     "override": "Override and keep",
     "remove": "Remove",
-    "withdraw": "Withdraw consent"
+    "withdraw": "Withdraw consent",
+    "retry": "Try again",
+    "loadMore": "Load more"
   },
   "diff": {
     "added": "Added",
@@ -42,7 +44,9 @@
     "ai": {
       "label": "AI suggested",
       "desc": "Suggested wording or content; the doctor decides"
-    }
+    },
+    "on": "On",
+    "off": "Off"
   },
   "status": {
     "loading": "Loading",
@@ -63,5 +67,15 @@
   },
   "toast": {
     "region": "Notifications"
+  },
+  "errors": {
+    "generic": "Something went wrong. Try again.",
+    "network": "The server cannot be reached. Check your connection and try again.",
+    "validation": "Some of the information is not valid. Check it and try again.",
+    "session": "Your session has ended. Sign in again.",
+    "forbidden": "Your role is not allowed to do this.",
+    "notFound": "That was not found. It may belong to another clinic or no longer exist.",
+    "conflict": "That cannot be done in the current state.",
+    "rateLimited": "Too many requests. Wait a moment and try again."
   }
 }

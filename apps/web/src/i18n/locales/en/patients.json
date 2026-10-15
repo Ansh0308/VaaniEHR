@@ -1,0 +1,70 @@
+{
+  "title": "Patients",
+  "intro": "Look up a patient by phone number, or register a new one. Allergies are shown first.",
+  "lookup": {
+    "heading": "Find a patient",
+    "label": "Phone number",
+    "hint": "10 digits. The match appears by itself once all digits are typed.",
+    "find": "Find",
+    "invalid": "Enter a 10-digit phone number.",
+    "searching": "Searching",
+    "found": "Patient found",
+    "notFound": "No patient found with this number",
+    "notFoundTitle": "No patient with this number",
+    "notFoundBody": "You can register this patient now. Only the phone number is required."
+  },
+  "card": {
+    "noName": "(no name on record)",
+    "phone": "Phone",
+    "dob": "Date of birth",
+    "age": "Age {{count}}",
+    "gender": "Gender",
+    "messages": "Messages",
+    "optIn": "Allowed",
+    "optOut": "Not allowed",
+    "unknown": "Not recorded"
+  },
+  "allergies": {
+    "heading": "Allergies",
+    "none": "No allergies on record.",
+    "remove": "Remove allergy {{name}}",
+    "addLabel": "Add an allergy",
+    "addHint": "Free text, for example the name of a drug or food. Press Enter or the Add button.",
+    "add": "Add",
+    "save": "Save allergies",
+    "saved": "Allergies saved",
+    "saveFailed": "Allergies were not saved",
+    "unsaved": "You have unsaved changes to the allergy list.",
+    "tooLong": "An allergy can be at most {{max}} characters.",
+    "tooMany": "A patient can have at most {{max}} allergies.",
+    "duplicate": "This allergy is already in the list."
+  },
+  "register": {
+    "open": "Register patient",
+    "title": "Register a new patient",
+    "description": "Only the phone number is required. Everything else can be added later.",
+    "submit": "Register",
+    "errorSummary": "The patient was not registered",
+    "phone": "Phone number",
+    "name": "Name (optional)",
+    "dob": "Date of birth (optional)",
+    "dobHint": "Leave empty if unknown.",
+    "dobFuture": "The date of birth cannot be in the future.",
+    "gender": "Gender (optional)",
+    "genderUnknown": "Not recorded",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderOther": "Other",
+    "optIn": "Messages allowed",
+    "optInHint": "Whether the clinic may send this patient messages.",
+    "done": "Patient registered"
+  },
+  "session": {
+    "heading": "Open a consent page",
+    "intro": "If a doctor started a session for a patient, open its consent page here using the session code or link they gave you.",
+    "label": "Session code",
+    "hint": "The long code at the end of the consent link, for example 5eed0000-0000-4000-8000-000000000100.",
+    "invalid": "That is not a valid session code.",
+    "open": "Open consent page"
+  }
+}

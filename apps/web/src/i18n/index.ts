@@ -2,22 +2,67 @@
 // Gujarati strings are PLACEHOLDERS and need review by a Gujarati speaker (see docs/DESIGN.md).
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import enAudit from './locales/en/audit.json';
+import enAuth from './locales/en/auth.json';
 import enClinical from './locales/en/clinical.json';
+import enConsent from './locales/en/consent.json';
+import enDashboard from './locales/en/dashboard.json';
+import enPatients from './locales/en/patients.json';
+import enSettings from './locales/en/settings.json';
 import enCommon from './locales/en/common.json';
 import enDesign from './locales/en/design.json';
 import enShell from './locales/en/shell.json';
+import guAudit from './locales/gu/audit.json';
+import guAuth from './locales/gu/auth.json';
 import guClinical from './locales/gu/clinical.json';
+import guConsent from './locales/gu/consent.json';
+import guDashboard from './locales/gu/dashboard.json';
+import guPatients from './locales/gu/patients.json';
+import guSettings from './locales/gu/settings.json';
 import guCommon from './locales/gu/common.json';
 import guDesign from './locales/gu/design.json';
 import guShell from './locales/gu/shell.json';
 
 export const LANGUAGES = ['en', 'gu'] as const;
 export type Language = (typeof LANGUAGES)[number];
-export const NAMESPACES = ['common', 'shell', 'design', 'clinical'] as const;
+export const NAMESPACES = [
+  'common',
+  'shell',
+  'design',
+  'clinical',
+  'auth',
+  'dashboard',
+  'patients',
+  'consent',
+  'audit',
+  'settings',
+] as const;
 
 export const resources = {
-  en: { common: enCommon, shell: enShell, design: enDesign, clinical: enClinical },
-  gu: { common: guCommon, shell: guShell, design: guDesign, clinical: guClinical },
+  en: {
+    common: enCommon,
+    shell: enShell,
+    design: enDesign,
+    clinical: enClinical,
+    auth: enAuth,
+    dashboard: enDashboard,
+    patients: enPatients,
+    consent: enConsent,
+    audit: enAudit,
+    settings: enSettings,
+  },
+  gu: {
+    common: guCommon,
+    shell: guShell,
+    design: guDesign,
+    clinical: guClinical,
+    auth: guAuth,
+    dashboard: guDashboard,
+    patients: guPatients,
+    consent: guConsent,
+    audit: guAudit,
+    settings: guSettings,
+  },
 } as const;
 
 const STORAGE_KEY = 'vaaniehr.language';

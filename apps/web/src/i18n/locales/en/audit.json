@@ -1,0 +1,65 @@
+{
+  "title": "Audit log",
+  "introAdmin": "Every action in this clinic, newest first. The record cannot be edited.",
+  "introResearcher": "What happened in this clinic, newest first. Who and to whom are hidden for researchers.",
+  "loading": "Loading the audit log",
+  "caption": "Audit log",
+  "empty": "No audit entries yet.",
+  "emptyFiltered": "No entries match these filters.",
+  "verify": {
+    "checking": "Checking the chain",
+    "ok": "Chain verified",
+    "broken": "Chain broken at row {{seq}}",
+    "failedToRun": "Chain check could not run",
+    "again": "Verify again",
+    "adminOnly": "Chain verification is available to admins."
+  },
+  "filters": {
+    "heading": "Filters",
+    "errorSummary": "The filters were not applied",
+    "user": "User ID",
+    "userHint": "Paste a user ID, or use \"Filter by this user\" in a row.",
+    "userInvalid": "That is not a valid user ID.",
+    "action": "Action",
+    "anyAction": "Any action",
+    "from": "From date",
+    "to": "To date",
+    "rangeInvalid": "The start date must not be after the end date.",
+    "apply": "Apply filters",
+    "clear": "Clear filters",
+    "applied": "Filters applied",
+    "cleared": "Filters cleared"
+  },
+  "columns": {
+    "seq": "No.",
+    "time": "Time",
+    "action": "Action",
+    "user": "User",
+    "role": "Role",
+    "resource": "Record type",
+    "resourceId": "Record ID",
+    "filterThis": "Filter by this user",
+    "filterUser": "Filter by this user: {{id}}"
+  },
+  "export": {
+    "button": "Export CSV",
+    "done": "Exported rows: {{count}}",
+    "failed": "The export failed",
+    "truncatedTitle": "The export was cut short",
+    "truncatedBody": "Only the newest {{count}} rows were exported. Narrow the filters to export the rest.",
+    "note": "The CSV holds IDs only, uses the filters above, is limited in size, and the export itself is recorded in this log."
+  },
+  "actions": {
+    "LOGIN_SUCCEEDED": "Signed in",
+    "LOGIN_FAILED": "Sign-in failed",
+    "LOGOUT": "Signed out",
+    "PATIENT_LOOKUP": "Patient looked up",
+    "PATIENT_CREATED": "Patient registered",
+    "PATIENT_PROFILE_UPDATED": "Allergies updated",
+    "SESSION_CREATED": "Session started",
+    "CONSENT_GRANTED": "Consent given",
+    "CONSENT_WITHDRAWN": "Consent withdrawn",
+    "AUDIT_EXPORTED": "Audit log exported",
+    "SEED_APPLIED": "Fake data loaded"
+  }
+}

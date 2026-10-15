@@ -1,0 +1,69 @@
+{
+  "title": "Consent",
+  "back": "Back to my home page",
+  "loading": "Loading the consent page",
+  "notFound": "This session was not found. Check the code or link.",
+  "forPatient": "Patient: {{name}}",
+  "unnamed": "(no name on record)",
+  "status": {
+    "onTitle": "Recording consent is on record",
+    "onBody": "Audio and AI-processing consent are both on record. Recording is allowed.",
+    "offTitle": "Recording is off",
+    "offBody": "Recording stays off until both audio and AI-processing consent are on record. This cannot be skipped."
+  },
+  "ended": {
+    "title": "This session has ended",
+    "body": "Consent can no longer be added to it. It can still be withdrawn."
+  },
+  "notice": {
+    "heading": "Consent notice",
+    "version": "Notice version {{version}}. Read it to the patient in the language they prefer.",
+    "placeholder": "Placeholder wording"
+  },
+  "switches": {
+    "heading": "What the patient agrees to",
+    "intro": "Each choice is separate. Switch on only what the patient agreed to, then save."
+  },
+  "source": {
+    "patient": "The patient confirmed it themselves",
+    "staff": "Staff entered it for the patient"
+  },
+  "save": {
+    "errorSummary": "Consent was not saved",
+    "sourceLegend": "Who confirmed this consent?",
+    "sourceHint": "Required before saving.",
+    "sourceRequired": "Choose who confirmed this consent.",
+    "languageLegend": "Notice shown to the patient in",
+    "button": "Save consent",
+    "pending": "You have changes that are not saved yet.",
+    "nothing": "No changes to save.",
+    "done": "Consent saved"
+  },
+  "withdraw": {
+    "button": "Withdraw consent",
+    "title": "Withdraw all consent?",
+    "description": "Every consent that is on record for this session will be withdrawn.",
+    "confirm": "Withdraw all consent",
+    "sourceLegend": "Who withdrew it?",
+    "done": "Consent withdrawn",
+    "stopRecording": "If recording is running it must stop now. Withdrawing consent is always allowed."
+  },
+  "history": {
+    "heading": "History",
+    "caption": "Consent history for this session",
+    "empty": "No consent has been recorded for this session yet.",
+    "when": "When",
+    "scope": "Consent",
+    "change": "Change",
+    "granted": "Granted",
+    "withdrawn": "Withdrawn",
+    "by": "Recorded by",
+    "source": "Confirmed by",
+    "notice": "Notice (version / language)"
+  },
+  "gate": {
+    "title": "Recording needs consent first",
+    "body": "Audio and AI-processing consent must both be on record before anything can be recorded.",
+    "link": "Open the consent page"
+  }
+}

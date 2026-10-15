@@ -28,8 +28,7 @@
   },
   "placeholder": {
     "title": "Planned for a later phase",
-    "body": "This page ({{pg}}) is in the plan and is built in a later phase. Nothing is saved or shown here yet.",
-    "open": "Open the design system"
+    "body": "This page ({{pg}}) is in the plan and is built in a later phase. Nothing is saved or shown here yet."
   },
   "role": {
     "doctor": "Doctor",
@@ -37,5 +36,20 @@
     "admin": "Admin",
     "researcher": "Researcher"
   },
-  "skip": "Skip to main content"
+  "skip": "Skip to main content",
+  "signOut": "Sign out",
+  "errors": {
+    "home": "Go to my home page"
+  },
+  "forbidden": {
+    "title": "Not allowed",
+    "heading": "Your role cannot open this page",
+    "body": "This page is for other roles. If you think this is a mistake, ask your clinic admin."
+  },
+  "serverError": {
+    "title": "Something went wrong",
+    "heading": "The page could not be shown",
+    "body": "An unexpected problem stopped this page. Nothing you entered has been lost on the server.",
+    "retry": "Try again"
+  }
 }

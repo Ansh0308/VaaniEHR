@@ -25,7 +25,6 @@ import { Table, type Column, type SortState } from '../components/ui/Table';
 import { Tabs } from '../components/ui/Tabs';
 import { useToast } from '../components/ui/Toast';
 import { Tooltip } from '../components/ui/Tooltip';
-import { useDemoSession, ROLES, type Role } from '../demo/session';
 import { SAFETY_STATES, STATE_STYLES } from '../design/states';
 
 function Section({
@@ -136,7 +135,6 @@ export function DesignPage() {
   const en = i18n.getFixedT('en', 'design');
   const gu = i18n.getFixedT('gu', 'design');
   const toast = useToast();
-  const { role, setRole } = useDemoSession();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -234,22 +232,11 @@ export function DesignPage() {
     { id: 'sign', label: t('design:stepper.sign') },
   ];
 
-  const roleOptions = ROLES.map((r) => ({ value: r, label: t(`shell:role.${r}`) }));
-
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-10">
       <header>
         <h1 className="font-display text-3xl font-semibold text-ink">{t('design:title')}</h1>
         <p className="mt-2 max-w-prose text-base text-body">{t('design:lead')}</p>
-        <div className="mt-4 max-w-sm">
-          <Select
-            label={t('design:demoRole')}
-            hint={t('design:demoRoleHint')}
-            value={role}
-            onChange={(event) => setRole(event.target.value as Role)}
-            options={roleOptions}
-          />
-        </div>
       </header>
 
       <Section id="tokens" title={t('design:tokens.title')} intro={t('design:tokens.intro')}>

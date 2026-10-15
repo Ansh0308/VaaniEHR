@@ -1,0 +1,43 @@
+{
+  "title": "Settings and about",
+  "language": {
+    "heading": "Language",
+    "body": "Choose English or Gujarati. The choice is remembered on this device."
+  },
+  "account": {
+    "heading": "Your account",
+    "name": "Name",
+    "role": "Role",
+    "signOut": "Sign out"
+  },
+  "status": {
+    "heading": "System status",
+    "loading": "Checking the system",
+    "unknown": "The status could not be checked.",
+    "api": "Server",
+    "database": "Database",
+    "simulated": "Simulated data only",
+    "up": "Working",
+    "down": "Not reachable",
+    "simulatedOn": "On",
+    "simulatedUnknown": "Could not be confirmed",
+    "refresh": "Check again"
+  },
+  "about": {
+    "heading": "About VaaniEHR",
+    "prototypeTitle": "Research prototype. Simulated data only.",
+    "prototypeBody": "This is not approved for use with real patients. Do not enter real patient data.",
+    "intendedUseHeading": "Intended use",
+    "intendedUse": "VaaniEHR is a research prototype that helps a registered medical practitioner record a general-medicine OPD consultation and consider guideline-based follow-up questions and essential-medicine options. It informs clinical management; it does not diagnose, treat, or replace clinical judgement. Every clinical output requires review and sign-off by the practitioner. It is used only with acted or simulated consultations and is not approved for use with real patients."
+  },
+  "licences": {
+    "heading": "Licences",
+    "intro": "Open-source software shipped in this web app. The full list of everything used in the project is in docs/SBOM.md.",
+    "caption": "Licences of the web app's dependencies",
+    "package": "Package",
+    "version": "Version",
+    "licence": "Licence",
+    "empty": "No packages listed.",
+    "more": "Fonts (DM Sans, Fredoka, Noto Sans Gujarati) are self-hosted under the SIL Open Font License 1.1."
+  }
+}
