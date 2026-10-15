@@ -1,6 +1,8 @@
 import pg from 'pg';
 import { logger } from '../logger.js';
 
+import './types.js';
+
 /**
  * Lazily-connecting pool. No connection is attempted until the first query.
  * The 'error' listener is essential: pg emits it when an idle client's connection drops (e.g. the database

@@ -6,6 +6,10 @@ export type ErrorCode =
   | 'UNAUTHENTICATED'
   | 'FORBIDDEN'
   | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'ACCOUNT_LOCKED'
+  | 'RATE_LIMITED'
+  | 'CONSENT_REQUIRED'
   | 'NOT_IMPLEMENTED'
   | 'NOT_READY'
   | 'INTERNAL';
@@ -29,6 +33,12 @@ export const errors = {
   forbidden: (message = 'You do not have permission to access this resource') =>
     new AppError('FORBIDDEN', message, 403),
   notFound: (message = 'Route not found') => new AppError('NOT_FOUND', message, 404),
+  conflict: (message: string) => new AppError('CONFLICT', message, 409),
+  locked: (message = 'Account temporarily locked. Try again later.') =>
+    new AppError('ACCOUNT_LOCKED', message, 429),
+  rateLimited: (message = 'Too many requests. Please try again later.') =>
+    new AppError('RATE_LIMITED', message, 429),
+  consentRequired: (message: string) => new AppError('CONSENT_REQUIRED', message, 403),
   notImplemented: (message: string) => new AppError('NOT_IMPLEMENTED', message, 501),
   notReady: (message = 'Service not ready') => new AppError('NOT_READY', message, 503),
 };
