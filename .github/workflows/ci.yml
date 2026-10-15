@@ -15,7 +15,7 @@ concurrency:
 jobs:
   check:
     name: npm run check (lint, typecheck, tests, guards, pytest)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node: ['20', '24']
@@ -37,7 +37,7 @@ jobs:
 
   secret-scan:
     name: gitleaks secret scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,7 @@ jobs:
 
   no-shell-scripts:
     name: fail on .sh/.bat files outside .github/
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,7 +65,7 @@ jobs:
 
   no-data-files:
     name: fail if data/audio files are tracked
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -75,7 +75,7 @@ jobs:
 
   docker-build:
     name: docker build ${{ matrix.image }} (no push)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +86,7 @@ jobs:
 
   compose-config:
     name: docker compose config is valid
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -97,7 +97,7 @@ jobs:
 
   sbom:
     name: generate SBOM (artifact)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
