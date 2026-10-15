@@ -9,7 +9,8 @@ const SRC = join(__dirname, '..');
 function tsxFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
-    if (statSync(full).isDirectory()) return name === 'locales' ? [] : tsxFiles(full);
+    if (statSync(full).isDirectory())
+      return name === 'locales' || name === 'test-utils' ? [] : tsxFiles(full);
     return /\.tsx$/.test(name) && !/\.test\./.test(name) ? [full] : [];
   });
 }

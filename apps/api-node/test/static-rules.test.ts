@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { AUDIT_ACTIONS } from '../src/audit/audit.js';
 import { buildOpenApi, serialiseOpenApi } from '../src/openapi/build.js';
 import { OPENAPI_FILE } from '../src/openapi/generate.js';
 import { allRoutes } from '../src/routes/index.js';
@@ -40,6 +41,25 @@ describe('ClinicOS boundary (ADR-D20)', () => {
       const text = readFileSync(join(dir, name), 'utf8');
       expect(/references\s*:?\s*['"`(]*\s*mock_clinicos/i.test(text), name).toBe(false);
       expect(/REFERENCES\s+mock_clinicos/i.test(text), name).toBe(false);
+    }
+  });
+});
+
+describe('web and API agree on the audit actions', () => {
+  it("the web app's action list (used for the filter and labels) equals AUDIT_ACTIONS", () => {
+    const web = readFileSync(
+      join(__dirname, '..', '..', 'web', 'src', 'api', 'auditActions.ts'),
+      'utf8',
+    );
+    const listed = [...web.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]);
+    expect(listed).toEqual([...AUDIT_ACTIONS]);
+  });
+
+  it('every action has a label in both web languages', () => {
+    for (const lang of ['en', 'gu']) {
+      const file = join(__dirname, '..', '..', 'web', 'src', 'i18n', 'locales', lang, 'audit.json');
+      const labels = JSON.parse(readFileSync(file, 'utf8')).actions as Record<string, string>;
+      expect(Object.keys(labels).sort(), lang).toEqual([...AUDIT_ACTIONS].sort());
     }
   });
 });

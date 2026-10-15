@@ -2,8 +2,20 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import auditEn from './locales/en/audit.json';
+import authEn from './locales/en/auth.json';
 import commonEn from './locales/en/common.json';
+import consentEn from './locales/en/consent.json';
+import dashboardEn from './locales/en/dashboard.json';
+import patientsEn from './locales/en/patients.json';
+import settingsEn from './locales/en/settings.json';
+import auditGu from './locales/gu/audit.json';
+import authGu from './locales/gu/auth.json';
 import commonGu from './locales/gu/common.json';
+import consentGu from './locales/gu/consent.json';
+import dashboardGu from './locales/gu/dashboard.json';
+import patientsGu from './locales/gu/patients.json';
+import settingsGu from './locales/gu/settings.json';
 import clinicalEn from './locales/en/clinical.json';
 import clinicalGu from './locales/gu/clinical.json';
 import designEn from './locales/en/design.json';
@@ -18,6 +30,12 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   shell: { en: shellEn, gu: shellGu },
   design: { en: designEn, gu: designGu },
   clinical: { en: clinicalEn, gu: clinicalGu },
+  auth: { en: authEn, gu: authGu },
+  dashboard: { en: dashboardEn, gu: dashboardGu },
+  patients: { en: patientsEn, gu: patientsGu },
+  consent: { en: consentEn, gu: consentGu },
+  audit: { en: auditEn, gu: auditGu },
+  settings: { en: settingsEn, gu: settingsGu },
 };
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {
@@ -35,7 +53,8 @@ const placeholders = (text: string) => [...text.matchAll(/\{\{(\w+)\}\}/g)].map(
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
-    if (statSync(full).isDirectory()) return name === 'locales' ? [] : sourceFiles(full);
+    if (statSync(full).isDirectory())
+      return name === 'locales' || name === 'test-utils' ? [] : sourceFiles(full);
     return /\.(tsx?|ts)$/.test(name) && !/\.test\./.test(name) ? [full] : [];
   });
 }

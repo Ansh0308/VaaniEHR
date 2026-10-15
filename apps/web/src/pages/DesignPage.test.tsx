@@ -1,41 +1,24 @@
 // Behaviour and automated accessibility checks, driven through the real /design page.
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import axe from 'axe-core';
-import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import App from '../App';
-import { ToastProvider } from '../components/ui/Toast';
-import { DemoSessionProvider } from '../demo/session';
 import i18n from '../i18n';
+import { cleanupApp, renderApp } from '../test-utils/harness';
 
-function renderDesign(path = '/design') {
-  // Overlays set `inert` on #root, so mount inside a #root element like the real app.
-  const root = document.createElement('div');
-  root.id = 'root';
-  document.body.appendChild(root);
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <DemoSessionProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </DemoSessionProvider>
-    </MemoryRouter>,
-    { container: root },
-  );
+function renderDesign(role: 'doctor' | 'staff' | 'admin' | 'researcher' = 'admin') {
+  return renderApp({ role, path: '/design' });
 }
 
 beforeEach(async () => {
   await act(() => i18n.changeLanguage('en'));
 });
 afterEach(() => {
-  cleanup();
-  document.getElementById('root')?.remove();
+  cleanupApp();
 });
 
 describe('shell', () => {
   it('language toggle switches text and sets <html lang>', async () => {
-    renderDesign();
+    await renderDesign();
     expect(document.documentElement.lang).toBe('en');
     const gu = screen.getByRole('button', { name: 'ગુજરાતી' });
     expect(gu.getAttribute('aria-pressed')).toBe('false');
@@ -47,28 +30,30 @@ describe('shell', () => {
     expect(screen.getByRole('region', { name: 'પ્રોટોટાઇપ સૂચના' })).toBeTruthy();
   });
 
-  it('navigation follows the demo role', () => {
-    renderDesign();
+  it('navigation follows the signed-in role', async () => {
     const nav = () => screen.getByRole('navigation', { name: 'Main navigation' });
-    const role = screen.getByLabelText(/Demo role/);
-    fireEvent.change(role, { target: { value: 'doctor' } });
+    const doctor = await renderDesign('doctor');
     expect(within(nav()).queryByText('Doctor dashboard')).toBeTruthy();
     expect(within(nav()).queryByText('Medicine master')).toBeNull();
-    fireEvent.change(role, { target: { value: 'admin' } });
+    expect(within(nav()).queryByText('Audit log')).toBeNull();
+    doctor.unmount();
+    cleanupApp();
+    await renderDesign('admin');
     expect(within(nav()).queryByText('Medicine master')).toBeTruthy();
+    expect(within(nav()).queryByText('Audit log')).toBeTruthy();
     expect(within(nav()).queryByText('Doctor dashboard')).toBeNull();
   });
 
-  it('has a skip link and one main landmark', () => {
-    renderDesign();
+  it('has a skip link and one main landmark', async () => {
+    await renderDesign();
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toBeTruthy();
     expect(screen.getAllByRole('main')).toHaveLength(1);
   });
 });
 
 describe('overlays and widgets', () => {
-  it('modal: focus moves in, Esc closes, focus returns to the trigger', () => {
-    renderDesign();
+  it('modal: focus moves in, Esc closes, focus returns to the trigger', async () => {
+    await renderDesign();
     const trigger = screen.getByRole('button', { name: 'Open modal' });
     trigger.focus();
     fireEvent.click(trigger);
@@ -81,8 +66,8 @@ describe('overlays and widgets', () => {
     expect(document.getElementById('root')?.hasAttribute('inert')).toBe(false);
   });
 
-  it('modal: Tab wraps inside the dialog', () => {
-    renderDesign();
+  it('modal: Tab wraps inside the dialog', async () => {
+    await renderDesign();
     fireEvent.click(screen.getByRole('button', { name: 'Open modal' }));
     const dialog = screen.getByRole('dialog');
     const focusable = dialog.querySelectorAll<HTMLElement>(
@@ -95,16 +80,16 @@ describe('overlays and widgets', () => {
     expect(document.activeElement).toBe(focusable[0]);
   });
 
-  it('drawer opens and closes with Esc', () => {
-    renderDesign();
+  it('drawer opens and closes with Esc', async () => {
+    await renderDesign();
     fireEvent.click(screen.getByRole('button', { name: 'Open drawer' }));
     const drawer = screen.getByRole('dialog', { name: 'Drawer' });
     fireEvent.keyDown(drawer, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('tabs: arrow keys move selection and focus (roving tabindex)', () => {
-    renderDesign();
+  it('tabs: arrow keys move selection and focus (roving tabindex)', async () => {
+    await renderDesign();
     const tablist = screen.getByRole('tablist', { name: 'Sample tabs' });
     const tabs = within(tablist).getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
@@ -118,8 +103,8 @@ describe('overlays and widgets', () => {
     expect(tabs[0]?.getAttribute('aria-selected')).toBe('true');
   });
 
-  it('combobox: typing filters, arrows and Enter select, empty state shown', () => {
-    renderDesign();
+  it('combobox: typing filters, arrows and Enter select, empty state shown', async () => {
+    await renderDesign();
     const input = screen.getByRole('combobox', { name: /Medicine \(fake list\)/ });
     expect(input.getAttribute('aria-expanded')).toBe('false');
     fireEvent.change(input, { target: { value: 'Drug-' } });
@@ -138,8 +123,8 @@ describe('overlays and widgets', () => {
     expect(screen.getAllByText('No matching item')).toHaveLength(2);
   });
 
-  it('toast: neutral is a polite status, blocked is an alert', () => {
-    renderDesign();
+  it('toast: neutral is a polite status, blocked is an alert', async () => {
+    await renderDesign();
     fireEvent.click(screen.getByRole('button', { name: 'Show neutral toast' }));
     expect(screen.getByRole('region', { name: 'Notifications' }).textContent).toContain(
       'Saved (sample)',
@@ -148,14 +133,14 @@ describe('overlays and widgets', () => {
     expect(screen.getByRole('alert').textContent).toContain('Blocked');
   });
 
-  it('stepper marks the current step', () => {
-    renderDesign();
+  it('stepper marks the current step', async () => {
+    await renderDesign();
     const list = screen.getByRole('list', { name: 'Consultation steps' });
     expect(list.querySelectorAll('[aria-current="step"]')).toHaveLength(1);
   });
 
-  it('table is sortable with aria-sort and a caption', () => {
-    renderDesign();
+  it('table is sortable with aria-sort and a caption', async () => {
+    await renderDesign();
     const table = screen.getByRole('table', { name: /Fake patients waiting/ });
     const nameHeader = within(table).getByRole('columnheader', { name: /Name/ });
     const before = nameHeader.getAttribute('aria-sort');
@@ -165,8 +150,8 @@ describe('overlays and widgets', () => {
 });
 
 describe('clinical stubs', () => {
-  it('Start recording is disabled with a visible reason until both consents are on', () => {
-    renderDesign();
+  it('Start recording is disabled with a visible reason until both consents are on', async () => {
+    await renderDesign();
     const start = screen.getByRole('button', { name: 'Start recording' });
     if (start.hasAttribute('disabled') || start.getAttribute('aria-disabled') === 'true') {
       expect(screen.getAllByText(/Recording is off until consent/).length).toBeGreaterThan(0);
@@ -180,8 +165,8 @@ describe('clinical stubs', () => {
     }
   });
 
-  it('a blocked alert needs a typed reason of at least 8 characters to override', () => {
-    renderDesign();
+  it('a blocked alert needs a typed reason of at least 8 characters to override', async () => {
+    await renderDesign();
     const override = screen.getByRole('button', { name: 'Override and keep' });
     const reason = screen.getByLabelText(/Override reason/);
     fireEvent.change(reason, { target: { value: 'short' } });
@@ -192,8 +177,8 @@ describe('clinical stubs', () => {
     expect(screen.getByText('Overridden with your reason. This is recorded.')).toBeTruthy();
   });
 
-  it('all five safety states show an icon-backed text label', () => {
-    renderDesign();
+  it('all five safety states show an icon-backed text label', async () => {
+    await renderDesign();
     for (const label of ['Clear', 'Acknowledge', 'Blocked', 'Heard, unconfirmed', 'AI suggested']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
@@ -204,7 +189,7 @@ describe('axe (jsdom; colour contrast is checked by tokens.contrast.test.ts and 
   for (const lang of ['en', 'gu'] as const) {
     it(`/design has no axe violations in ${lang}`, async () => {
       await act(() => i18n.changeLanguage(lang));
-      const { container } = renderDesign();
+      const { container } = await renderDesign();
       const results = await axe.run(container, {
         rules: { 'color-contrast': { enabled: false }, region: { enabled: false } },
       });
