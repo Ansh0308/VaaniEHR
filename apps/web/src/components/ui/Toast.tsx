@@ -1,6 +1,7 @@
 // Toasts: a polite live region that always exists, so screen readers announce each addition.
 // "blocked" toasts use role="alert". Safety-related toasts stay until dismissed; only neutral/clear auto-dismiss.
 import { Info, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import {
   createContext,
   useCallback,
@@ -62,8 +63,11 @@ function ToastView({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
   const style = toast.kind === 'neutral' ? null : STATE_STYLES[toast.kind];
   const Icon = style ? style.Icon : Info;
   return (
-    <div
+    <motion.div
       role={toast.kind === 'blocked' ? 'alert' : undefined}
+      initial={{ opacity: 0, x: 32, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       className={cn(
         'flex items-start gap-3 rounded-md p-3 shadow-card',
         style ? style.panel : 'border border-control bg-card text-ink',
@@ -82,7 +86,7 @@ function ToastView({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
         {toast.message ? <p className="mt-0.5 text-sm">{toast.message}</p> : null}
       </div>
       <IconButton icon={X} label={t('action.dismiss')} onClick={onDismiss} className="-m-1" />
-    </div>
+    </motion.div>
   );
 }
 

@@ -6,14 +6,15 @@ import { cn, TARGET } from './cn';
 type Variant = 'primary' | 'secondary' | 'ghost';
 
 const VARIANT: Record<Variant, string> = {
-  primary: 'bg-action text-on-action hover:bg-action-hover border border-transparent',
+  primary:
+    'press-primary bg-action text-on-action hover:bg-action-hover border border-transparent shadow-card',
   secondary: 'bg-card text-ink border border-control hover:bg-sunken',
   ghost: 'bg-transparent text-ink border border-transparent hover:bg-sunken',
 };
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-base font-semibold ' +
-  'transition-colors duration-(--motion-fast) disabled:cursor-not-allowed disabled:opacity-60 ' +
+  'press inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-base font-semibold ' +
+  'disabled:cursor-not-allowed disabled:opacity-60 ' +
   'aria-disabled:cursor-not-allowed aria-disabled:opacity-60';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -80,7 +81,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       type={type ?? 'button'}
       aria-label={label}
       className={cn(
-        'inline-flex items-center justify-center rounded-md transition-colors duration-(--motion-fast)',
+        'press inline-flex items-center justify-center rounded-md',
         'disabled:cursor-not-allowed disabled:opacity-60',
         'size-11 shrink-0',
         VARIANT[variant],

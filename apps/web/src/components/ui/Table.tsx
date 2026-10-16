@@ -1,5 +1,6 @@
 // Data table: semantic <table>, caption, scope="col", sortable headers with aria-sort, keyboard-reachable scroll region.
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from './cn';
@@ -99,11 +100,17 @@ export function Table<T>({
               </td>
             </tr>
           ) : (
-            rows.map((row) => {
+            rows.map((row, rowIndex) => {
               const id = getRowId(row);
               const selected = id === selectedId;
               return (
-                <tr key={id} className={cn('border-t border-line', selected && 'bg-selected')}>
+                <motion.tr
+                  key={id}
+                  className={cn('row-hover border-t border-line', selected && 'bg-selected')}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(rowIndex, 12) * 0.03 }}
+                >
                   {columns.map((column, index) => (
                     <td
                       key={column.key}
@@ -118,7 +125,7 @@ export function Table<T>({
                       {column.render(row)}
                     </td>
                   ))}
-                </tr>
+                </motion.tr>
               );
             })
           )}

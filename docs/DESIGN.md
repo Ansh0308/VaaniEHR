@@ -58,6 +58,11 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 - **Found by running a real browser, fixed:** a landmark whose name repeated its table's name (`landmark-unique`); icon buttons shrinking below 44px in flex rows (`shrink-0`); radio and checkbox targets are measured by their label, which is the thing that is clicked; accessible names must contain the visible text (WCAG 2.5.3, so "Copy link for X", not "Copy the consent link for X"); screen-reader-only text positioned inside a wide table made the whole page scroll sideways at 375px (the table's scroll region is now a positioning context).
 - **Layouts:** every page is one column of titled sections that works at 375px; tables scroll inside their own region instead of the page.
 
+## Premium polish (ADR-D22)
+- Same palette, fonts and light theme. New tokens: `--shadow-lift`, `--shadow-press`, `--motion-slow`, `--ease-out-expo`. New utilities in `index.css`: `.bg-aurora`, `.glass`, `.lift`, `.press`, `.shimmer`, `.row-hover`, `.field-focus`, `.float-slow`.
+- Motion components live in `components/motion/motion.tsx` (`MotionRoot`, `Reveal`, `Stagger`/`StaggerItem`, `CountUp`, `PageTransition`). The login hero and the waveform are `aria-hidden` decoration with no text.
+- Reduced motion removes all of it. Nothing safety-relevant animates after it appears.
+
 ## Deliberate differences from ClinicOS
 
 - No crimson primary: crimson-like hues would read as "blocked". Ink is the action colour.

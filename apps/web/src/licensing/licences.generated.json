@@ -25,6 +25,11 @@
     "licence": "ISC"
   },
   {
+    "name": "motion",
+    "version": "13.4.6",
+    "licence": "MIT"
+  },
+  {
     "name": "react",
     "version": "18.3.1",
     "licence": "MIT"

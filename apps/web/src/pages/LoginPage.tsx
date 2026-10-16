@@ -1,18 +1,53 @@
 // PG-01 Login. E-mail and password against the configured AuthProvider (standalone: seeded fake accounts).
 // Failure handling: a focusable error summary (linked to the fields), inline field errors, and plain messages that
 // never reveal which part was wrong or whether an account exists.
-import { LogIn } from 'lucide-react';
+import { AudioWaveform, LogIn } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { homeFor, useAuth } from '../auth/AuthContext';
+import { Stagger, StaggerItem } from '../components/motion/motion';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
 import { ErrorSummary, type FormError } from '../components/ui/ErrorSummary';
 import { Input } from '../components/ui/Field';
 import { LanguageToggle } from '../shell/LanguageToggle';
 import { SimulatedDataBanner } from '../shell/SimulatedDataBanner';
+
+// decorative bar heights (percent) for the hero waveform; fixed so the picture is the same on every render
+const WAVE = [
+  28, 52, 38, 74, 46, 90, 60, 82, 42, 68, 34, 78, 50, 94, 58, 72, 40, 64, 30, 56, 36, 48, 26, 44,
+];
+
+/** Ink hero panel: a pulsing mark over a row of voice-wave bars. Pure decoration (hidden from assistive tech, no text). */
+function Hero() {
+  return (
+    <div
+      aria-hidden="true"
+      className="relative hidden overflow-hidden bg-action lg:flex lg:flex-col lg:items-center lg:justify-center"
+    >
+      <div className="absolute -top-32 -left-32 size-96 rounded-full bg-ink-2/60 blur-3xl" />
+      <div className="absolute -right-24 -bottom-24 size-96 rounded-full bg-ink-2/50 blur-3xl" />
+      <div className="relative grid size-28 place-items-center">
+        <span className="absolute inset-0 rounded-full border-2 border-on-action/40 motion-safe:animate-[vaani-ring_2.6s_ease-out_infinite]" />
+        <span className="absolute inset-0 rounded-full border-2 border-on-action/40 motion-safe:animate-[vaani-ring_2.6s_ease-out_1.3s_infinite]" />
+        <span className="grid size-20 place-items-center rounded-full bg-on-action text-ink shadow-overlay">
+          <AudioWaveform className="size-10" />
+        </span>
+      </div>
+      <div className="relative mt-16 flex h-32 items-center gap-1.5">
+        {WAVE.map((height, index) => (
+          <span
+            key={index}
+            className="w-1.5 origin-center rounded-full bg-on-action/80 motion-safe:animate-[vaani-wave_1.8s_ease-in-out_infinite]"
+            style={{ height: `${height}%`, animationDelay: `${index * 0.09}s` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const EMAIL_ID = 'login-email';
 const PASSWORD_ID = 'login-password';
@@ -87,66 +122,87 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-page">
+    <div className="flex min-h-screen flex-col">
       <SimulatedDataBanner />
-      <header className="flex justify-end p-4">
-        <LanguageToggle />
-      </header>
-      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-md flex-1 p-4">
-        <h1 className="font-display text-3xl font-semibold text-ink">{t('common:appName')}</h1>
-        <p className="mt-1 text-base text-body">{t('auth:login.intro')}</p>
+      <div className="grid flex-1 lg:grid-cols-2">
+        <Hero />
+        <div className="bg-aurora flex flex-col">
+          <header className="flex justify-end p-4">
+            <LanguageToggle />
+          </header>
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center p-4"
+          >
+            <Stagger className="flex flex-col">
+              <StaggerItem>
+                <h1 className="font-display text-4xl font-semibold text-ink">
+                  {t('common:appName')}
+                </h1>
+                <p className="mt-1 text-base text-body">{t('auth:login.intro')}</p>
+              </StaggerItem>
 
-        <form
-          onSubmit={onSubmit}
-          noValidate
-          aria-labelledby="login-heading"
-          className="mt-6 flex flex-col gap-4 rounded-lg border border-line bg-card p-5 shadow-card"
-        >
-          <h2 id="login-heading" className="text-xl font-semibold text-ink">
-            {t('auth:login.heading')}
-          </h2>
+              <StaggerItem>
+                <form
+                  onSubmit={onSubmit}
+                  noValidate
+                  aria-labelledby="login-heading"
+                  className="mt-6 flex flex-col gap-4 rounded-lg border border-line bg-card p-6 shadow-lift"
+                >
+                  <h2 id="login-heading" className="text-xl font-semibold text-ink">
+                    {t('auth:login.heading')}
+                  </h2>
 
-          {sessionEnded ? (
-            <Banner kind="acknowledge" live title={t('auth:login.sessionEnded.title')}>
-              {t('auth:login.sessionEnded.body')}
-            </Banner>
-          ) : null}
+                  {sessionEnded ? (
+                    <Banner kind="acknowledge" live title={t('auth:login.sessionEnded.title')}>
+                      {t('auth:login.sessionEnded.body')}
+                    </Banner>
+                  ) : null}
 
-          <ErrorSummary ref={summaryRef} title={t('auth:login.errors.summary')} errors={errors} />
+                  <ErrorSummary
+                    ref={summaryRef}
+                    title={t('auth:login.errors.summary')}
+                    errors={errors}
+                  />
 
-          <Input
-            id={EMAIL_ID}
-            label={t('auth:login.email')}
-            type="email"
-            autoComplete="username"
-            inputMode="email"
-            required
-            requiredText={t('common:status.required')}
-            value={email}
-            error={fieldErrors.email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              acknowledgeSessionEnded();
-            }}
-          />
-          <Input
-            id={PASSWORD_ID}
-            label={t('auth:login.password')}
-            type="password"
-            autoComplete="current-password"
-            required
-            requiredText={t('common:status.required')}
-            value={password}
-            error={fieldErrors.password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
+                  <Input
+                    id={EMAIL_ID}
+                    label={t('auth:login.email')}
+                    type="email"
+                    autoComplete="username"
+                    inputMode="email"
+                    required
+                    requiredText={t('common:status.required')}
+                    value={email}
+                    error={fieldErrors.email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      acknowledgeSessionEnded();
+                    }}
+                  />
+                  <Input
+                    id={PASSWORD_ID}
+                    label={t('auth:login.password')}
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    requiredText={t('common:status.required')}
+                    value={password}
+                    error={fieldErrors.password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
 
-          <Button type="submit" variant="primary" icon={LogIn} loading={busy}>
-            {t('auth:login.submit')}
-          </Button>
-          <p className="text-xs text-body">{t('auth:login.hint')}</p>
-        </form>
-      </main>
+                  <Button type="submit" variant="primary" icon={LogIn} loading={busy}>
+                    {t('auth:login.submit')}
+                  </Button>
+                  <p className="text-xs text-body">{t('auth:login.hint')}</p>
+                </form>
+              </StaggerItem>
+            </Stagger>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

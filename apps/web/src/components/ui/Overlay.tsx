@@ -1,5 +1,6 @@
 // Modal and Drawer: dialog semantics, focus trap, Escape to close, focus restored on close, page inert behind.
 import { X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -100,7 +101,12 @@ function OverlayFrame({
   initialFocusRef,
   placement,
   panelClass,
-}: OverlayBase & { placement: string; panelClass: string }) {
+  enter,
+}: OverlayBase & {
+  placement: string;
+  panelClass: string;
+  enter: { opacity: number; x?: number; y?: number; scale?: number };
+}) {
   const { t } = useTranslation('common');
   const titleId = useId();
   const descId = useId();
@@ -108,13 +114,19 @@ function OverlayFrame({
   useOverlay(open, onClose, dismissible, panelRef, initialFocusRef);
   if (!open) return null;
   return createPortal(
-    <div
-      className={cn('fixed inset-0 z-40 flex bg-scrim', placement)}
+    <motion.div
+      className={cn('fixed inset-0 z-40 flex bg-scrim backdrop-blur-[2px]', placement)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
       onMouseDown={(event) => {
         if (dismissible && event.target === event.currentTarget) onClose();
       }}
     >
-      <div
+      <motion.div
+        initial={enter}
+        animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 34 }}
         ref={panelRef}
         role="dialog"
         aria-modal="true"
@@ -140,8 +152,8 @@ function OverlayFrame({
         {footer ? (
           <div className="flex flex-wrap justify-end gap-2 border-t border-line p-4">{footer}</div>
         ) : null}
-      </div>
-    </div>,
+      </motion.div>
+    </motion.div>,
     document.body,
   );
 }
@@ -152,6 +164,7 @@ export function Modal(props: OverlayBase) {
       {...props}
       placement="items-center justify-center p-4"
       panelClass="w-full max-w-lg rounded-lg"
+      enter={{ opacity: 0, y: 16, scale: 0.96 }}
     />
   );
 }
@@ -162,6 +175,7 @@ export function Drawer({ side = 'right', ...props }: OverlayBase & { side?: 'lef
       {...props}
       placement={side === 'right' ? 'justify-end' : 'justify-start'}
       panelClass="h-full w-full max-w-sm"
+      enter={{ opacity: 0, x: side === 'right' ? 48 : -48 }}
     />
   );
 }

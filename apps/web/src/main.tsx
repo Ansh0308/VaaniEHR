@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './auth/AuthContext';
+import { MotionRoot } from './components/motion/motion';
 import { ToastProvider } from './components/ui/Toast';
 import './i18n';
 import './index.css';
@@ -16,9 +17,11 @@ createRoot(root).render(
     <BrowserRouter>
       <ErrorBoundary>
         <AuthProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
+          <MotionRoot>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </MotionRoot>
         </AuthProvider>
       </ErrorBoundary>
     </BrowserRouter>

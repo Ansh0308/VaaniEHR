@@ -38,6 +38,7 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | jose | 6.2.12 | runtime | apps/api-node/package.json | MIT | Signs/verifies the dev provider's HS256 JWT (ADR-D4 amendment): pure ESM, no native build, strict algorithm and claim checks. |
 | npm | jsdom | 27.4.0 | dev | apps/web/package.json | MIT | Browser-like DOM for Vitest component tests. 27.x chosen: 30.x needs Node 22+. |
 | npm | lucide-react | 1.57.0 | runtime | apps/web/package.json | ISC | Icon set (already used by ClinicOS); every safety state pairs an icon with a text label, never colour alone. |
+| npm | motion | 13.4.6 | runtime | apps/web/package.json | MIT | Animation for the premium finish (ADR-D22): entrances, sliding nav highlight, count-up, spring dialogs; honours reduced motion. Owner approved 2026-10-16. |
 | npm | node-pg-migrate | 8.0.4 | dev | apps/api-node/package.json | MIT | SQL-first migration tool (migration 0001: schema_info + vector extension); standard, Postgres-only, no ORM lock-in. |
 | npm | pg | 8.23.1 | runtime | apps/api-node/package.json | MIT | PostgreSQL client for api-node (ADR-D1); used for the readiness check and, later, all data access. |
 | npm | playwright-core | 1.64.1 | dev | apps/web/package.json | Apache-2.0 | Drives the Chrome already installed (CI runner and developer machine) to run axe and measure touch targets on /design. Apache-2.0, dev only; no browser binaries are downloaded, so it stays light. |
@@ -79,7 +80,7 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 
 ## 2. Licence review summary
 
-- npm packages in lockfile: 522; pip distributions installed: 26
+- npm packages in lockfile: 527; pip distributions installed: 26
 - Packages needing review or with unverified licence: 3
 
 | Ecosystem | Package | Version | Declared licence | Status |
@@ -114,6 +115,7 @@ Source: `skills-lock.json`. Licence read from the installed skill files in `.age
 | healthcare-eval-harness | affaan-m/ecc | UNVERIFIED | UNVERIFIED | no licence declared in skill files; check the source repository |
 | healthcare-phi-compliance | affaan-m/ecc | UNVERIFIED | UNVERIFIED | no licence declared in skill files; check the source repository |
 | playwright-best-practices | currents-dev/playwright-best-practices-skill | MIT | ok (permissive) | SKILL.md frontmatter |
+| ui-ux-pro-max | nextlevelbuilder/ui-ux-pro-max-skill | UNVERIFIED | UNVERIFIED | skill files not present on this machine |
 | vitest | antfu/skills | UNVERIFIED | UNVERIFIED | no licence declared in skill files; check the source repository |
 | web-design-guidelines | vercel-labs/agent-skills | UNVERIFIED | UNVERIFIED | no licence declared in skill files; check the source repository |
 
@@ -410,6 +412,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | form-data | 4.0.6 | MIT | dev | ok (permissive) |
 | formidable | 3.5.4 | MIT | dev | ok (permissive) |
 | forwarded | 0.2.0 | MIT | runtime | ok (permissive) |
+| framer-motion | 13.5.1 | MIT | runtime | ok (permissive) |
 | fresh | 2.0.0 | MIT | runtime | ok (permissive) |
 | fsevents | 2.3.3 | MIT | dev, optional | ok (permissive) |
 | function-bind | 1.1.2 | MIT | runtime | ok (permissive) |
@@ -505,6 +508,9 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | mime-types | 3.0.2 | MIT | runtime | ok (permissive) |
 | minimatch | 10.2.6 | BlueOak-1.0.0 | dev | ok (permissive) |
 | minipass | 7.1.3 | BlueOak-1.0.0 | dev | ok (permissive) |
+| motion | 13.4.6 | MIT | runtime | ok (permissive) |
+| motion-dom | 13.5.1 | MIT | runtime | ok (permissive) |
+| motion-utils | 13.5.0 | MIT | runtime | ok (permissive) |
 | ms | 2.1.3 | MIT | runtime | ok (permissive) |
 | nanoid | 3.3.20 | MIT | dev | ok (permissive) |
 | natural-compare | 1.4.0 | MIT | dev | ok (permissive) |
@@ -610,6 +616,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | tough-cookie | 6.0.2 | BSD-3-Clause | dev | ok (permissive) |
 | tr46 | 6.0.0 | MIT | dev | ok (permissive) |
 | ts-api-utils | 2.5.0 | MIT | dev | ok (permissive) |
+| tslib | 2.8.1 | 0BSD | runtime | ok (permissive) |
 | tsx | 4.23.15 | MIT | dev | ok (permissive) |
 | type-check | 0.4.0 | MIT | dev | ok (permissive) |
 | type-is | 2.1.0 | MIT | runtime | ok (permissive) |

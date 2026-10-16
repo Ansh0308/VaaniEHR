@@ -40,5 +40,10 @@
       "in_progress": "In progress",
       "ended": "Ended"
     }
+  },
+  "stats": {
+    "open": "Open sessions",
+    "consent": "Recording consent given",
+    "total": "Sessions in this list"
   }
 }

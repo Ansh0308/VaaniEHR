@@ -2,7 +2,7 @@
 //  - the doctor's own sessions (drafts = sessions that are not ended; sign-off arrives in a later phase);
 //  - a way to start a session for a patient (phone lookup, then "Start session", then the consent page);
 //  - the queue / tokens come from ClinicOS, so the area is a clearly labelled placeholder. No fake queue, no numbers.
-import { ClipboardCheck, Hourglass, Link2, Play } from 'lucide-react';
+import { ClipboardCheck, Hourglass, Link2, ListChecks, Mic, Play } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -18,7 +18,9 @@ import { Banner } from '../components/ui/Banner';
 import { StateBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState, Skeleton } from '../components/ui/Feedback';
+import { StatCard } from '../components/ui/StatCard';
 import { Table, type Column } from '../components/ui/Table';
+import { Stagger, StaggerItem } from '../components/motion/motion';
 import { useToast } from '../components/ui/Toast';
 
 const linkClass =
@@ -51,6 +53,7 @@ export function DashboardPage() {
   const sessions: SessionListItem[] =
     state.status === 'ready' ? [...state.data.items, ...extra] : [];
   const open = sessions.filter((s) => s.status !== 'ended').length;
+  const withConsent = sessions.filter((s) => s.consent.recordingAllowed).length;
 
   async function loadMore() {
     if (!cursor) return;
@@ -155,6 +158,24 @@ export function DashboardPage() {
         </p>
       </header>
 
+      {state.status === 'ready' ? (
+        <Stagger className="grid gap-4 sm:grid-cols-3">
+          <StaggerItem>
+            <StatCard icon={Hourglass} label={t('dashboard:stats.open')} value={open} />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard icon={Mic} label={t('dashboard:stats.consent')} value={withConsent} />
+          </StaggerItem>
+          <StaggerItem>
+            <StatCard
+              icon={ListChecks}
+              label={t('dashboard:stats.total')}
+              value={sessions.length}
+            />
+          </StaggerItem>
+        </Stagger>
+      ) : null}
+
       <section aria-labelledby="start-heading" className="flex flex-col gap-3">
         <h2 id="start-heading" className="text-2xl font-semibold text-ink">
           {t('dashboard:start.heading')}
@@ -173,7 +194,7 @@ export function DashboardPage() {
           </Banner>
         ) : null}
         {lookup.patient ? (
-          <div className="flex flex-col gap-3 rounded-lg border border-line bg-card p-4 shadow-card">
+          <div className="lift flex flex-col gap-3 rounded-lg border border-line bg-card p-4 shadow-card">
             <p className="text-lg font-semibold text-ink">
               {lookup.patient.name ?? t('dashboard:sessions.noName')}
             </p>

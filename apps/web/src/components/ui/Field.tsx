@@ -89,7 +89,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           hint ? `${fieldId}-hint` : undefined,
           error ? `${fieldId}-error` : undefined,
         )}
-        className={cn(CONTROL, error ? 'border-blocked-accent' : 'border-control', className)}
+        className={cn(
+          CONTROL,
+          'field-focus',
+          error ? 'border-blocked-accent' : 'border-control',
+          className,
+        )}
         {...rest}
       />
     </FieldFrame>

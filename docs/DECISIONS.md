@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D21 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D22 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -219,6 +219,7 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | i18next | Internationalisation core: English and Gujarati namespaces, no hard-coded UI strings (NFR-UX-02). |
 | react-i18next | React bindings for i18next (hooks, language switching). |
 | lucide-react | Icon set (already used by ClinicOS); every safety state pairs an icon with a text label, never colour alone. |
+| motion | Animation for the premium finish (ADR-D22): entrances, sliding nav highlight, count-up, spring dialogs; honours reduced motion. Owner approved 2026-10-16. |
 | @fontsource-variable/dm-sans | Self-hosted body font (ClinicOS body font, OFL-1.1); no runtime requests to Google Fonts. |
 | @fontsource-variable/fredoka | Self-hosted page-title font (ClinicOS display font, OFL-1.1). Latin only, so every stack falls back to Noto Sans Gujarati. |
 | @fontsource-variable/noto-sans-gujarati | Self-hosted Gujarati font (OFL-1.1); ClinicOS fonts have no Gujarati glyphs. Loaded by unicode-range only when Gujarati text appears. |
@@ -257,3 +258,9 @@ Runtime rules (apply to every new service): non-root user; no secrets in images 
 |---|---|---|---|
 | gitleaks CLI | 8.30.1 (Linux x64 tarball, SHA-256 pinned in `.github/workflows/ci.yml`) | MIT | Secret scan over every commit (Hard Rule 5). Replaced `gitleaks/gitleaks-action@v2`, whose first CI run on the public repo failed with "Unexpected exit code [1]" while the same scan run locally with this CLI found nothing (11 commits). The same command is documented in the README. |
 
+### ADR-D22 Premium polish and motion layer (2026-10-16)
+- **Decision.** Phase 2B pages get a premium finish: layered shadows, a glass sticky top bar, a cream "aurora" page background, a sliding navigation highlight, an ink hero panel with a decorative voice waveform on the login page, count-up stat cards on the doctor dashboard, staggered entrances for lists and table rows, spring dialogs and toasts, shimmer skeletons and press/hover feedback.
+- **Unchanged (owner choice "keep palette").** Palette, fonts, light-only theme and the five safety colours. No new hue was added; the aurora and shimmer use existing cream tokens only.
+- **Dependency.** `motion` 13.4.6 (MIT), exact pin, recorded in `docs/SBOM.md`. Owner approved on 2026-10-16.
+- **Safety of motion.** All motion is decoration; content is in the DOM from the first render. `MotionConfig reducedMotion="user"` plus the global CSS rule switch it off for people who ask. Page changes animate on enter only (no exit delay). Tests set `skipAnimations`, and the browser scans wait for entrances to finish before measuring contrast.
+- **Skill.** `ui-ux-pro-max` was installed from `nextlevelbuilder/ui-ux-pro-max-skill` (owner request) and used for motion timing, feedback and loading guidance. Its advice to animate sparingly was followed for safety-relevant content: allergy panels, consent state and audit data do not move once shown.

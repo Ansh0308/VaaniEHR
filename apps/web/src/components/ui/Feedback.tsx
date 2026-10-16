@@ -18,7 +18,9 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-control bg-card p-8 text-center">
-      <Icon aria-hidden="true" className="size-10 text-ink" />
+      <span className="float-slow grid size-16 place-items-center rounded-full bg-sunken">
+        <Icon aria-hidden="true" className="size-9 text-ink" />
+      </span>
       {createElement(`h${headingLevel}`, { className: 'text-xl font-semibold text-ink' }, title)}
       <p className="max-w-prose text-base text-body">{description}</p>
       {action}
@@ -44,7 +46,7 @@ export function Skeleton({
           key={index}
           aria-hidden="true"
           className={cn(
-            'h-4 rounded-sm bg-selected motion-safe:animate-pulse',
+            'shimmer h-4 rounded-sm bg-selected',
             index === lines - 1 ? 'w-2/3' : 'w-full',
           )}
         />

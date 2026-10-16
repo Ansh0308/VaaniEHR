@@ -41,6 +41,19 @@ export function killTree(child) {
 export async function scanPage(page, label) {
   const problems = [];
   await page.evaluate(() => document.fonts.ready);
+  // entrance animations fade content in; measure contrast only once they are done (endless decorative loops are ignored)
+  await page.waitForFunction(
+    () =>
+      document
+        .getAnimations()
+        .every(
+          (a) =>
+            a.effect?.getComputedTiming().iterations === Infinity || a.playState === 'finished',
+        ),
+    undefined,
+    { timeout: 10000 },
+  );
+  await page.waitForTimeout(900); // JS-driven entrances (motion) are not in getAnimations()
   if (!(await page.evaluate(() => typeof window.axe !== 'undefined'))) {
     await page.addScriptTag({ content: axeSource });
   }
