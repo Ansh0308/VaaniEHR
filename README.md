@@ -70,7 +70,7 @@ npm run medicines:codes -- <file.csv>      # maps licensed SNOMED / ATC codes fr
 npm run medicines:translit -- <file.csv>   # loads a Gujarati-reviewed search list (refuses rows without reviewer and date; dry run unless --apply)
 npm run openapi             # regenerates apps\api-node\openapi.json (a test fails if it is stale)
 npm run coverage:api        # api-node tests with a coverage report (thresholds on audit/auth/consent)
-npm run e2e                 # end-to-end test: real API + database + Chrome, fake data (needs db:up, db:migrate, seed:dev)
+npm run e2e                 # end-to-end test: real API + Chrome on its own throwaway database (needs db:up only; it never touches your dev data)
 npm run licences:web        # regenerates the licence list shown on the Settings page
 npm run build               # production builds of web and api-node
 npm run a11y                # browser accessibility check of /design (axe, 44px targets; needs Chrome)
