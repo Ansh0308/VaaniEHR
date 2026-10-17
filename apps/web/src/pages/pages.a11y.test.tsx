@@ -14,6 +14,8 @@ import {
   type Handler,
 } from '../test-utils/harness';
 
+import { fakeMedicine, fakeSummary } from '../test-utils/medicineFixtures';
+
 afterEach(cleanupApp);
 
 const session = {
@@ -224,6 +226,49 @@ const CASES: Case[] = [
         },
       });
       await screen.findByRole('table', { name: /.+/ });
+    },
+  },
+  {
+    name: 'medicine master',
+    show: async (language) => {
+      await renderApp({
+        role: 'admin',
+        path: '/admin/medicines',
+        language,
+        routes: {
+          'GET /medicines': () => ({
+            data: { items: [fakeMedicine()], total: 1, limit: 25, offset: 0 },
+          }),
+          'GET /medicines/categories': () => ({
+            data: { categories: [{ name: 'Section One', count: 1 }] },
+          }),
+        },
+      });
+      await screen.findByRole('table', { name: /.+/ });
+    },
+  },
+  {
+    name: 'templates list',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: '/admin/templates',
+        language,
+        routes: {
+          'GET /templates': () => ({
+            data: { items: [fakeSummary()], total: 1, limit: 25, offset: 0 },
+          }),
+        },
+      });
+      await screen.findByRole('table', { name: /.+/ });
+    },
+  },
+  {
+    name: 'template builder',
+    show: async (language) => {
+      await renderApp({ role: 'doctor', path: '/admin/templates/new', language });
+      fireEvent.click(await screen.findByRole('button', { name: /Add medicine|દવા ઉમેરો/ }));
+      await screen.findAllByRole('combobox');
     },
   },
   {

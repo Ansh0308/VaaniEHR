@@ -98,7 +98,7 @@ describe('route guards (the API enforces permissions; these show each role only 
   });
 
   it('planned pages open a labelled placeholder (nothing is faked)', async () => {
-    await renderApp({ role: 'admin', path: '/admin/medicines' });
+    await renderApp({ role: 'admin', path: '/admin/pathways' });
     expect(await screen.findByRole('heading', { name: 'Planned for a later phase' })).toBeTruthy();
   });
 });
