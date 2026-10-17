@@ -69,3 +69,6 @@ Generic names always rank above brand names: exact, starts with, a word starts w
 
 ## Not done in 3A
 Template API and UI (F11), brand data (no source with clear terms yet), SNOMED/ATC codes, drug interaction and dose rules, a medicine admin page, and clinician review.
+
+## The admin page
+The medicine master page (PG-12, admin) shows these rows with their source as "PDF p. 27, printed 26" and a "Not reviewed" badge. It has no CSV upload; this importer is the supported route for bulk loads (ADR-D24).
