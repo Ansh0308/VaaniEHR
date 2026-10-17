@@ -64,7 +64,7 @@ export function Table<T>({
                     <button
                       type="button"
                       onClick={() => onSort(column.key)}
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-sm font-semibold text-ink"
+                      className="inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-sm font-semibold text-ink"
                     >
                       {column.header}
                       {active ? (
