@@ -34,8 +34,21 @@ const appDbPassword =
     ? existingApp
     : randomBytes(18).toString('hex');
 
+// Phase 4A: the signed internal token secret is the SAME value in api-node and asr-py; the audio master key lives only
+// in asr-py. Losing AUDIO_MASTER_KEY makes stored audio unrecoverable (docs/ASR.md).
+const existingInternal =
+  parseEnv(read('apps/api-node') ?? '').get('INTERNAL_SERVICE_SECRET') ??
+  parseEnv(read('apps/asr-py') ?? '').get('INTERNAL_SERVICE_SECRET');
+const internalSecret =
+  existingInternal && !existingInternal.startsWith('REPLACE_ME')
+    ? existingInternal
+    : randomBytes(32).toString('hex');
+const audioMasterKey = randomBytes(32).toString('hex');
+
 function fill(text) {
   return text
+    .replaceAll('REPLACE_ME_INTERNAL_SECRET', internalSecret)
+    .replaceAll('REPLACE_ME_AUDIO_MASTER_KEY', audioMasterKey)
     .replaceAll('REPLACE_ME_APP_DB_PASSWORD', appDbPassword)
     .replaceAll('REPLACE_ME_DB_PASSWORD', dbPassword)
     .replaceAll('REPLACE_ME_DEV_AUTH_SECRET', devSecret);
@@ -88,5 +101,37 @@ for (const target of targets) {
     );
   } else {
     console.log(`kept    ${target}/.env (already up to date)`);
+  }
+}
+
+// Least privilege (Phase 4A): vendor keys belong to asr-py only. Move SARVAM_API_KEY and HF_TOKEN from the api-node
+// .env to the asr-py .env (never overwriting a value already there) and remove them from the api-node file.
+// Nothing is printed except the names that moved.
+{
+  const from = join(ROOT, 'apps', 'api-node', '.env');
+  const to = join(ROOT, 'apps', 'asr-py', '.env');
+  if (existsSync(from) && existsSync(to)) {
+    const keep = [];
+    const moved = [];
+    let dest = readFileSync(to, 'utf8');
+    const haveDest = parseEnv(dest);
+    for (const line of readFileSync(from, 'utf8').split('\n')) {
+      const m = /^(SARVAM_API_KEY|HF_TOKEN)=(.*?)\r?$/.exec(line);
+      if (!m) {
+        keep.push(line);
+        continue;
+      }
+      if (!haveDest.has(m[1]) && m[2] !== '') {
+        dest = `${dest}${dest.endsWith('\n') ? '' : '\n'}${m[1]}=${m[2]}\n`;
+      }
+      moved.push(m[1]);
+    }
+    if (moved.length > 0) {
+      writeFileSync(to, dest, { encoding: 'utf8' });
+      writeFileSync(from, keep.join('\n'), { encoding: 'utf8' });
+      console.log(
+        `moved ${moved.join(', ')} from apps/api-node/.env to apps/asr-py/.env (values not shown)`,
+      );
+    }
   }
 }

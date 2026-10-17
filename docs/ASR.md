@@ -1,0 +1,19 @@
+# ASR.md - the speech service (apps/asr-py), Phase 4A
+
+Vendor facts: `docs/vendor-notes.md`. Decisions: ADR-D25 (transport) and ADR-D26 (consent token, storage, spend caps) in `docs/DECISIONS.md`.
+
+## Keys and secrets (never printed, never committed)
+- `npm run setup:env` creates `apps/asr-py/.env` values: `INTERNAL_SERVICE_SECRET` (the same value is written to `apps/api-node/.env`) and `AUDIO_MASTER_KEY` (asr-py only). It also MOVES `SARVAM_API_KEY` and `HF_TOKEN` from the api-node file to the asr-py file and removes them from the api-node file (least privilege).
+- **If `AUDIO_MASTER_KEY` is lost, stored audio cannot be recovered. Back it up with the same care as a password.** Changing it makes older files unreadable. (Planned: a key id in each file header so a new key can be added later.)
+- `INTERNAL_SERVICE_SECRET` can be rotated by running setup with the old lines removed in both files; tokens are short-lived, so nothing is lost.
+
+## Sarvam terms: what the pages say (read 2026-10-17; unclear points are for the owner to settle with Sarvam)
+Pages: https://www.sarvam.ai/terms-of-service (v2.0, 29 Jul 2026; the text was cut off in the fetch, so section 17 is a summary), https://www.sarvam.ai/privacy-policy, https://www.sarvam.ai/trust-center, https://docs.sarvam.ai/api/platform/data-retention, https://docs.sarvam.ai/api/platform/faq. The EULA and the DPA text were not read (the DPA is "request only").
+- **Training on customer inputs: the default is unclear.** The Privacy Policy heading says "Opt-In" but its text says content is used unless you opt out. The docs FAQ says an Owner can switch the "Model training" toggle off (Settings > Organisation > General) and does not state the default. The Trust Center says data is never used to train models for OTHER customers, which is not "never trains". **Treat training as ON until the toggle is switched off and Sarvam confirms in writing that 0-day retention also excludes training.**
+- **Retention:** docs say retention is indefinite until an Owner sets a period; "0 days" is available for Model APIs (Settings > Workspace > Data retention, Owner only, not retroactive). The Privacy Policy says 30 days after last access: the two conflict; the docs are the operative behaviour. Usage and API logs are kept 1 year.
+- **Where:** India is the primary location (Azure Central India), but the Privacy Policy allows transfers to the US and EU and the Terms say data may be transferred; India-only for API audio is not guaranteed in writing.
+- **Health data:** the Privacy Policy says Sarvam does not knowingly collect sensitive data (health is listed); there is no HIPAA or BAA language and no public sub-processor list. A DPA exists on request. No page bans medical use of the API, but the Terms (10.1) bar medical advice or high-stakes automated decisions without qualified human review: documentation by a doctor who reviews is consistent with that; this is not a legal opinion.
+- **Before ANY clip of another person is sent to Sarvam (owner decision, 2026-10-17):** the owner (1) switches model training off and sets 0-day retention in the Sarvam dashboard, (2) asks Sarvam to confirm in writing the five points in OWNER_ACTIONS, and (3) has ethics approval and the actor's audio-release. Until then only the owner's own voice may be used, and the code enforces a `SARVAM_ALLOW_THIRD_PARTY_AUDIO=true` switch that defaults to false (step 7).
+
+## Not adopted
+- **Indic-Transcribe** (huggingface.co/bodhan-ai/indic-transcribe-core, 25 languages) is named on the IndicConformer model card as the recommended newer model. Not read, not adopted: a possible future baseline.

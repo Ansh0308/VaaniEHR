@@ -1,3 +1,7 @@
 fastapi==0.143.0
 pydantic==2.14.1
 uvicorn==0.54.0
+# Phase 4A (approved 2026-10-17): WebSocket transport, audio arrays, AES-256-GCM for stored audio
+websockets==17.2
+numpy==2.4.6
+cryptography==50.0.2
