@@ -23,5 +23,5 @@ Things only the owner can arrange (people, approvals, licences, accounts). The a
 - **NLEM PDF:** `data/medicines/raw/nlem2022.pdf` and `reportnlem2022.pdf` (moved there from `DOCUMENTS/` on 2026-10-15). The folder is git-ignored, so they are never committed (ADR-D18).
 - **Credentials:** the assistant never asks for secrets in chat and never writes them to a tracked file. When a phase needs a key (Sarvam, LLM provider, WhatsApp, ABDM), the assistant will ask you first, then you put the value in your own git-ignored `.env`.
 - **Phase 3A (medicine master) is built and waits for your review.** Nothing blocks it. The clinician reviewer is still "not started", so every medicine row has `reviewed_on` empty (a hard block for Phase 6, not for 3A). The Gujarati reviewer is needed before Gujarati medicine search is enabled and, as before, for the consent notice and UI text, which are placeholders until a speaker has read them.
-- **Phase 3B** (templates API and UI, F11) does not need anything from you.
+- **Phase 3B** (templates API and UI, F11) is built. From you: a Gujarati reviewer for the frequency labels (OCI-013), a clinician's view on the frequency list (OCI-014), and a yes or no on the permission table in ADR-D24 (doctor and admin only).
 - Legal wording of the consent notice is the owner's and the institution's, not the assistant's.
