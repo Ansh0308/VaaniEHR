@@ -40,6 +40,7 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | lucide-react | 1.57.0 | runtime | apps/web/package.json | ISC | Icon set (already used by ClinicOS); every safety state pairs an icon with a text label, never colour alone. |
 | npm | motion | 13.4.6 | runtime | apps/web/package.json | MIT | Animation for the premium finish (ADR-D22): entrances, sliding nav highlight, count-up, spring dialogs; honours reduced motion. Owner approved 2026-10-16. |
 | npm | node-pg-migrate | 8.0.4 | dev | apps/api-node/package.json | MIT | SQL-first migration tool (migration 0001: schema_info + vector extension); standard, Postgres-only, no ORM lock-in. |
+| npm | pdfjs-dist | 5.5.207 | dev | apps/api-node/package.json | Apache-2.0 | Reads the NLEM 2022 PDF as positioned text in the medicine importer (ADR-D23), dev only, never loaded by the API. Apache-2.0. PyMuPDF (AGPL) is deliberately not used. Owner approved 2026-10-17. |
 | npm | pg | 8.23.1 | runtime | apps/api-node/package.json | MIT | PostgreSQL client for api-node (ADR-D1); used for the readiness check and, later, all data access. |
 | npm | playwright-core | 1.64.1 | dev | apps/web/package.json | Apache-2.0 | Drives the Chrome already installed (CI runner and developer machine) to run axe and measure touch targets on /design. Apache-2.0, dev only; no browser binaries are downloaded, so it stays light. |
 | npm | prettier | 3.9.10 | dev | package.json | MIT | Single code formatter (NFR-MAINT-01); checked in `npm run lint`. |
@@ -80,7 +81,7 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 
 ## 2. Licence review summary
 
-- npm packages in lockfile: 527; pip distributions installed: 26
+- npm packages in lockfile: 541; pip distributions installed: 26
 - Packages needing review or with unverified licence: 3
 
 | Ecosystem | Package | Version | Declared licence | Status |
@@ -121,7 +122,14 @@ Source: `skills-lock.json`. Licence read from the installed skill files in `.age
 
 ## 5. Models and datasets
 
-None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NLEM 2022, DDInter, benchmark) here with licence and version when it is adopted (PRD §12, NFR-COMP-02).
+Models: none used yet. Add each model (ASR, LLM, embeddings) here with licence and version when it is adopted (PRD §12, NFR-COMP-02).
+
+| Dataset | Version | Licence / terms | Use | Where it lives |
+|---|---|---|---|---|
+| National List of Essential Medicines (NLEM) | 2022 | Government of India publication (CDSCO). Reuse terms NOT yet checked: OWNER_ACTIONS. | Seeds `medicine_master` (FR-F5-01), ADR-D23 | PDF in `data/medicines/raw/` and every derived file in `data/medicines/` (git-ignored, ADR-D18); tests use synthetic fixtures only |
+| NLEM 2022 committee report | 2022 | Government of India publication (CDSCO). Reuse terms NOT yet checked. | Read only for the 384 / 386 note; nothing is copied from it | `data/medicines/raw/` (git-ignored) |
+
+Not adopted yet: DDInter 2.0 (CC BY-NC-SA 4.0, non-commercial: licence check first), SNOMED CT / CDCI / ATC (licensed releases the owner must supply), brand datasets of unclear provenance.
 
 ## 6. All npm packages (from package-lock.json)
 
@@ -211,6 +219,18 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | @jridgewell/trace-mapping | 0.3.31 | MIT | dev | ok (permissive) |
 | @keyv/bigmap | 1.3.1 | MIT | dev | ok (permissive) |
 | @keyv/serialize | 1.1.1 | MIT | dev | ok (permissive) |
+| @napi-rs/canvas | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-android-arm64 | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-darwin-arm64 | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-darwin-x64 | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-arm-gnueabihf | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-arm64-gnu | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-arm64-musl | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-riscv64-gnu | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-x64-gnu | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-linux-x64-musl | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-win32-arm64-msvc | 0.1.100 | MIT | dev, optional | ok (permissive) |
+| @napi-rs/canvas-win32-x64-msvc | 0.1.100 | MIT | dev, optional | ok (permissive) |
 | @napi-rs/lzma-linux-x64-gnu | 1.5.1 | MIT | dev, optional | ok (permissive) |
 | @noble/hashes | 1.8.0 | MIT | dev | ok (permissive) |
 | @paralleldrive/cuid2 | 2.3.1 | MIT | dev | ok (permissive) |
@@ -518,6 +538,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | negotiator | 0.6.3 | MIT | runtime | ok (permissive) |
 | negotiator | 1.1.0 | MIT | runtime | ok (permissive) |
 | node-pg-migrate | 8.0.4 | MIT | dev | ok (permissive) |
+| node-readable-to-web-readable-stream | 0.4.2 | MIT | dev, optional | ok (permissive) |
 | node-releases | 2.0.58 | MIT | dev | ok (permissive) |
 | object-assign | 4.1.1 | MIT | runtime | ok (permissive) |
 | object-inspect | 1.13.4 | MIT | runtime | ok (permissive) |
@@ -535,6 +556,7 @@ None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NL
 | path-scurry | 2.0.2 | BlueOak-1.0.0 | dev | ok (permissive) |
 | path-to-regexp | 8.4.2 | MIT | runtime | ok (permissive) |
 | pathe | 2.0.3 | MIT | dev | ok (permissive) |
+| pdfjs-dist | 5.5.207 | Apache-2.0 | dev | ok (permissive) |
 | pg | 8.23.1 | MIT | runtime | ok (permissive) |
 | pg-cloudflare | 1.4.1 | MIT | runtime, optional | ok (permissive) |
 | pg-connection-string | 2.14.1 | MIT | runtime | ok (permissive) |

@@ -398,7 +398,14 @@ push(
   '',
   '## 5. Models and datasets',
   '',
-  'None used yet (Phase 1.1). Add each model (ASR, LLM, embeddings) and dataset (NLEM 2022, DDInter, benchmark) here with licence and version when it is adopted (PRD §12, NFR-COMP-02).',
+  'Models: none used yet. Add each model (ASR, LLM, embeddings) here with licence and version when it is adopted (PRD §12, NFR-COMP-02).',
+  '',
+  '| Dataset | Version | Licence / terms | Use | Where it lives |',
+  '|---|---|---|---|---|',
+  '| National List of Essential Medicines (NLEM) | 2022 | Government of India publication (CDSCO). Reuse terms NOT yet checked: OWNER_ACTIONS. | Seeds `medicine_master` (FR-F5-01), ADR-D23 | PDF in `data/medicines/raw/` and every derived file in `data/medicines/` (git-ignored, ADR-D18); tests use synthetic fixtures only |',
+  '| NLEM 2022 committee report | 2022 | Government of India publication (CDSCO). Reuse terms NOT yet checked. | Read only for the 384 / 386 note; nothing is copied from it | `data/medicines/raw/` (git-ignored) |',
+  '',
+  'Not adopted yet: DDInter 2.0 (CC BY-NC-SA 4.0, non-commercial: licence check first), SNOMED CT / CDCI / ATC (licensed releases the owner must supply), brand datasets of unclear provenance.',
 );
 
 push(

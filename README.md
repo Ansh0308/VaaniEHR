@@ -65,6 +65,9 @@ npm run dev:web             # web on http://localhost:5173
 npm run dev:asr             # asr-py on http://localhost:8000
 npm run check:unit          # same as check, but WITHOUT the database tests (no Docker needed)
 npm run verify:audit        # re-computes the audit hash chain; reports the first broken row (see docs\AUDIT_CHAIN.md: record the head hash and count)
+npm run import:nlem         # reads the private NLEM PDF (data\medicines\raw), writes CSV + review sheet under data\medicines, loads medicine_master, prints the report (add -- --dry-run to skip the database)
+npm run medicines:codes -- <file.csv>      # maps licensed SNOMED / ATC codes from a file you supply (dry run unless --apply)
+npm run medicines:translit -- <file.csv>   # loads a Gujarati-reviewed search list (refuses rows without reviewer and date; dry run unless --apply)
 npm run openapi             # regenerates apps\api-node\openapi.json (a test fails if it is stale)
 npm run coverage:api        # api-node tests with a coverage report (thresholds on audit/auth/consent)
 npm run e2e                 # end-to-end test: real API + database + Chrome, fake data (needs db:up, db:migrate, seed:dev)
