@@ -40,6 +40,11 @@ Each count is a different thing: numbered lines (with the category headings amon
 
 A held row is not lost: check it against the PDF and add it through `POST /api/v1/medicines` as an admin, with a `source` such as "NLEM 2022 p. 27 (checked by hand)". It starts as not reviewed.
 
+## Checking the extraction by hand
+- `npm run medicines:inspect -- held` prints each held row with the PDF's own cells (column, height on the page, text) next to the importer's reading. Nothing is guessed; what it cannot split is said so.
+- `npm run medicines:inspect -- sample --n 20 --seed 3 --docs docs/NLEM_SPOTCHECK.md` prints a seeded random sample of loaded rows with the PDF cells beside each, and writes only page numbers and item numbers to `docs/NLEM_SPOTCHECK.md` for the owner's pass / fail record.
+- **Manual transcriptions:** `data/medicines/nlem2022.overrides.csv` (private; read by the importer only if it exists, never created by a script). Each row needs its item number, PDF page and a note that says "manually transcribed, confirmed by owner". Every item number that has override rows has ALL of its parsed rows replaced by them. Route, codes and review columns are refused. The file stays private because it holds NLEM text and the reuse terms are unchecked (ADR-D18).
+
 ## What is deliberately empty
 - `route`: the NLEM does not state one; the prescribing doctor chooses it (OPEN_CLINICAL_ITEMS OCI-001).
 - `snomed_code`, `atc_code`: until a licensed release is loaded with `medicines:codes` (every row needs a licence note).

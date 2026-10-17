@@ -36,6 +36,7 @@
     "import:nlem": "node scripts/import-nlem.mjs",
     "medicines:codes": "node scripts/load-medicine-codes.mjs",
     "medicines:translit": "node scripts/load-translit-gu.mjs",
+    "medicines:inspect": "node scripts/inspect-nlem.mjs",
     "licences:web": "node scripts/web-licences.mjs",
     "e2e": "node scripts/e2e.mjs",
     "verify:audit": "node scripts/verify-audit-chain.mjs",

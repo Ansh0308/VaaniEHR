@@ -15,6 +15,7 @@ import {
 } from './nlemFiles.js';
 import { loadNlemRows, type LoadResult } from './nlemLoad.js';
 import { parseNlem } from './nlemParser.js';
+import { applyOverrides, parseOverridesCsv } from './overrides.js';
 import { readPdfItems } from './pdfItems.js';
 import { formatReport } from './nlemReport.js';
 
@@ -40,6 +41,27 @@ mkdirSync(DIR, { recursive: true });
 
 const pages = await readPdfItems(pdfPath);
 const result = parseNlem(pages, { nlemYear: 2022 });
+
+// Manual transcriptions confirmed by the owner (private file; read only if it exists).
+const overridesPath = join(DIR, 'nlem2022.overrides.csv');
+let overrideLine = 'Manual overrides: none (no data/medicines/nlem2022.overrides.csv).';
+if (existsSync(overridesPath)) {
+  const { rows: overrideRows, errors } = parseOverridesCsv(readFileSync(overridesPath, 'utf8'));
+  if (errors.length > 0) {
+    process.stderr.write('nlem2022.overrides.csv was refused; nothing was imported:\n');
+    for (const e of errors) process.stderr.write(`  ${e}\n`);
+    process.exit(1);
+  }
+  const applied = applyOverrides(
+    result.rows,
+    overrideRows,
+    (page, ref) => result.entries.find((e) => e.page === page && e.ref === ref)?.category ?? null,
+    2022,
+  );
+  result.rows = applied.rows;
+  result.stats.formulationRows = applied.rows.length;
+  overrideLine = `Manual overrides: ${applied.addedRows} rows for ${applied.items.length} item numbers (${applied.items.join(', ')}); they replaced ${applied.replacedRows} parsed rows.`;
+}
 
 const csvPath = join(DIR, 'nlem2022.csv');
 const prevPath = join(DIR, 'nlem2022.prev.csv');
@@ -100,5 +122,11 @@ const report = formatReport({
     'data/medicines/nlem2022.report.txt',
   ],
 });
-writeFileSync(join(DIR, 'nlem2022.report.txt'), report, 'utf8');
-process.stdout.write(report);
+const reportWithOverrides = report.replace(
+  'Files written (git-ignored):',
+  `${overrideLine}
+
+Files written (git-ignored):`,
+);
+writeFileSync(join(DIR, 'nlem2022.report.txt'), reportWithOverrides, 'utf8');
+process.stdout.write(reportWithOverrides);

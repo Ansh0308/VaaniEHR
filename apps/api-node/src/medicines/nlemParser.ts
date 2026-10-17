@@ -79,12 +79,23 @@ export const HOLD_REASONS: ReadonlySet<ReviewReason> = new Set([
   'CONTINUES_ON_NEXT_PAGE',
 ]);
 
+/** One line of a row's cells exactly as the PDF holds it (y = height on the page, larger = higher). */
+export interface RawLine {
+  column: 'name' | 'level' | 'form';
+  y: number;
+  text: string;
+}
+
 export interface ReviewItem {
   page: number;
   ref: string;
   name: string;
   /** The text as extracted (name, level and form lines), for the person checking it. */
   rawText: string;
+  /** The same text line by line, in the order the PDF holds it, with each line's column and height. */
+  rawLines: RawLine[];
+  /** Where the geometric cross-check would have put the lines, when it disagreed with the reading above. */
+  geometryReading?: { name: string; forms: string[] };
   reasons: ReviewReason[];
   /** true = no row was made from it (it is not loaded). */
   held: boolean;
@@ -102,6 +113,8 @@ export interface ParsedEntry {
   name: string;
   category: string | null;
   formLines: string[];
+  /** The row's cells as the PDF holds them, line by line (for spot-checks). */
+  rawLines: RawLine[];
   /** How the row's text sat against its item number: how far off-centre, and how many large gaps inside it. */
   fit: { offset: number; gaps: number };
 }
@@ -312,8 +325,11 @@ interface Raw {
   ref: string;
   y: number;
   name: string;
+  nameLines: Line[];
   levels: Array<{ y: number; text: string }>;
   forms: Line[];
+  /** What the geometric cross-check read for this row, kept when it disagreed. */
+  geometry?: { name: string; forms: string[] };
   context: Context;
   reasons: Set<ReviewReason>;
   /** Vertical extent of the row's own text (names and forms), used to place level items. */
@@ -514,6 +530,14 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
           ref: event.ref,
           y: event.y,
           name: nameLines.map((l) => l.text).join(' '),
+          nameLines,
+          geometry:
+            same(nameLines, nameMatch.runs[index]) && same(formLines, formMatch.runs[index])
+              ? undefined
+              : {
+                  name: (nameMatch.runs[index] ?? []).map((l) => l.text).join(' '),
+                  forms: (formMatch.runs[index] ?? []).map((l) => l.text),
+                },
           levels: bucket.levels.map((i) => ({
             y: i.y,
             text: normaliseSpaces(i.str).replace(/\s*,\s*/g, ','),
@@ -570,7 +594,7 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
 }
 
 /** Joins a wrapped form line onto the one before it, only on the strict cues in the header comment. */
-function joinWrapped(lines: Line[]): { lines: Line[]; joined: number } {
+export function joinWrapped(lines: Line[]): { lines: Line[]; joined: number } {
   const out: Line[] = [];
   let joined = 0;
   for (const line of lines) {
@@ -640,9 +664,23 @@ function finish(
     const rawText = [raw.name, levelText, ...raw.forms.map((l) => l.text)]
       .filter(Boolean)
       .join(' | ');
+    const rawLines: RawLine[] = [
+      ...raw.nameLines.map((l) => ({ column: 'name' as const, y: l.y, text: l.text })),
+      ...raw.levels.map((l) => ({ column: 'level' as const, y: l.y, text: l.text })),
+      ...raw.forms.map((l) => ({ column: 'form' as const, y: l.y, text: l.text })),
+    ];
     const flag = (reasons: ReviewReason[]) => {
       const held = reasons.some((r) => HOLD_REASONS.has(r));
-      review.push({ page: raw.page, ref: raw.ref, name: cleaned.name, rawText, reasons, held });
+      review.push({
+        page: raw.page,
+        ref: raw.ref,
+        name: cleaned.name,
+        rawText,
+        rawLines,
+        ...(raw.geometry ? { geometryReading: raw.geometry } : {}),
+        reasons,
+        held,
+      });
       return held;
     };
 
@@ -693,6 +731,7 @@ function finish(
       name: cleaned.name,
       category,
       formLines: wrapped.lines.map((l) => l.text),
+      rawLines,
       fit: raw.fit,
     });
 
@@ -736,6 +775,7 @@ function finish(
             ref: raw.ref,
             name: cleaned.name,
             rawText,
+            rawLines,
             reasons: ['LEVELS_DIFFER_ON_REPEAT'],
             held: false,
           });
