@@ -135,6 +135,24 @@ const fixture = (route: RouteDef): Call => {
     'GET /sessions': { path: '/sessions' },
     'GET /sessions/:id': { path: `/sessions/${sessionId}` },
     'GET /sessions/:id/consent': { path: `/sessions/${sessionId}/consent` },
+    'POST /internal/audio-assets': {
+      path: '/internal/audio-assets',
+      body: {
+        assetId: sessionId,
+        sessionId,
+        storageKey: 'x',
+        durationS: 1,
+        bytes: 1,
+        retentionUntil: '2027-01-01T00:00:00Z',
+      },
+    },
+    'POST /internal/audio-assets/:id/deleted': {
+      path: `/internal/audio-assets/${sessionId}/deleted`,
+      body: { reason: 'manual' },
+    },
+    'GET /internal/sessions/:id/consent-status': {
+      path: `/internal/sessions/${sessionId}/consent-status`,
+    },
     'POST /sessions/:id/asr-token': { path: `/sessions/${consentedSessionId}/asr-token` },
     'POST /sessions/:id/consent': { path: `/sessions/${sessionId}/consent`, body: consentGrant },
     'POST /sessions/:id/consent/withdraw': {
@@ -239,7 +257,10 @@ describe('role x endpoint matrix', () => {
         const res = await send(route, actor);
         const label = `${key} as ${actor} -> ${res.status}`;
 
-        if (expected === 'public') {
+        if (expected === 'service') {
+          // internal route: a user token (any role) or no token is simply not a service signature
+          expect(res.status, label).toBe(401);
+        } else if (expected === 'public') {
           // public: nobody is refused for their ROLE (a bad login is 401, never 403)
           expect(res.status, label).not.toBe(403);
         } else if (actor === 'anonymous') {

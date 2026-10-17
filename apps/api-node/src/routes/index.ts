@@ -1,6 +1,7 @@
 // The complete list of /api/v1 routes. Add new routes ONLY here (through a *Routes() factory) so RBAC, audit and
 // OpenAPI coverage tests see them.
 import { auditRoutes } from '../audit/routes.js';
+import { asrInternalRoutes } from '../asr/internalRoutes.js';
 import { asrRoutes } from '../asr/routes.js';
 import { authRoutes } from '../auth/routes.js';
 import type { Config } from '../config/env.js';
@@ -20,6 +21,7 @@ export function allRoutes(config: Config): RouteDef[] {
     ...sessionRoutes(),
     ...consentRoutes(),
     ...asrRoutes(),
+    ...asrInternalRoutes(),
     ...auditRoutes(),
     ...medicineRoutes(),
     ...templateRoutes(),

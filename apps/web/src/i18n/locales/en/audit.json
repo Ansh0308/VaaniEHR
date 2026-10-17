@@ -62,6 +62,8 @@
     "AUDIT_EXPORTED": "Audit log exported",
     "SEED_APPLIED": "Fake data loaded",
     "ASR_TOKEN_ISSUED": "Speech access token issued",
+    "AUDIO_STORED": "Recording stored (encrypted)",
+    "AUDIO_PURGED": "Recording deleted",
     "MEDICINE_IMPORTED": "Medicine list imported",
     "MEDICINE_CODES_LOADED": "Medicine codes loaded",
     "MEDICINE_CREATED": "Medicine added",

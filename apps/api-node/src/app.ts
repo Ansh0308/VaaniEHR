@@ -39,7 +39,14 @@ export function createApp(deps: AppDeps): Express {
       exposedHeaders: ['Content-Disposition', 'X-Exported-Rows', 'X-Export-Truncated'],
     }),
   );
-  app.use(express.json({ limit: '100kb' }));
+  app.use(
+    express.json({
+      limit: '100kb',
+      verify: (req, _res, buf) => {
+        (req as express.Request).rawBody = buf;
+      },
+    }),
+  );
 
   // Liveness: the process is up. No dependencies are touched.
   app.get('/health', (_req, res) => {

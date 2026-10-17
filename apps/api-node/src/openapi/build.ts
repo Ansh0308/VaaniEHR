@@ -93,6 +93,7 @@ export function buildOpenApi(defs: readonly RouteDef[]): JsonObject {
     op['responses'] = responses;
 
     if (def.access.kind === 'public') op['security'] = [];
+    else if (def.access.kind === 'service') op['security'] = [{ serviceSignature: [] }];
     else op['security'] = [{ bearerAuth: [] }];
     if (def.access.kind === 'permission') {
       op['x-permission'] = def.access.permission;
@@ -115,7 +116,16 @@ export function buildOpenApi(defs: readonly RouteDef[]): JsonObject {
     servers: [{ url: API_PREFIX }],
     paths,
     components: {
-      securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        serviceSignature: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-Service-Signature',
+          description:
+            'Internal routes for asr-py only: HMAC-SHA256 over timestamp, method, path and body hash, with X-Service-Timestamp (ADR-D26).',
+        },
+      },
       schemas: {
         ErrorEnvelope: {
           type: 'object',

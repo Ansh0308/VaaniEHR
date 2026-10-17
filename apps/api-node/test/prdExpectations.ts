@@ -5,7 +5,10 @@ import type { Role } from '../src/auth/types.js';
  * src/auth/permissions.ts. Consent: PRD 4 / Journey A say staff + doctor, 2.2 says staff/admin: the union is used
  * (ADR-D20, PRD_ERRATA).
  */
-export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenticated'> = {
+export const PRD_EXPECTED: Record<
+  string,
+  readonly Role[] | 'public' | 'authenticated' | 'service'
+> = {
   'POST /auth/login': 'public',
   'POST /auth/logout': 'authenticated',
   'GET /auth/me': 'authenticated',
@@ -21,6 +24,10 @@ export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenti
   'POST /sessions/:id/consent': ['doctor', 'staff', 'admin'],
   // only the session's own doctor starts recording (PRD 2.2); consent is checked again inside the route
   'POST /sessions/:id/asr-token': ['doctor'],
+  // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)
+  'POST /internal/audio-assets': 'service',
+  'POST /internal/audio-assets/:id/deleted': 'service',
+  'GET /internal/sessions/:id/consent-status': 'service',
   'POST /sessions/:id/consent/withdraw': ['doctor', 'staff', 'admin'],
   'GET /audit': ['admin', 'researcher'],
   'GET /audit/verify': ['admin'],

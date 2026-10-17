@@ -111,6 +111,8 @@ describe('OpenAPI', () => {
       const op = doc.paths[path]?.[route.method];
       expect(op, `${route.method} ${route.path} missing from OpenAPI`).toBeTruthy();
       if (route.access.kind === 'public') expect(op?.['security']).toEqual([]);
+      else if (route.access.kind === 'service')
+        expect(op?.['security']).toEqual([{ serviceSignature: [] }]);
       else expect(op?.['security']).toEqual([{ bearerAuth: [] }]);
       if (route.access.kind === 'permission') {
         expect(op?.['x-permission']).toBe(route.access.permission);

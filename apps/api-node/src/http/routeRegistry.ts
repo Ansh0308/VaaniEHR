@@ -11,6 +11,7 @@ import type { Request, RequestHandler, Response, Router } from 'express';
 import type { ZodType } from 'zod';
 import { appendAudit, type AuditAction, type AuditEntry } from '../audit/audit.js';
 import { authenticate, requirePermission } from '../auth/middleware.js';
+import { authenticateService } from '../auth/serviceAuth.js';
 import type { PermissionId } from '../auth/permissions.js';
 import type { AuthContext } from '../auth/types.js';
 import { withTransaction, type Queryable } from '../db/tx.js';
@@ -20,7 +21,11 @@ import { validate } from './validate.js';
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 export type Access =
-  { kind: 'public' } | { kind: 'authenticated' } | { kind: 'permission'; permission: PermissionId };
+  | { kind: 'public' }
+  | { kind: 'authenticated' }
+  | { kind: 'permission'; permission: PermissionId }
+  /** Internal route called by asr-py, signed with INTERNAL_SERVICE_SECRET; accepts no user token. */
+  | { kind: 'service' };
 
 /** Fields a handler may set on an audit row; actor, clinic, ip and request id are filled in from the request. */
 export type AuditInput = Omit<AuditEntry, 'ip' | 'requestId'> & {
@@ -116,6 +121,13 @@ export function authedRoute<P = unknown, B = unknown, Q = unknown>(
   return finish({ kind: 'authenticated' }, def);
 }
 
+/** An INTERNAL route for asr-py (signed request, no user). Handlers must name their own audit actor role. */
+export function serviceRoute<P = unknown, B = unknown, Q = unknown>(
+  def: RouteBase<P, B, Q> & { handler: Erase<PublicContext<P, B, Q>> },
+): RouteDef {
+  return finish({ kind: 'service' }, def);
+}
+
 export function permRoute<P = unknown, B = unknown, Q = unknown>(
   permission: PermissionId,
   def: RouteBase<P, B, Q> & { handler: Erase<AuthedContext<P, B, Q>> },
@@ -167,7 +179,11 @@ function auditFields(req: Request, input: AuditInput): AuditEntry {
 export function mountRoutes(router: Router, defs: readonly RouteDef[], services: Services): void {
   for (const def of defs) {
     const chain: RequestHandler[] = [...def.pre];
-    if (def.access.kind !== 'public') chain.push(authenticate(services.auth));
+    if (def.access.kind === 'service') {
+      chain.push(authenticateService(() => services.config.internalServiceSecret));
+    } else if (def.access.kind !== 'public') {
+      chain.push(authenticate(services.auth));
+    }
     if (def.access.kind === 'permission') chain.push(requirePermission(def.access.permission));
     chain.push(
       validate({

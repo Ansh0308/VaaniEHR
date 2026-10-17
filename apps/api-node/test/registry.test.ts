@@ -55,7 +55,7 @@ describe('route registry structure', () => {
   it("each route's access rule equals the PRD expectation", () => {
     for (const route of routes) {
       const expected = PRD_EXPECTED[key(route)];
-      if (expected === 'public' || expected === 'authenticated') {
+      if (expected === 'public' || expected === 'authenticated' || expected === 'service') {
         expect(route.access.kind, key(route)).toBe(expected);
       } else {
         expect(route.access.kind, key(route)).toBe('permission');

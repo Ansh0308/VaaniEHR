@@ -1,0 +1,8 @@
+{
+  "secret": "cross-language-test-secret-0123456789abcdef0123",
+  "timestamp": 1792238400,
+  "method": "POST",
+  "path": "/api/v1/internal/audio-assets/abc/deleted",
+  "body": "{\"reason\":\"retention\"}",
+  "signature": "bd7f704eb0b9d93788dff44de88e4539f23c0864838cdaafdb09f3980871a717"
+}

@@ -35,6 +35,8 @@ declare global {
       id: string;
       /** Set by the authenticate middleware. */
       auth?: AuthContext;
+      /** The exact request body bytes (kept for service-signature checks). */
+      rawBody?: Buffer;
     }
   }
 }

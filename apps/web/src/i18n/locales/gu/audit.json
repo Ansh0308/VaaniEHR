@@ -62,6 +62,8 @@
     "AUDIT_EXPORTED": "ઑડિટ લૉગ નિકાસ થયો",
     "SEED_APPLIED": "નકલી ડેટા લોડ થયો",
     "ASR_TOKEN_ISSUED": "સ્પીચ સેવાનો ઍક્સેસ ટોકન અપાયો",
+    "AUDIO_STORED": "રેકોર્ડિંગ સંગ્રહિત (એન્ક્રિપ્ટેડ)",
+    "AUDIO_PURGED": "રેકોર્ડિંગ કાઢી નંખાયું",
     "MEDICINE_IMPORTED": "દવાની યાદી આયાત થઈ",
     "MEDICINE_CODES_LOADED": "દવાના કોડ લોડ થયા",
     "MEDICINE_CREATED": "દવા ઉમેરાઈ",
