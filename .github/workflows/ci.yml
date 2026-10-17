@@ -139,10 +139,7 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
-      # migrations as the owner role, then the least-privilege role gets its password
-      - run: npm run db:migrate
-      # generates RANDOM fake logins into data/dev-credentials.json (git-ignored); the values are never printed
-      - run: npm run seed:dev
+      # the run creates, migrates and seeds its own throwaway database (random fake logins in a temp file) and drops it
       # uses the Chrome that is preinstalled on the runner; no browser download
       - run: npm run e2e
         env:

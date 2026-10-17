@@ -4,9 +4,10 @@
 //
 //   npm run e2e
 //
-// Needs: the database up and migrated, and the fake users seeded (`npm run db:up`, `npm run db:migrate`,
-// `npm run seed:dev`). Sign-in passwords are read from the git-ignored data/dev-credentials.json that the seed
-// generated (locally) or generated in this CI run (in CI). They are never printed, logged or put in a screenshot.
+// Needs: the database SERVER up (`npm run db:up`) and MIGRATION_DATABASE_URL / APP_DB_PASSWORD. The run NEVER touches
+// the real development database: it creates its own throwaway database (vaaniehr_e2e_<random>), migrates and seeds it,
+// keeps the generated fake logins in a temp file, and drops both in a finally block. Passwords are never printed,
+// logged or put in a screenshot.
 //
 // Story: staff registers a fake patient and adds an allergy -> a doctor starts a session for that patient -> staff
 // records consent on the session -> the doctor sees the session with consent on record -> an admin sees the chain
@@ -15,9 +16,11 @@
 // pages are scanned again in Gujarati. Sign-in is done with the keyboard only.
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import pg from 'pg';
 import { chromium } from 'playwright-core';
 import { findChrome, killTree, scanPage } from './browser-lib.mjs';
 
@@ -40,28 +43,16 @@ if (!ownerUrl || !appPassword) {
   );
   process.exit(2);
 }
-const credentialsFile = join(root, 'data', 'dev-credentials.json');
-if (!existsSync(credentialsFile)) {
-  console.error(
-    'data/dev-credentials.json is missing. Run `npm run seed:dev` first (it generates the fake logins).',
-  );
-  process.exit(2);
-}
-const credentials = JSON.parse(readFileSync(credentialsFile, 'utf8'));
+// the throwaway database and the temp file for its fake logins (the real data/dev-credentials.json is never read or written)
+const dbName = `vaaniehr_e2e_${randomBytes(4).toString('hex')}`;
+const credentialsFile = join(tmpdir(), `${dbName}-credentials.json`);
+let credentials = {};
 const EMAIL = {
   admin: 'admin@example.invalid',
   doctor: 'doctor1@example.invalid',
   staff: 'staff@example.invalid',
   researcher: 'researcher@example.invalid',
 };
-for (const email of Object.values(EMAIL)) {
-  if (!credentials[email]) {
-    console.error(
-      `No generated login for ${email}. Run \`npm run seed:dev -- --reset-passwords\`.`,
-    );
-    process.exit(2);
-  }
-}
 const chromePath = findChrome();
 if (!chromePath) {
   console.error('No Chrome/Chromium found. Install one or set CHROME_PATH.');
@@ -69,7 +60,9 @@ if (!chromePath) {
 }
 
 // the API connects as the least-privilege role, on the same database the owner URL names
-const appUrl = new URL(ownerUrl);
+const throwawayOwnerUrl = new URL(ownerUrl);
+throwawayOwnerUrl.pathname = `/${dbName}`;
+const appUrl = new URL(throwawayOwnerUrl);
 appUrl.username = 'vaani_app';
 appUrl.password = appPassword;
 
@@ -196,9 +189,39 @@ async function scan(page, label) {
   note(`scanned: ${label}`);
 }
 
+// ---------------------------------------------------------------- throwaway database helpers
+let databaseCreated = false;
+/** Runs one statement on the database SERVER (as the owner role) without touching any application database. */
+async function adminQuery(sql) {
+  const client = new pg.Client({ connectionString: ownerUrl });
+  await client.connect();
+  try {
+    await client.query(sql);
+  } finally {
+    await client.end();
+  }
+}
+
 // ---------------------------------------------------------------- main
 let browser;
 try {
+  // ------------------------------------------------ throwaway database: created, migrated, seeded, dropped in `finally`
+  note(`creating the throwaway database ${dbName}`);
+  await adminQuery(`CREATE DATABASE ${dbName}`);
+  databaseCreated = true;
+  const throwawayEnv = {
+    ...process.env,
+    MIGRATION_DATABASE_URL: throwawayOwnerUrl.toString(),
+    DEV_CREDENTIALS_FILE: credentialsFile,
+    SIMULATED_DATA_ONLY: 'true',
+  };
+  await runToEnd(['run', 'db:migrate'], throwawayEnv);
+  await runToEnd(['run', 'seed:dev'], throwawayEnv);
+  credentials = JSON.parse(readFileSync(credentialsFile, 'utf8'));
+  for (const email of Object.values(EMAIL)) {
+    if (!credentials[email]) throw new Error(`the seed made no login for ${email}`);
+  }
+
   note('building the web app and starting the API and the preview server');
   await runToEnd(['run', 'build', '--workspace', 'apps/web'], {
     ...process.env,
@@ -580,6 +603,20 @@ try {
 } finally {
   await browser?.close();
   for (const child of spawned) killTree(child);
+  // always remove what this run made: the throwaway database and its login file
+  rmSync(credentialsFile, { force: true });
+  if (databaseCreated) {
+    await new Promise((r) => setTimeout(r, 1500)); // let the API's connections close first
+    try {
+      await adminQuery(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
+      console.log(`dropped the throwaway database ${dbName}`);
+    } catch (error) {
+      console.error(
+        `COULD NOT DROP ${dbName}: ${String(error?.message ?? error).split(String.fromCharCode(10))[0]} (drop it by hand)`,
+      );
+      failures.push(`the throwaway database ${dbName} was not dropped`);
+    }
+  }
 }
 
 console.log(`\ne2e steps completed: ${steps.length}`);

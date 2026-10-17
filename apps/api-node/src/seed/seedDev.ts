@@ -17,7 +17,9 @@ import { withTransaction } from '../db/tx.js';
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, '..', '..', '..', '..');
 export const SEED_DIR = join(REPO_ROOT, 'seed', 'dev');
-export const CREDENTIALS_FILE = join(REPO_ROOT, 'data', 'dev-credentials.json');
+/** DEV_CREDENTIALS_FILE lets a throwaway run (the e2e test) keep its logins out of the real file. */
+export const CREDENTIALS_FILE =
+  process.env.DEV_CREDENTIALS_FILE ?? join(REPO_ROOT, 'data', 'dev-credentials.json');
 
 export interface SeedClinic {
   id: string;
