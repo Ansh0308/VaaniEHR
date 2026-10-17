@@ -156,6 +156,12 @@ async function signOut(page) {
   await page.waitForURL(/\/login/);
 }
 
+/** Moves inside the app the way an in-app link would (a full page load would drop the in-memory token). */
+async function goInApp(page, path) {
+  await page.evaluate((to) => window.history.pushState({}, '', to), path);
+  await page.evaluate(() => window.dispatchEvent(new PopStateEvent('popstate')));
+}
+
 /** axe + 44px targets, then a 375px-wide check that the PAGE does not scroll sideways. */
 async function scan(page, label) {
   failures.push(...(await scanPage(page, label)));
@@ -428,6 +434,76 @@ try {
       .waitFor();
     check(true, 'the export appears in the audit log');
     await scan(page, 'en audit (export recorded)');
+    await context.close();
+  }
+
+  // ------------------------------------------------ admin adds a medicine and a clinic-wide template; the doctor loads it
+  const medicineName = `Drug-E2E-${phoneTail} (FAKE)`;
+  const templateName = `E2E clinic-wide template ${phoneTail} (FAKE)`;
+  {
+    const { context, page } = await newPage(browser);
+    await signIn(page, 'admin');
+    await goInApp(page, '/admin/medicines');
+    await page.getByRole('heading', { name: 'Medicine master', level: 1 }).waitFor();
+    await scan(page, 'en medicine master');
+    await page.getByRole('button', { name: 'Add medicine' }).first().click();
+    const dialog = page.getByRole('dialog', { name: 'Add a medicine' });
+    await dialog.waitFor();
+    await dialog.getByLabel(/Generic name/).fill(medicineName);
+    await dialog.getByLabel('Strength').fill('1 mg');
+    await dialog.getByLabel('Dose form').fill('Tablet');
+    await dialog.getByLabel('Source (required)').fill('e2e fixture (fake)');
+    await scan(page, 'en medicine dialog');
+    await dialog.getByRole('button', { name: 'Save medicine' }).click();
+    await page.getByText('Medicine added').first().waitFor();
+
+    await goInApp(page, '/admin/templates');
+    await page.getByRole('heading', { name: 'Prescription templates', level: 1 }).waitFor();
+    await scan(page, 'en template list (admin)');
+    await page.getByRole('button', { name: 'New template' }).first().click();
+    await page.getByRole('heading', { name: 'New template', level: 1 }).waitFor();
+    await page.getByLabel('Template name (required)').fill(templateName);
+    await page.getByRole('radio', { name: /Clinic-wide/ }).check();
+    await page.getByRole('button', { name: 'Add medicine' }).click();
+    await page.getByRole('combobox', { name: 'Medicine' }).fill(medicineName);
+    const option = page.getByRole('option').filter({ hasText: medicineName });
+    await option.waitFor();
+    check(
+      (await option.textContent()).includes('NLEM 2022 - not clinically reviewed'),
+      'a new medicine is offered as not clinically reviewed',
+    );
+    await option.click();
+    await page.getByLabel('Frequency').selectOption('BD');
+    await page.getByLabel('Dose').fill('1 tablet');
+    await scan(page, 'en template builder');
+    await page.getByRole('button', { name: 'Save template' }).click();
+    await page.getByRole('heading', { name: 'Prescription templates', level: 1 }).waitFor();
+    await page.getByText(templateName).first().waitFor();
+    await context.close();
+  }
+  {
+    const { context, page } = await newPage(browser);
+    await signIn(page, 'doctor');
+    await goInApp(page, '/admin/templates');
+    await page.getByText(templateName).first().waitFor();
+    check(
+      (await page.getByRole('row').filter({ hasText: templateName }).count()) === 1,
+      'the doctor sees the clinic-wide template',
+    );
+    await page.getByRole('button', { name: `Load ${templateName}` }).click();
+    const loaded = page.getByRole('dialog');
+    await loaded.getByRole('listitem').first().waitFor();
+    const text = await loaded.textContent();
+    check(text.includes(medicineName), 'the loaded template shows the medicine');
+    check(text.includes('Twice daily (BD)'), 'the loaded template shows the frequency label');
+    check(text.includes('Not reviewed'), 'the loaded medicine is marked not reviewed');
+    await scan(page, 'en template loaded (doctor)');
+    await page.keyboard.press('Escape');
+    // the doctor cannot edit the admin's template: no edit button on its row
+    check(
+      (await page.getByRole('button', { name: `Edit ${templateName}` }).count()) === 0,
+      "the doctor has no edit button on the admin's template",
+    );
     await context.close();
   }
 
