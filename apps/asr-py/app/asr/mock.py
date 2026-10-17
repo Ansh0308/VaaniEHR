@@ -13,6 +13,17 @@ from pathlib import Path
 from app.asr.engine import ASREngine
 from app.asr.types import BYTES_PER_MS, Capabilities, Segment, ms_of
 
+# A short fake consultation for demos (made-up words; nothing clinical).
+DEMO_SCRIPT: list[dict[str, object]] = [
+    {"start_ms": 0, "end_ms": 1500, "text": "Namaste, tav kyarthi che", "language": "gu-IN"},
+    {
+        "start_ms": 1600,
+        "end_ms": 3200,
+        "text": "Drug-A twice a day for five days",
+        "language": "en-IN",
+    },
+]
+
 
 class MockEngine(ASREngine):
     name = "mock"

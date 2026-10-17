@@ -28,6 +28,9 @@ class Settings(BaseModel):
     #: browser origins allowed to open the audio WebSocket
     allowed_origins: tuple[str, ...] = ("http://localhost:5173",)
     api_node_url: str = "http://localhost:4000"
+    #: engine used when the client does not name one; `mock` is only registered when enable_mock is true
+    default_engine: str = "sarvam"
+    enable_mock: bool = False
     #: shared with api-node; signs the short-lived consent tokens (>= 32 characters)
     internal_service_secret: SecretStr | None = None
     #: 64 hex characters (32 bytes); encrypts stored audio. Losing it makes stored audio unrecoverable.
@@ -77,6 +80,7 @@ _PLAIN = {
     "ASR_SMOKE_MAX_SECONDS": "smoke_max_seconds",
     "AUDIO_RETENTION_DAYS": "audio_retention_days",
     "API_NODE_URL": "api_node_url",
+    "ASR_DEFAULT_ENGINE": "default_engine",
     "INTERNAL_SERVICE_SECRET": "internal_service_secret",
     "AUDIO_MASTER_KEY": "audio_master_key",
 }
@@ -88,6 +92,8 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     for variable, field in _PLAIN.items():
         if source.get(variable, "") != "":
             raw[field] = source[variable]
+    if source.get("ASR_ENABLE_MOCK", "").strip().lower() in ("true", "false"):
+        raw["enable_mock"] = source["ASR_ENABLE_MOCK"].strip().lower() == "true"
     if "SIMULATED_DATA_ONLY" in source:
         value = source["SIMULATED_DATA_ONLY"].strip().lower()
         if value not in ("true", "false"):

@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D24 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D26 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -187,6 +187,18 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **PG-12 has no CSV upload** (owner confirmed 2026-10-17). NLEM rows come from the importer script; the page says so in its help text. The PRD's "import CSV" is therefore met by the script (PRD_ERRATA 38). Codes come only from the licensed-file loader.
 - **Medicine search for pickers.** `GET /medicines` gains `category`, `sort` (name, strength, form, category, page, reviewed; a whitelist) and `order`, and `GET /medicines/categories`. A search is ordered by relevance, not by the chosen column. Every medicine view carries `sourcePage` (PDF page) and `sourcePagePrinted` (one lower).
 - **Consequences.** Seed and demo templates use made-up names ("Drug-A", "(FAKE)") and say so; no ready-made clinical template exists.
+
+## D25 - Phase 4A: the audio transport is a plain WebSocket on asr-py (2026-10-17)
+- **Context.** FR-F2-01 names Socket.IO "as in ClinicOS". ADR-D10 already says VaaniEHR runs its own authenticated endpoint and sends no PHI through ClinicOS sockets. Socket.IO would add a Python dependency and a framing layer for a one-way stream of binary frames.
+- **Decision.** The browser opens `/ws/sessions/{id}/audio` on asr-py with the platform WebSocket (FastAPI/Starlette; `websockets` for uvicorn). Rules, all tested: the `Origin` header must be on an allow-list (checked before the connection is accepted; a missing Origin is refused); the consent token travels in the FIRST message, never in the URL (URLs end up in logs), within 5 s; the token is verified, session-bound and single-use; each binary frame is at most 32 KiB (close 1009); a connection with no message for 15 s is closed (4408); a stream is capped at one hour and, for paid engines, at the remaining monthly allowance (4429). Close codes are listed in `app/ws.py`.
+- **Consequences.** PRD FR-F2-01 is changed from Socket.IO to a plain WebSocket (PRD_ERRATA 42). Rooms, acknowledgements and reconnection are not needed: a dropped stream starts again with a new token.
+
+## D26 - Phase 4A: consent token, internal routes, encrypted audio, spend caps (2026-10-17)
+- **Consent guard.** The browser asks api-node (`POST /sessions/:id/asr-token`, doctor only, own sessions only) for a token. api-node checks that audio AND ai_processing consent are effective for that session and then signs `{aud: asr-py, sid, scopes, uid, cid, iat, exp (+120 s), jti}` with HMAC-SHA256 and `INTERNAL_SERVICE_SECRET`. asr-py verifies the signature in constant time, the audience, expiry, session, scopes and single use. While a stream runs asr-py asks api-node again every 10 s; if consent is withdrawn, or cannot be checked three times in a row, the stream stops and nothing is stored (fail closed).
+- **Internal routes.** asr-py calls three routes on api-node, authenticated by a request signature (timestamp, method, path and body hash, 60 s window) and by nothing else; a user token of any role gets 401. They are a new access kind `service` in the route registry, so the RBAC matrix, OpenAPI and audit tests cover them. Only the token route is browser-facing. The clinic of a recording comes from its session.
+- **Audio at rest.** AES-256-GCM, a fresh data key per recording wrapped by `AUDIO_MASTER_KEY`; asset id and session id are authenticated data. `audio_asset` (migration 0009) records existence, `retention_until` (default 90 days, NFR-PRIV-01) and deletion; the runtime role has no DELETE. A purge job (hourly in the service, or `python -m app.purge`) deletes expired recordings and recordings whose consent was withdrawn, overwrites then removes the file, keeps a manifest as the record, and tells api-node (audited as AUDIO_PURGED). If api-node is down the file is still deleted and the report retried. **If the master key is lost the audio is unrecoverable** (docs/ASR.md).
+- **Spend.** Every request writes one line (ids, engine, seconds, INR estimate) to `data/asr/usage.jsonl`. Paid engines (Sarvam) are refused at the start of a stream once the monthly allowance (default 300 minutes, UTC month) is used, and a stream is cut when it reaches the remainder; manual smoke runs are capped at 300 s each. Rates come from the Sarvam pricing page (30 INR/hour, 45 with diarization).
+- **Dependencies (owner approved 2026-10-17).** websockets, numpy, cryptography (runtime); silero-vad and torch (optional, `requirements-vad.txt`). The service uses the standard library for its calls to api-node.
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
 - **Docker:** installed with WSL2 (daemon must be running to use compose).
