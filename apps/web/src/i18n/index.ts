@@ -7,21 +7,25 @@ import enAuth from './locales/en/auth.json';
 import enClinical from './locales/en/clinical.json';
 import enConsent from './locales/en/consent.json';
 import enDashboard from './locales/en/dashboard.json';
+import enMedicines from './locales/en/medicines.json';
 import enPatients from './locales/en/patients.json';
 import enSettings from './locales/en/settings.json';
 import enCommon from './locales/en/common.json';
 import enDesign from './locales/en/design.json';
 import enShell from './locales/en/shell.json';
+import enTemplates from './locales/en/templates.json';
 import guAudit from './locales/gu/audit.json';
 import guAuth from './locales/gu/auth.json';
 import guClinical from './locales/gu/clinical.json';
 import guConsent from './locales/gu/consent.json';
 import guDashboard from './locales/gu/dashboard.json';
+import guMedicines from './locales/gu/medicines.json';
 import guPatients from './locales/gu/patients.json';
 import guSettings from './locales/gu/settings.json';
 import guCommon from './locales/gu/common.json';
 import guDesign from './locales/gu/design.json';
 import guShell from './locales/gu/shell.json';
+import guTemplates from './locales/gu/templates.json';
 
 export const LANGUAGES = ['en', 'gu'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -36,6 +40,8 @@ export const NAMESPACES = [
   'consent',
   'audit',
   'settings',
+  'medicines',
+  'templates',
 ] as const;
 
 export const resources = {
@@ -50,6 +56,8 @@ export const resources = {
     consent: enConsent,
     audit: enAudit,
     settings: enSettings,
+    medicines: enMedicines,
+    templates: enTemplates,
   },
   gu: {
     common: guCommon,
@@ -62,6 +70,8 @@ export const resources = {
     consent: guConsent,
     audit: guAudit,
     settings: guSettings,
+    medicines: guMedicines,
+    templates: guTemplates,
   },
 } as const;
 

@@ -7,6 +7,7 @@ import authEn from './locales/en/auth.json';
 import commonEn from './locales/en/common.json';
 import consentEn from './locales/en/consent.json';
 import dashboardEn from './locales/en/dashboard.json';
+import medicinesEn from './locales/en/medicines.json';
 import patientsEn from './locales/en/patients.json';
 import settingsEn from './locales/en/settings.json';
 import auditGu from './locales/gu/audit.json';
@@ -14,6 +15,7 @@ import authGu from './locales/gu/auth.json';
 import commonGu from './locales/gu/common.json';
 import consentGu from './locales/gu/consent.json';
 import dashboardGu from './locales/gu/dashboard.json';
+import medicinesGu from './locales/gu/medicines.json';
 import patientsGu from './locales/gu/patients.json';
 import settingsGu from './locales/gu/settings.json';
 import clinicalEn from './locales/en/clinical.json';
@@ -22,6 +24,8 @@ import designEn from './locales/en/design.json';
 import designGu from './locales/gu/design.json';
 import shellEn from './locales/en/shell.json';
 import shellGu from './locales/gu/shell.json';
+import templatesEn from './locales/en/templates.json';
+import templatesGu from './locales/gu/templates.json';
 
 type Tree = { [key: string]: string | Tree };
 
@@ -36,6 +40,8 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   consent: { en: consentEn, gu: consentGu },
   audit: { en: auditEn, gu: auditGu },
   settings: { en: settingsEn, gu: settingsGu },
+  medicines: { en: medicinesEn, gu: medicinesGu },
+  templates: { en: templatesEn, gu: templatesGu },
 };
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {

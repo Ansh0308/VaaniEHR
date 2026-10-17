@@ -1,0 +1,97 @@
+{
+  "title": "Medicine master",
+  "intro": "The medicines doctors can pick from. Rows come from the NLEM 2022 import. No row has been clinically reviewed yet.",
+  "importHelp": "There is no CSV upload on this page. NLEM rows are loaded by the importer script (npm run import:nlem), run by whoever looks after the server. Use this page to add, edit or retire single rows.",
+  "notReviewedLine": "NLEM 2022 - not clinically reviewed",
+  "page": {
+    "pdfOnly": "PDF p. {{pdf}}",
+    "both": "PDF p. {{pdf}}, printed {{printed}}"
+  },
+  "status": {
+    "notReviewed": "Not reviewed",
+    "reviewed": "Reviewed {{date}}",
+    "retired": "Retired"
+  },
+  "combobox": {
+    "label": "Medicine",
+    "hint": "Type at least 2 letters of the generic or brand name.",
+    "empty": "No medicine found. Check the spelling, or ask an admin to add it.",
+    "searching": "Searching",
+    "failed": "The medicine list could not be loaded. Type again to retry.",
+    "brand": "Brand: {{brand}}"
+  },
+  "filters": {
+    "heading": "Find a medicine",
+    "search": "Search by generic or brand name",
+    "searchButton": "Search",
+    "category": "Category",
+    "allCategories": "All categories",
+    "showRetired": "Show retired medicines",
+    "shown": "Showing {{shown}} of {{total}}",
+    "searchNote": "While you search, results are ordered by best match instead of by the column you chose."
+  },
+  "table": {
+    "caption": "Medicine master",
+    "loading": "Loading medicines",
+    "empty": "No medicines match.",
+    "name": "Medicine",
+    "strength": "Strength",
+    "form": "Dose form",
+    "category": "Category",
+    "source": "Source",
+    "status": "Status",
+    "actions": "Actions",
+    "retiredReason": "Retired by the importer: not in the NLEM import",
+    "brandLine": "Brand: {{brand}}"
+  },
+  "actions": {
+    "add": "Add medicine",
+    "edit": "Edit {{name}}",
+    "retire": "Retire {{name}}",
+    "restore": "Restore {{name}}"
+  },
+  "empty": {
+    "title": "No medicines yet",
+    "description": "Run the NLEM importer, or add the first medicine here."
+  },
+  "form": {
+    "addTitle": "Add a medicine",
+    "editTitle": "Edit a medicine",
+    "addDescription": "A source is required. The new row starts as Not reviewed.",
+    "editDescription": "Change the fields below, then save.",
+    "clearsReview": "Saving a change clears any clinical review of this medicine. It will show as Not reviewed again.",
+    "genericName": "Generic name",
+    "strength": "Strength",
+    "doseForm": "Dose form",
+    "route": "Route",
+    "routeHint": "Leave empty unless the source gives it.",
+    "category": "Therapeutic category",
+    "nlemYear": "NLEM year",
+    "source": "Source",
+    "sourceHint": "Where this row comes from, for example the NLEM 2022 PDF.",
+    "sourcePage": "PDF page",
+    "sourcePageHint": "The page of the PDF file. The printed page number is one lower.",
+    "sourceNotes": "Source notes",
+    "save": "Save medicine",
+    "errorSummary": "The medicine was not saved",
+    "nameRequired": "Enter the generic name.",
+    "sourceRequired": "Enter the source.",
+    "pageInvalid": "Enter a whole page number from 1 to 10000, or leave it empty.",
+    "yearInvalid": "Enter a year from 1990 to 2100, or leave it empty.",
+    "nothingChanged": "Nothing was changed.",
+    "duplicate": "A medicine with this name, dose form, strength and route already exists.",
+    "created": "Medicine added",
+    "updated": "Medicine saved"
+  },
+  "retire": {
+    "title": "Retire {{name}}?",
+    "body": "It stops appearing in searches and cannot be added to new templates. Templates that already use it keep it and show a warning. You can restore it later.",
+    "confirm": "Retire",
+    "done": "Medicine retired",
+    "restored": "Medicine restored",
+    "failed": "The change was not saved"
+  },
+  "error": {
+    "loadFailed": "The medicine list could not be loaded."
+  }
+}
