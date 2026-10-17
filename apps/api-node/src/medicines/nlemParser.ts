@@ -66,6 +66,8 @@ export type ReviewReason =
   | 'NO_FORM_OR_STRENGTH'
   | 'ODD_LEVEL'
   | 'LEVELS_DIFFER_ON_REPEAT'
+  | 'PREFIX_LINES_ATTACHED'
+  | 'FOOTNOTE_NOT_FOUND'
   | 'MULTI_LEVEL'
   | 'UNUSUAL_LAYOUT'
   | 'NO_LEVEL';
@@ -99,6 +101,8 @@ export interface ReviewItem {
   reasons: ReviewReason[];
   /** true = no row was made from it (it is not loaded). */
   held: boolean;
+  /** Set by the importer when a manual transcription replaced this item. */
+  resolvedBy?: 'override';
 }
 export interface Rejected {
   page: number;
@@ -113,10 +117,35 @@ export interface ParsedEntry {
   name: string;
   category: string | null;
   formLines: string[];
+  /** The dose-form lines as they were read (form, strength, level), one per formulation line. */
+  parsedLines: Array<{ doseForm: string | null; strength: string | null; level: string | null }>;
   /** The row's cells as the PDF holds them, line by line (for spot-checks). */
   rawLines: RawLine[];
   /** How the row's text sat against its item number: how far off-centre, and how many large gaps inside it. */
   fit: { offset: number; gaps: number };
+}
+
+export interface Footnote {
+  page: number;
+  marker: string;
+  text: string;
+}
+
+/** Where one raw dose-form cell of the PDF ended up. Every cell must end in exactly one of these. */
+export type CellDisposition =
+  | 'LOADED' // became (or merged into another item's identical) loaded row
+  | 'WRAP_JOINED' // the continuation of a wrapped line, joined to the cell before it
+  | 'NOTE' // a note inside the cell (starts with # or *): goes to source_notes, not to a row
+  | 'PREFIX_ATTACHED' // a prefix cell ("Modified Release -") attached to the dose-form lines after it
+  | 'HELD' // its item is held and listed for a person
+  | 'COLLAPSED_IN_ENTRY'; // merged into a row of the SAME item: two cells of one item became one row (a defect)
+export type CellDefect = 'PREFIX_LINE' | 'HEADER_FRAGMENT';
+export interface CellRecord {
+  page: number;
+  ref: string;
+  text: string;
+  disposition: CellDisposition;
+  defects: CellDefect[];
 }
 
 export interface ParseResult {
@@ -143,6 +172,8 @@ export interface ParseResult {
     rejected: number;
     flagged: number;
     flaggedHeld: number;
+    /** Repeated table-header fragments ("Dosage form( s) and strength(s)") taken out of the cells. */
+    headerFragmentsDropped: number;
   };
   /** Why the numbered entries reduce to fewer distinct names. */
   repeats: {
@@ -152,6 +183,10 @@ export interface ParseResult {
   };
   /** Generic names that appear in the PDF but have no loaded row (all their entries were held or rejected). */
   unplaced: string[];
+  /** One record per raw dose-form cell of every item (for the systematic check). */
+  cells: CellRecord[];
+  /** The footnote paragraphs at the foot of each table page, keyed by their marker ("*", "**", "#" ...). */
+  footnotes: Footnote[];
   /** The publication's own numbered "Alphabetical List of Medicines": the official count, for reconciliation. */
   alphabetical: {
     names: Array<{ no: number; name: string }>;
@@ -373,6 +408,8 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
   const tolerance = options.centreTolerance ?? 16;
   const raws: Raw[] = [];
   const rejected: Rejected[] = [];
+  const footnotes: Footnote[] = [];
+  let headerFragmentsDropped = 0;
   const context: Context = { section: null, subsection: null };
   let previous: Raw | undefined;
   let pagesRead = 0;
@@ -407,6 +444,18 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
       ...left.filter((i) => /^[*#†]+/.test(i.str)).map((i) => i.y),
     );
     const body = live.filter((i) => i.y > footnoteTop + 0.5);
+
+    // ---- footnote paragraphs: a line that starts with a marker begins one; the lines after it continue it
+    if (Number.isFinite(footnoteTop)) {
+      let open: Footnote | null = null;
+      for (const line of toLines(live.filter((i) => i.y <= footnoteTop + 0.5))) {
+        const m = /^([*#†]+)\s*(.*)$/.exec(line.text);
+        if (m) {
+          open = { page, marker: m[1] ?? '', text: m[2] ?? '' };
+          footnotes.push(open);
+        } else if (open) open.text = normaliseSpaces(`${open.text} ${line.text}`);
+      }
+    }
 
     // ---- section titles, sub-section headings and item numbers, in reading order
     const events: Event[] = [];
@@ -520,8 +569,14 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
       } else {
         const index = pageRows.length;
         const bucket = buckets.get(`${event.ref}@${event.y}`) ?? emptyBucket();
-        const nameLines = toLines(bucket.names);
-        const formLines = toLines(bucket.forms);
+        const notHeader = (lines: Line[]) =>
+          lines.filter((l) => {
+            const header = isHeaderFragment(l.text);
+            if (header) headerFragmentsDropped += 1;
+            return !header;
+          });
+        const nameLines = notHeader(toLines(bucket.names));
+        const formLines = notHeader(toLines(bucket.forms));
         const same = (a: Line[], b: Line[] | null | undefined) =>
           a.map((l) => l.text).join('|') === (b ?? []).map((l) => l.text).join('|');
         const own = [...nameLines, ...formLines];
@@ -560,7 +615,11 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
     }
 
     // ---- cells before the first number: dosage-form lines continue the last row of the previous page
-    const leadingForms = toLines(leadingBucket.forms);
+    const leadingForms = toLines(leadingBucket.forms).filter((l) => {
+      const header = isHeaderFragment(l.text);
+      if (header) headerFragmentsDropped += 1;
+      return !header;
+    });
     if (leadingForms.length > 0) {
       if (previous && previous.page === page - 1) {
         previous.forms.push(...leadingForms);
@@ -590,14 +649,17 @@ export function parseNlem(pages: PageItems[], options: ParserOptions): ParseResu
     if (pageRows.length > 0) previous = pageRows[pageRows.length - 1];
   }
 
-  return { ...finish(raws, rejected, options.nlemYear, { pagesRead, pagesSkipped }), alphabetical };
+  const result = finish(raws, rejected, options.nlemYear, { pagesRead, pagesSkipped }, footnotes);
+  result.stats.headerFragmentsDropped = headerFragmentsDropped;
+  return { ...result, alphabetical, footnotes };
 }
 
 /** Joins a wrapped form line onto the one before it, only on the strict cues in the header comment. */
-export function joinWrapped(lines: Line[]): { lines: Line[]; joined: number } {
+export function joinWrapped(lines: Line[]): { lines: Line[]; joined: number; groups: number[][] } {
   const out: Line[] = [];
+  const groups: number[][] = [];
   let joined = 0;
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
     const last = out[out.length - 1];
     const continuation =
       last !== undefined &&
@@ -606,10 +668,191 @@ export function joinWrapped(lines: Line[]): { lines: Line[]; joined: number } {
     // a joined line keeps the height of its first physical line (used to pick the nearest level)
     if (continuation) {
       out[out.length - 1] = { y: last.y, text: `${last.text} ${line.text}` };
+      groups[groups.length - 1]?.push(index);
       joined += 1;
-    } else out.push({ y: line.y, text: line.text });
+    } else {
+      out.push({ y: line.y, text: line.text });
+      groups.push([index]);
+    }
   }
-  return { lines: out, joined };
+  return { lines: out, joined, groups };
+}
+
+/** One dose-form entry after prefixes have been attached. `first` = index of the physical line that carries it. */
+interface FinalLine {
+  text: string;
+  y: number;
+  first: number;
+  /** Set when the line is already split (a prefix followed by "As licensed"), or cannot be split. */
+  forced?: ParsedForm;
+}
+
+const hasDigit = (t: string) => /\d/.test(t);
+/** A prefix cell: no digit, ends in "-" or "/" ("Modified Release -", "Conventional/Effervescent/"). Lettered a) b) lists are not. */
+const isPrefixLine = (t: string) => !hasDigit(t) && /[-/]\s*$/.test(t) && !/^[a-z]\)\s/.test(t);
+const firstWord = (t: string) => t.trim().split(/\s+/)[0]?.toLowerCase() ?? '';
+
+/**
+ * Prefix cells belong to the dose-form lines that follow them, so "Modified Release -" + "Tablet 200 mg" is the form
+ * "Modified Release Tablet" (as the inline "Modified Release Tablet 750 mg" of Levetiracetam). A "-" prefix covers the next
+ * line and the lines after it that start with the same word; a "/" prefix covers only the next line with a number.
+ * A prefix followed by "As licensed ..." gives the form (the prefix) and the strength text "As licensed ...".
+ */
+function attachPrefixes(
+  lines: Line[],
+  groups: number[][],
+): { lines: FinalLine[]; attached: number; prefixPhysical: number[] } {
+  const out: FinalLine[] = [];
+  const prefixPhysical: number[] = [];
+  let attached = 0;
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] as Line;
+    const first = groups[i]?.[0] ?? i;
+    if (!isPrefixLine(line.text)) {
+      out.push({ text: line.text, y: line.y, first });
+      i += 1;
+      continue;
+    }
+    // the prefix can run over several lines ("Conventional/Effervescent/" then "Dispersible/ Enteric coated")
+    const parts = [line.text];
+    let j = i + 1;
+    while (j < lines.length) {
+      const t = (lines[j] as Line).text;
+      if (hasDigit(t) || isPrefixLine(t) || /^as licensed/i.test(t) || /^[a-z]\)\s/.test(t)) break;
+      parts.push(t);
+      j += 1;
+    }
+    for (let m = i; m < j; m += 1) prefixPhysical.push(...(groups[m] ?? []));
+    const dash = /-\s*$/.test(line.text);
+    const prefix = parts
+      .join(' ')
+      .replace(/\s*-\s*$/, '')
+      .trim();
+    const target = lines[j];
+    if (target === undefined) {
+      out.push({
+        text: parts.join(' '),
+        y: line.y,
+        first,
+        forced: {
+          doseForm: null,
+          strength: null,
+          paediatric: false,
+          noteText: null,
+          problem: 'a prefix line with nothing after it',
+        },
+      });
+      i = j;
+      continue;
+    }
+    if (/^as licensed/i.test(target.text)) {
+      out.push({
+        text: `${prefix} ${target.text}`,
+        y: line.y,
+        first,
+        forced: {
+          doseForm: prefix,
+          strength: target.text,
+          paediatric: false,
+          noteText: null,
+          problem: null,
+        },
+      });
+      attached += 1;
+      prefixPhysical.push(...(groups[j] ?? []));
+      i = j + 1;
+      continue;
+    }
+    const word = firstWord(target.text);
+    let k = j;
+    do {
+      const t = lines[k] as Line;
+      out.push({ text: `${prefix} ${t.text}`, y: t.y, first: groups[k]?.[0] ?? k });
+      attached += 1;
+      k += 1;
+    } while (
+      dash &&
+      k < lines.length &&
+      !isPrefixLine((lines[k] as Line).text) &&
+      firstWord((lines[k] as Line).text) === word
+    );
+    i = k;
+  }
+  return { lines: out, attached, prefixPhysical };
+}
+
+/**
+ * Gives each physical form line a level. A row with one level gives it to every line. A row with several levels
+ * (P,S,T for the tablets, S,T for the injection) is cut into consecutive groups, one per level, so that each group is
+ * centred on its level; that is how the PDF lays them out, and "nearest level" gets the lines in between wrong.
+ */
+function assignLevels(
+  ys: number[],
+  levels: Array<{ y: number; text: string }>,
+): Array<string | null> {
+  const sorted = [...levels].sort((a, b) => b.y - a.y);
+  const nearest = (y: number) =>
+    sorted.reduce(
+      (best, l) => (Math.abs(l.y - y) < Math.abs(best.y - y) ? l : best),
+      sorted[0] as { y: number; text: string },
+    ).text;
+  if (sorted.length === 0) return ys.map(() => null);
+  if (sorted.length === 1) return ys.map(() => (sorted[0] as { text: string }).text);
+  const n = ys.length;
+  const k = sorted.length;
+  if (n < k) return ys.map((y) => nearest(y));
+  const centre = (a: number, b: number) => ((ys[a] as number) + (ys[b - 1] as number)) / 2;
+  let best = { cost: Infinity, cuts: [] as number[] };
+  const cuts: number[] = [];
+  const walk = (start: number, group: number, cost: number) => {
+    const level = sorted[group] as { y: number };
+    if (group === k - 1) {
+      const total = cost + Math.abs(centre(start, n) - level.y);
+      if (total < best.cost) best = { cost: total, cuts: [...cuts] };
+      return;
+    }
+    for (let end = start + 1; end <= n - (k - group - 1); end += 1) {
+      cuts.push(end);
+      walk(end, group + 1, cost + Math.abs(centre(start, end) - level.y));
+      cuts.pop();
+    }
+  };
+  walk(0, 0, 0);
+  return ys.map((_, i) => {
+    let g = 0;
+    while (g < k - 1 && i >= (best.cuts[g] as number)) g += 1;
+    return (sorted[g] as { text: string }).text;
+  });
+}
+
+interface CellNote {
+  marker: string;
+  text: string;
+}
+
+/**
+ * A note that sits INSIDE the dose-form cell starts with a marker ("#", "*", "(*") and runs to the end of the cell:
+ * "#" then "for prophylaxis of P. vivax". It is not a dose form; it goes to source_notes, verbatim.
+ */
+function splitCellNotes(forms: Line[]): { forms: Line[]; notes: CellNote[]; noteLines: number } {
+  const at = forms.findIndex((l) => /^(?:\(\s*)?[*#†]+/.test(l.text));
+  if (at < 0) return { forms, notes: [], noteLines: 0 };
+  const rest = forms.slice(at);
+  const head = rest[0] as Line;
+  const marker = (/^(?:\(\s*)?([*#†]+)/.exec(head.text) as RegExpExecArray)[1] as string;
+  const lone = /^[*#†]+$/.test(head.text);
+  const text = lone
+    ? `${marker}${rest
+        .slice(1)
+        .map((l) => l.text)
+        .join(' ')}`
+    : rest.map((l) => l.text).join(' ');
+  return {
+    forms: forms.slice(0, at),
+    notes: [{ marker, text: normaliseSpaces(text) }],
+    noteLines: rest.length,
+  };
 }
 
 function finish(
@@ -617,7 +860,8 @@ function finish(
   rejected: Rejected[],
   nlemYear: number,
   pageCounts: { pagesRead: number; pagesSkipped: number },
-): Omit<ParseResult, 'alphabetical'> {
+  footnotes: Footnote[],
+): Omit<ParseResult, 'alphabetical' | 'footnotes'> {
   const review: ReviewItem[] = [];
   const entries: ParsedEntry[] = [];
   const rows: FormulationRow[] = [];
@@ -627,6 +871,7 @@ function finish(
   let wrappedLinesJoined = 0;
   const placedGenerics = new Set<string>();
   const allGenerics = new Map<string, { name: string; refs: string[] }>();
+  const cells: CellRecord[] = [];
 
   // numbered category headings: a number and a name, no level, no forms, and numbered children below it
   const headingNames = new Map<string, string>();
@@ -653,13 +898,21 @@ function finish(
       null
     );
   };
+  const footnoteOf = (page: number, marker: string) =>
+    footnotes.find((f) => f.page === page && f.marker === marker);
 
   for (const raw of raws) {
     if (headingNames.has(raw.ref)) continue;
     const cleaned = cleanName(raw.name);
     const category = categoryOf(raw);
-    const wrapped = joinWrapped(raw.forms);
+    const noteSplit = splitCellNotes(raw.forms);
+    const wrapped = joinWrapped(noteSplit.forms);
     wrappedLinesJoined += wrapped.joined;
+    const prefixed = attachPrefixes(wrapped.lines, wrapped.groups);
+    const levelAt = assignLevels(
+      noteSplit.forms.map((l) => l.y),
+      raw.levels,
+    );
     const levelText = raw.levels.map((l) => l.text).join(' / ');
     const rawText = [raw.name, levelText, ...raw.forms.map((l) => l.text)]
       .filter(Boolean)
@@ -669,20 +922,6 @@ function finish(
       ...raw.levels.map((l) => ({ column: 'level' as const, y: l.y, text: l.text })),
       ...raw.forms.map((l) => ({ column: 'form' as const, y: l.y, text: l.text })),
     ];
-    const flag = (reasons: ReviewReason[]) => {
-      const held = reasons.some((r) => HOLD_REASONS.has(r));
-      review.push({
-        page: raw.page,
-        ref: raw.ref,
-        name: cleaned.name,
-        rawText,
-        rawLines,
-        ...(raw.geometry ? { geometryReading: raw.geometry } : {}),
-        reasons,
-        held,
-      });
-      return held;
-    };
 
     if (cleaned.name === '') {
       rejected.push({
@@ -702,27 +941,35 @@ function finish(
     if (raw.levels.length === 0) reasons.add('NO_LEVEL');
     if (raw.levels.length > 1) reasons.add('MULTI_LEVEL');
     if (raw.levels.some((l) => !LEVEL.test(l.text))) reasons.add('ODD_LEVEL');
-    if (wrapped.lines.length === 0) reasons.add('NO_FORM_LINES');
+    if (prefixed.lines.length === 0) reasons.add('NO_FORM_LINES');
+    if (prefixed.attached > 0) reasons.add('PREFIX_LINES_ATTACHED');
     // text that sits off-centre or has a large gap inside it is matched correctly in practice, but a person should glance at it
     if (raw.fit.offset > 6 || raw.fit.gaps > 0) reasons.add('UNUSUAL_LAYOUT');
 
-    // each form line takes the level nearest to it (a row with one level gives it to every line)
-    const parsed: Array<{ form: ParsedForm; level: string | null }> = wrapped.lines.map((line) => {
-      let level: string | null = null;
-      let best = Infinity;
-      for (const l of raw.levels) {
-        const d = Math.abs(l.y - line.y);
-        if (d < best) {
-          best = d;
-          level = l.text;
-        }
-      }
-      return { form: parseFormLine(line.text), level };
-    });
+    const parsed = prefixed.lines.map((line) => ({
+      line,
+      form: line.forced ?? parseFormLine(line.text),
+      level: levelAt[line.first] ?? null,
+    }));
     for (const { form } of parsed) {
       if (form.problem) reasons.add('UNPARSED_FORM_LINE');
       else if (form.doseForm === null && form.strength === null) reasons.add('NO_FORM_OR_STRENGTH');
       else if (form.strength === null) reasons.add('NO_STRENGTH_STATED');
+    }
+
+    // notes that belong to the whole item: the table's own note, and the footnote of each marker beside the name
+    const itemNotes: string[] = [];
+    for (const n of noteSplit.notes) itemNotes.push(`table note: ${n.text}`);
+    for (const marker of cleaned.markerGroups) {
+      if (noteSplit.notes.some((n) => n.marker === marker)) continue; // that marker's note is the table note above
+      const fn = footnoteOf(raw.page, marker);
+      if (fn) itemNotes.push(`footnote ${marker}: ${fn.text}`);
+      else {
+        itemNotes.push(
+          `footnote marker ${marker} beside the name; its text was not found on the page`,
+        );
+        reasons.add('FOOTNOTE_NOT_FOUND');
+      }
     }
 
     entries.push({
@@ -730,24 +977,70 @@ function finish(
       ref: raw.ref,
       name: cleaned.name,
       category,
-      formLines: wrapped.lines.map((l) => l.text),
+      formLines: prefixed.lines.map((l) => l.text),
+      parsedLines: parsed.map(({ form, level }) => ({
+        doseForm: form.doseForm,
+        strength: form.strength,
+        level,
+      })),
       rawLines,
       fit: raw.fit,
     });
 
-    if (reasons.size > 0) {
-      const held = flag([...reasons]);
-      if (held) continue;
+    // account for every raw dose-form cell of this item (filled in below when the item is not held)
+    const cellOf: CellRecord[] = raw.forms.map((l) => ({
+      page: raw.page,
+      ref: raw.ref,
+      text: l.text,
+      disposition: 'HELD' as CellDisposition,
+      defects: cellDefects(l.text),
+    }));
+    cells.push(...cellOf);
+    wrapped.groups.forEach((group) =>
+      group.slice(1).forEach((k) => {
+        const c = cellOf[k];
+        if (c) c.disposition = 'WRAP_JOINED';
+      }),
+    );
+    for (let k = noteSplit.forms.length; k < cellOf.length; k += 1) {
+      const c = cellOf[k];
+      if (c) c.disposition = 'NOTE';
     }
+    // a prefix cell (and the "As licensed" cell after it) is accounted for once it has been attached to its form
+    for (const k of prefixed.prefixPhysical) {
+      const c = cellOf[k];
+      if (c) c.disposition = 'PREFIX_ATTACHED';
+    }
+    const flagItem = (heldNow: boolean) => {
+      review.push({
+        page: raw.page,
+        ref: raw.ref,
+        name: cleaned.name,
+        rawText,
+        rawLines,
+        ...(raw.geometry ? { geometryReading: raw.geometry } : {}),
+        reasons: [...reasons],
+        held: heldNow,
+      });
+    };
+    const heldNow = [...reasons].some((r) => HOLD_REASONS.has(r));
+    if (reasons.size > 0) flagItem(heldNow);
+    if (heldNow) continue;
 
     placedGenerics.add(gKey);
-    for (const { form, level } of parsed) {
+    for (const { line, form, level } of parsed) {
       formulationLines += 1;
+      const firstCell = cellOf[line.first];
       const notes: string[] = [];
       if (form.paediatric) notes.push('paediatric formulation, marked (p) in the source');
       if (form.noteText) notes.push(`source text: ${form.noteText}`);
-      if (cleaned.markers)
-        notes.push(`footnote marker ${cleaned.markers} beside the name in the source`);
+      notes.push(...itemNotes);
+      // a marker inside this row's own text (for example "MDI/DPI*") brings its footnote to this row only
+      for (const marker of line.text.match(/[*#†]+/g) ?? []) {
+        const fn = footnoteOf(raw.page, marker);
+        const text = fn ? `footnote ${marker}: ${fn.text}` : '';
+        if (text && !notes.includes(text)) notes.push(text);
+      }
       const row: FormulationRow = {
         genericName: cleaned.name,
         doseForm: form.doseForm,
@@ -767,8 +1060,19 @@ function finish(
         byKey.set(key, row);
         levelOf.set(key, row.healthcareLevels);
         rows.push(row);
+        if (firstCell && firstCell.disposition !== 'PREFIX_ATTACHED')
+          firstCell.disposition = 'LOADED';
       } else {
         firstRow.alsoListedIn.push(raw.ref);
+        // the notes of this item's own markers must not be lost because an earlier item holds the row
+        const extra = itemNotes.filter((n) => !(firstRow.sourceNotes ?? '').includes(n));
+        if (extra.length > 0)
+          firstRow.sourceNotes = [firstRow.sourceNotes, ...extra].filter(Boolean).join('; ');
+        if (firstCell)
+          firstCell.disposition =
+            firstRow.nlemRef === raw.ref && firstRow.sourcePage === raw.page
+              ? 'COLLAPSED_IN_ENTRY'
+              : 'LOADED';
         if (levelOf.get(key) !== row.healthcareLevels)
           review.push({
             page: raw.page,
@@ -809,6 +1113,7 @@ function finish(
       rejected: rejected.length,
       flagged: review.length,
       flaggedHeld: review.filter((r) => r.held).length,
+      headerFragmentsDropped: 0,
     },
     repeats: {
       extraEntries: numberedEntries - allGenerics.size,
@@ -821,5 +1126,19 @@ function finish(
         .map((g) => ({ name: g.name, listings: g.refs.length, refs: g.refs })),
     },
     unplaced,
+    cells,
   };
+}
+
+const HEADER_LINE =
+  /^(?:medicine|level of|healthcare|level of healthcare|dosage form\(\s*s\)(?:\s*and)?(?:\s*strength\(\s*s\))?|strength\(\s*s\))$/i;
+/** A repeated table-header fragment ("Dosage form( s) and strength(s)") that landed in a cell. */
+export const isHeaderFragment = (text: string): boolean => HEADER_LINE.test(normaliseSpaces(text));
+
+/** A prefix cell, or a stray page-header fragment. */
+function cellDefects(text: string): CellDefect[] {
+  const defects: CellDefect[] = [];
+  if (isPrefixLine(text)) defects.push('PREFIX_LINE');
+  if (isHeaderFragment(text)) defects.push('HEADER_FRAGMENT');
+  return defects;
 }

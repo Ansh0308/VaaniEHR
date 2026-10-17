@@ -60,6 +60,14 @@ if (existsSync(overridesPath)) {
   );
   result.rows = applied.rows;
   result.stats.formulationRows = applied.rows.length;
+  // an item the owner transcribed by hand is resolved: it is no longer held
+  const transcribed = new Set(overrideRows.map((o) => `${o.sourcePage}|${o.nlemRef}`));
+  for (const item of result.review)
+    if (item.held && transcribed.has(`${item.page}|${item.ref}`)) {
+      item.held = false;
+      item.resolvedBy = 'override';
+    }
+  result.stats.flaggedHeld = result.review.filter((r) => r.held).length;
   overrideLine = `Manual overrides: ${applied.addedRows} rows for ${applied.items.length} item numbers (${applied.items.join(', ')}); they replaced ${applied.replacedRows} parsed rows.`;
 }
 
@@ -114,6 +122,9 @@ const report = formatReport({
   result,
   diff,
   load,
+  finalNames: [
+    ...new Map(result.rows.map((r) => [r.genericName.toLowerCase(), r.genericName])).values(),
+  ],
   files: [
     'data/medicines/nlem2022.csv',
     'data/medicines/nlem2022.review.csv',

@@ -2,6 +2,9 @@
 
 How the medicine list gets into the database, what is deliberately empty, and what to do with the rows the importer would not trust. Decisions are in `DECISIONS.md` (ADR-D23). Simulated-data and "never invent clinical content" rules apply: nothing here is a prescribing recommendation.
 
+## Page numbers: PDF page and printed page
+`source_page` stores the **PDF page** (the page index in the file). The number printed on the page is one lower, because the PDF has a cover page. This document, the review sheet, the importer report and the spot-check list all use the PDF page. Wherever a page is shown to a person it is shown as both: **"PDF p. 27, printed 26"** (the API also returns `sourcePagePrinted`). Example: item 6.5.1 is on PDF page 27, printed page 26.
+
 ## What exists
 - `medicine_master`: one row per **formulation** (generic name + dose form + strength + route). Every row names its `source` and `source_page`.
 - `medicine_brand` (optional children), `medicine_translit_gu` (Gujarati search spellings, empty until reviewed), `med_template` and `med_template_item` (tables only; the template API and UI come with F11).
@@ -30,6 +33,17 @@ The PDF is expected at `data\medicines\raw\nlem2022.pdf`. Running the importer t
 
 ## How a row is read
 The PDF writes each row's cells together (number, name, level, forms) before the next number, so the importer takes everything between two item numbers as one row. A second, independent method (geometry: each cell is vertically centred on its number) cross-checks it, and a row on which the two disagree is held. Wrapped form lines are joined back only on strict cues. Rows that are in the database but no longer in the import are reported, and `--retire-stale` retires them (rows are never deleted).
+
+## Rules learned from the spot-check (all covered by tests)
+- **Prefix cells.** A cell with no number that ends in "-" or "/" ("Modified Release -", "Conventional/Effervescent/") belongs to the dose-form lines after it: "Modified Release -" + "Tablet 200 mg" is the form "Modified Release Tablet" (as the inline "Modified Release Tablet 750 mg"). A "-" prefix covers the next line and the lines after it that start with the same word; a "/" prefix covers the next line with a number. A prefix followed by "As licensed" gives the form (the prefix) and the strength text "As licensed". A prefix with nothing after it is held.
+- **Repeated page-header fragments** ("Dosage form( s) and strength(s)") are taken out of the cells; a real form such as "Oral Dosage forms 2 mg" is kept.
+- **Notes inside a cell** that start with "#", "*" or "(*" run to the end of the cell, are stored verbatim as "table note: ..." in `source_notes`, and are never a dose form.
+- **Footnotes.** Each footnote paragraph at the foot of a page is keyed by its marker; the footnote of a marker beside a name is stored verbatim as "footnote **: ..." in `source_notes` of the item's rows. When an item repeats a formulation an earlier item holds, its own footnote is added to that row. A marker whose text is not on the page is recorded as such and listed for review.
+- **Levels.** A row with several levels (P,S,T for the tablets, S,T for the injection) is cut into groups of lines, each centred on its level; "nearest level" gave lines in between the wrong level.
+- **Retired rows.** A row the importer retires because a later run no longer produces it carries the reason "not in the NLEM import" and comes back if a later run produces it again; a row an admin retired has no reason and is never brought back by an import.
+
+## The systematic cell check
+`npm run medicines:inspect -- coverage` accounts for every raw dose-form cell of every item: became a loaded row, wrapped continuation, prefix attached, note inside the cell, in a held item, merged into another row of the same item (defect), unmapped (defect); plus (b) prefix cells not attached, (c) page-header fragments left in cells, and (d) every "#" / "*" marker beside a name has its note in `source_notes`. The target is zero defects. `npm run medicines:inspect -- expected` compares the items listed in `data/medicines/nlem2022.expected.csv` (the owner's confirmed readings) with what the parser read, item by item.
 
 ## Reading the report
 Each count is a different thing: numbered lines (with the category headings among them), medicine entries, formulation lines (one per dose form and strength), formulation **rows** after merging repeats (this is what is loaded), distinct generic names, rejected text, and flagged rows. It also explains why the entries reduce to fewer distinct names (NLEM lists a medicine again under every category it belongs to), reconciles the names with the publication's own numbered alphabetical list (1 to 384), lists every name that differs on either side, and quotes the committee report's contradictory totals with page numbers.

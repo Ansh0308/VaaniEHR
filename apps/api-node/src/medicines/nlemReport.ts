@@ -13,6 +13,8 @@ export interface ReportInput {
   /** null for a dry run (nothing was written to the database). */
   load: LoadResult | null;
   files: string[];
+  /** Distinct generic names of the rows actually loaded (after manual transcriptions). */
+  finalNames?: string[];
 }
 
 const dots = (label: string, value: number | string, width = 60) =>
@@ -75,12 +77,14 @@ export function formatReport(input: ReportInput): string {
   out.push(
     dots('formulation ROWS after removing repeats (= medicine_master rows)', s.formulationRows),
   );
-  out.push(dots('distinct generic names', s.distinctGenerics));
+  out.push(dots('distinct generic names read from the tables', s.distinctGenerics));
+  if (input.finalNames)
+    out.push(dots('distinct generic names in the loaded rows', input.finalNames.length));
   out.push(dots('rejected (text that could not be placed; no row made)', s.rejected));
   out.push(
     dots(
       'flagged for review',
-      `${s.flagged} (${s.flaggedHeld} HELD and not loaded; ${s.flagged - s.flaggedHeld} loaded with a note)`,
+      `${s.flagged} (${s.flaggedHeld} HELD and not loaded; ${r.review.filter((x) => x.resolvedBy === 'override').length} resolved by manual transcription; ${s.flagged - s.flaggedHeld - r.review.filter((x) => x.resolvedBy === 'override').length} loaded with a note)`,
     ),
   );
   out.push('');
@@ -108,7 +112,9 @@ export function formatReport(input: ReportInput): string {
   );
   out.push('');
 
-  const distinctNames = [...new Map(r.entries.map((e) => [distinctKey(e.name), e.name])).values()];
+  const distinctNames = input.finalNames ?? [
+    ...new Map(r.entries.map((e) => [distinctKey(e.name), e.name])).values(),
+  ];
   const rec = reconcile(distinctNames, r.alphabetical.names);
   const a = r.alphabetical;
   out.push('Compare with the official count (reconciled by name; not decided by this script):');
@@ -120,7 +126,7 @@ export function formatReport(input: ReportInput): string {
     }.`,
   );
   out.push(
-    `  The PRD uses 384 medicines. This run read ${s.distinctGenerics} distinct names from the tables; ${rec.matched} of them match a name in the alphabetical list.`,
+    `  The PRD uses 384 medicines. The loaded rows hold ${distinctNames.length} distinct names; ${rec.matched} of them match a name in the alphabetical list.`,
   );
   out.push(
     `  Only in the alphabetical list (${rec.onlyInAlphabetical.length}): ${sample(rec.onlyInAlphabetical, 40)}`,
@@ -167,7 +173,7 @@ export function formatReport(input: ReportInput): string {
   out.push(
     load === null
       ? 'Database: not touched (dry run).'
-      : `Database: ${load.inserted} inserted, ${load.updated} updated, ${load.unchanged} unchanged.`,
+      : `Database: ${load.inserted} inserted, ${load.updated} updated, ${load.unchanged} unchanged${load.restored > 0 ? `, ${load.restored} restored (retired by an earlier run, produced again now)` : ''}.`,
   );
   if (load !== null)
     out.push(

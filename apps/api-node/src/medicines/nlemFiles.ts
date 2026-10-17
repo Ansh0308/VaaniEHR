@@ -62,7 +62,11 @@ export function reviewToCsv(review: readonly ReviewItem[]): string {
       r.page,
       r.ref,
       r.name,
-      r.held ? 'HELD (not loaded)' : 'loaded with a note',
+      r.held
+        ? 'HELD (not loaded)'
+        : r.resolvedBy === 'override'
+          ? 'resolved: manually transcribed'
+          : 'loaded with a note',
       r.reasons.join('; '),
       r.rawText,
     ]),

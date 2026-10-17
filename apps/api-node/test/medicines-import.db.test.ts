@@ -175,7 +175,25 @@ describe('rows an earlier run created that this run no longer produces (stale ro
     expect(audit?.meta).toMatchObject({ staleRows: 1, retiredStale: 1 });
     expect(Object.values(audit?.meta ?? {}).every((v) => typeof v === 'number')).toBe(true);
 
-    // a later full import brings Drug-C's row back into the import; it stays retired until someone restores it
+    // a later full import produces Drug-C again: a row the IMPORTER retired comes back (and the report says so) ...
+    const back = await loadNlemRows(h.db.owner, parsed().rows, counts);
+    expect(back.restored).toBe(1);
+    expect(
+      (
+        await q(
+          `SELECT 1 FROM medicine_master WHERE generic_name = 'Drug-C' AND retired_at IS NULL`,
+        )
+      ).length,
+    ).toBe(1);
+    expect(
+      (
+        await q(
+          `SELECT 1 FROM medicine_master WHERE generic_name = 'Drug-C' AND retired_reason IS NOT NULL`,
+        )
+      ).length,
+    ).toBe(0);
+    // ... but a row an ADMIN retired (no reason) is never brought back by an import
+    await q(`UPDATE medicine_master SET retired_at = now() WHERE generic_name = 'Drug-C'`);
     await loadNlemRows(h.db.owner, parsed().rows, counts);
     expect(
       (

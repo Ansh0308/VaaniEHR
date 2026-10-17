@@ -5,7 +5,7 @@ import type { PageItems, TextItem } from '../src/medicines/nlemParser.js';
 const X = { ref: 99, name: 158, level: 288, forms: 366 };
 const PITCH = 18.5;
 
-const item = (str: string, x: number, y: number): TextItem => ({
+export const item = (str: string, x: number, y: number): TextItem => ({
   str,
   x,
   y,
@@ -48,8 +48,8 @@ export const sectionHeader = (no: number, title: string, y = 720): TextItem[] =>
 
 export const subsectionHeader = (text: string, y: number): TextItem[] => [item(text, X.ref, y)];
 
-export const footnote = (text: string, y = 110): TextItem[] => [
-  item('*', X.ref, y),
+export const footnote = (text: string, y = 110, marker = '*'): TextItem[] => [
+  item(marker, X.ref, y),
   item(text, 112, y),
 ];
 

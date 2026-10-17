@@ -12,16 +12,20 @@ export interface CleanName {
   name: string;
   /** The footnote marker(s) that were stuck to the name, for example "**". */
   markers: string;
+  /** The same markers, one entry per run: "Doxycycline**" with a "#" beside it gives ["**", "#"]. */
+  markerGroups: string[];
 }
 
 /** "Oxygen*" -> { name: "Oxygen", markers: "*" }; " + " spacing is made uniform for combinations. */
 export function cleanName(raw: string): CleanName {
   let text = normaliseSpaces(raw);
   // footnote stars and daggers can sit anywhere ("Co-trimoxazole* [Sulphamethoxazole ...]"); "#" only at the edges
-  const markers =
-    [...text.matchAll(/[*†‡]+/g)].map((m) => m[0]).join('') +
-    (/^#+/.exec(text)?.[0] ?? '') +
-    (/#+$/.exec(text)?.[0] ?? '');
+  const markerGroups = [...text.matchAll(/[*†‡]+/g)].map((m) => m[0]);
+  const leading = /^#+/.exec(text)?.[0];
+  const trailing = /#+$/.exec(text)?.[0];
+  if (leading) markerGroups.push(leading);
+  if (trailing && trailing !== leading) markerGroups.push(trailing);
+  const markers = markerGroups.join('');
   text = text
     .replace(/[*†‡]+/g, '')
     .replace(/^#+\s*/, '')
@@ -31,7 +35,7 @@ export function cleanName(raw: string): CleanName {
     .replace(/\s+/g, ' ')
     .replace(/[,;:\s]+$/, '')
     .trim();
-  return { name: text, markers };
+  return { name: text, markers, markerGroups };
 }
 
 /** Matching key for comparing two lists of names: letters, digits and "+" only, lower case. Used for reconciliation. */

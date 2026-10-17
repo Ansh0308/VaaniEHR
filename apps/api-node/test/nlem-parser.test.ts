@@ -53,7 +53,7 @@ describe('normalisation (it never rewrites a clinical value)', () => {
     expect(parseFormLine('250 mg tablet').problem).toBe('starts with a number');
   });
   it('removes footnote stars and hashes from names but records them', () => {
-    expect(cleanName('Oxygen*')).toEqual({ name: 'Oxygen', markers: '*' });
+    expect(cleanName('Oxygen*')).toEqual({ name: 'Oxygen', markers: '*', markerGroups: ['*'] });
     expect(cleanName('Co-trimoxazole* [A (A) + B (B)]').name).toBe(
       'Co-trimoxazole [A (A) + B (B)]',
     );
@@ -102,7 +102,7 @@ describe('table parsing', () => {
     expect(item?.reasons).toContain('NO_FORM_OR_STRENGTH');
     expect(item?.held).toBe(false);
     expect(r.rows.find((x) => x.genericName === 'Drug-B')?.sourceNotes).toContain(
-      'footnote marker *',
+      'footnote *: Drug-B formulations are also listed elsewhere.',
     );
   });
 

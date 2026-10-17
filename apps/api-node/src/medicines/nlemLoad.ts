@@ -16,7 +16,12 @@ export interface LoadResult {
   stale: string[];
   /** How many of those were retired (only when asked; rows are never deleted). */
   retiredStale: number;
+  /** Rows an earlier run had retired as stale that this run produces again: they are active again. */
+  restored: number;
 }
+
+/** Why the importer retires a row. A row an admin retired has no reason and is never restored by an import. */
+export const STALE_REASON = 'not in the NLEM import';
 
 const UPSERT = `
 INSERT INTO medicine_master
@@ -28,8 +33,10 @@ DO UPDATE SET
   therapeutic_category = EXCLUDED.therapeutic_category, nlem_year = EXCLUDED.nlem_year,
   source = EXCLUDED.source, source_page = EXCLUDED.source_page, nlem_ref = EXCLUDED.nlem_ref,
   healthcare_levels = EXCLUDED.healthcare_levels, source_notes = EXCLUDED.source_notes,
-  also_listed_in = EXCLUDED.also_listed_in
-WHERE (medicine_master.therapeutic_category, medicine_master.nlem_year, medicine_master.source,
+  also_listed_in = EXCLUDED.also_listed_in,
+  retired_at = CASE WHEN medicine_master.retired_reason = 'not in the NLEM import' THEN NULL ELSE medicine_master.retired_at END,
+  retired_reason = CASE WHEN medicine_master.retired_reason = 'not in the NLEM import' THEN NULL ELSE medicine_master.retired_reason END
+WHERE medicine_master.retired_reason = 'not in the NLEM import' OR (medicine_master.therapeutic_category, medicine_master.nlem_year, medicine_master.source,
        medicine_master.source_page, medicine_master.nlem_ref, medicine_master.healthcare_levels,
        medicine_master.source_notes, medicine_master.also_listed_in)
   IS DISTINCT FROM
@@ -50,7 +57,27 @@ export async function loadNlemRows(
       unchanged: 0,
       stale: [],
       retiredStale: 0,
+      restored: 0,
     };
+    // rows this importer retired earlier: the ones this run produces again come back
+    const earlier = await tx.query<{
+      generic_name: string;
+      dose_form: string | null;
+      strength: string | null;
+    }>(`SELECT generic_name, dose_form, strength FROM medicine_master WHERE retired_reason = $1`, [
+      STALE_REASON,
+    ]);
+    const comeBack = new Set(
+      earlier.rows.map((e) =>
+        formulationKey({
+          genericName: e.generic_name,
+          doseForm: e.dose_form,
+          strength: e.strength,
+          route: null,
+        }),
+      ),
+    );
+    result.restored = rows.filter((r) => comeBack.has(formulationKey(r))).length;
     for (const r of rows) {
       const res = await tx.query<{ inserted: boolean }>(UPSERT, [
         r.genericName,
@@ -98,9 +125,10 @@ export async function loadNlemRows(
       [e.generic_name, e.dose_form, e.strength].filter(Boolean).join(' | '),
     );
     if (options.retireStale && stale.length > 0) {
-      await tx.query('UPDATE medicine_master SET retired_at = now() WHERE id = ANY($1::uuid[])', [
-        stale.map((e) => e.id),
-      ]);
+      await tx.query(
+        'UPDATE medicine_master SET retired_at = now(), retired_reason = $2 WHERE id = ANY($1::uuid[])',
+        [stale.map((e) => e.id), STALE_REASON],
+      );
       result.retiredStale = stale.length;
     }
     // Counts only: no PDF text, no names (the audit meta guard also refuses personal-looking keys).
@@ -115,6 +143,7 @@ export async function loadNlemRows(
         unchanged: result.unchanged,
         staleRows: result.stale.length,
         retiredStale: result.retiredStale,
+        restoredRows: result.restored,
       },
     });
     return result;

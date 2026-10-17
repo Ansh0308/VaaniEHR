@@ -266,7 +266,8 @@ export function medicineRoutes(): RouteDef[] {
         response: medicineView,
         handler: async (ctx) => {
           const res = await ctx.db.query<MedicineRow>(
-            `UPDATE medicine_master SET retired_at = ${verb === 'retire' ? 'coalesce(retired_at, now())' : 'NULL'}
+            `UPDATE medicine_master SET retired_at = ${verb === 'retire' ? 'coalesce(retired_at, now())' : 'NULL'},
+                 retired_reason = NULL
               WHERE id = $1 RETURNING *`,
             [ctx.params.id],
           );

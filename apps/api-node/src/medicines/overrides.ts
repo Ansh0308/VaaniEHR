@@ -19,6 +19,7 @@ export const OVERRIDE_COLUMNS = [
   'therapeutic_category',
   'nlem_ref',
   'source_page',
+  'also_listed_in',
   'note',
 ] as const;
 const FORBIDDEN_COLUMNS = ['route', 'snomed_code', 'atc_code', 'reviewed_on', 'reviewed_by'];
@@ -32,6 +33,8 @@ export interface OverrideRow {
   therapeuticCategory: string | null;
   nlemRef: string;
   sourcePage: number;
+  /** Other item numbers that list the same formulation (separated by ";" in the file). */
+  alsoListedIn: string[];
   note: string;
 }
 
@@ -71,6 +74,10 @@ export function parseOverridesCsv(text: string): { rows: OverrideRow[]; errors: 
       therapeuticCategory: (r.therapeutic_category ?? '').trim() || null,
       nlemRef: ref,
       sourcePage: page,
+      alsoListedIn: (r.also_listed_in ?? '')
+        .split(';')
+        .map((x) => x.trim())
+        .filter(Boolean),
       note,
     });
   });
@@ -106,7 +113,7 @@ export function applyOverrides(
     healthcareLevels: o.healthcareLevels,
     sourcePage: o.sourcePage,
     sourceNotes: o.note,
-    alsoListedIn: [],
+    alsoListedIn: o.alsoListedIn,
   }));
   return {
     rows: [...kept, ...added],
