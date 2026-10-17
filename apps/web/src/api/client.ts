@@ -26,6 +26,7 @@ export interface Api {
   get<T>(path: string, query?: Record<string, string | number | undefined>): Promise<T>;
   post<T>(path: string, body?: unknown): Promise<T>;
   put<T>(path: string, body?: unknown): Promise<T>;
+  patch<T>(path: string, body?: unknown): Promise<T>;
   /** POST /api/v1/<path> that answers with a file (the audit CSV export). */
   download(path: string, body?: unknown): Promise<DownloadResult>;
   /** GET on an unprefixed public endpoint: /health, /ready, /config/public. No token is sent. */
@@ -108,6 +109,7 @@ export function createApi({ baseUrl, getToken, onUnauthorized, fetchImpl }: ApiO
     get: async (path, query) => json(await send('GET', url(path, query), undefined, true)),
     post: async (path, body) => json(await send('POST', url(path), body ?? {}, true)),
     put: async (path, body) => json(await send('PUT', url(path), body ?? {}, true)),
+    patch: async (path, body) => json(await send('PATCH', url(path), body ?? {}, true)),
     root: async (path) => json(await send('GET', `${baseUrl}${path}`, undefined, false)),
     download: async (path, body) => {
       const response = await send('POST', url(path), body ?? {}, true);
