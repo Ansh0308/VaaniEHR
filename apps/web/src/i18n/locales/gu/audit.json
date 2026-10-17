@@ -69,6 +69,10 @@
     "MEDICINE_RESTORED": "દવા પાછી લવાઈ",
     "MEDICINE_BRAND_ADDED": "બ્રાન્ડ ઉમેરાઈ",
     "MEDICINE_BRAND_RETIRED": "બ્રાન્ડ નિવૃત્ત કરાઈ",
-    "MEDICINE_TRANSLIT_LOADED": "ગુજરાતી શોધ યાદી લોડ થઈ"
+    "MEDICINE_TRANSLIT_LOADED": "ગુજરાતી શોધ યાદી લોડ થઈ",
+    "TEMPLATE_CREATED": "ટેમ્પલેટ બનાવ્યું",
+    "TEMPLATE_UPDATED": "ટેમ્પલેટ સુધાર્યું",
+    "TEMPLATE_RETIRED": "ટેમ્પલેટ નિવૃત્ત કર્યું",
+    "TEMPLATE_RESTORED": "ટેમ્પલેટ પાછું લાવ્યા"
   }
 }

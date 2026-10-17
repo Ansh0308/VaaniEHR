@@ -21,9 +21,14 @@ interface World {
   phone: string;
   sessionId: string;
   allergy: string;
+  /** a clinic-wide and a personal template of this clinic's doctor */
+  templateId: string;
+  personalTemplateId: string;
 }
 
 let h: Harness;
+/** medicines are shared reference data (ADR-D23): one fake medicine serves both clinics' templates */
+let templateMedicineId: string;
 let A: World;
 let B: World;
 
@@ -42,7 +47,7 @@ const one = async (sql: string, params: unknown[] = []) =>
   (await h.db.owner.query(sql, params)).rows[0];
 
 async function populate(
-  world: Omit<World, 'patientId' | 'sessionId'>,
+  world: Omit<World, 'patientId' | 'sessionId' | 'templateId' | 'personalTemplateId'>,
   phone: string,
 ): Promise<World> {
   const created = await call('post', '/patients', world.tokens.staff, {
@@ -61,12 +66,31 @@ async function populate(
     noticeLanguage: 'en',
     source: 'staff',
   });
-  return { ...world, patientId, sessionId };
+  const tpl = async (visibility: 'clinic' | 'personal') =>
+    (
+      await call('post', '/templates', world.tokens.doctor, {
+        name: `Demo ${visibility} template ${world.name} (FAKE)`,
+        visibility,
+        items: [{ medicineId: templateMedicineId, frequency: 'BD', dose: '1 tablet (demo)' }],
+      })
+    ).body.data.id as string;
+  return {
+    ...world,
+    patientId,
+    sessionId,
+    templateId: await tpl('clinic'),
+    personalTemplateId: await tpl('personal'),
+  };
 }
 
 beforeAll(async () => {
   h = await createHarness();
   const clinicA = h.seed.clinics[0]?.id as string;
+  templateMedicineId = (
+    await one(
+      `INSERT INTO medicine_master (generic_name, source) VALUES ('Drug-I (FAKE)', 'isolation fixture') RETURNING id`,
+    )
+  ).id as string;
 
   // ---- clinic B: a second clinic with its own users, created directly as the database owner
   await h.db.owner.query(
@@ -153,6 +177,17 @@ async function snapshot(w: World) {
     ).n,
     recording: (await call('get', `/sessions/${w.sessionId}/consent`, w.tokens.admin)).body.data
       .recordingAllowed,
+    templates: await Promise.all(
+      [w.templateId, w.personalTemplateId].map(async (id) => ({
+        row: await one(
+          'SELECT name, visibility, retired_at, updated_at FROM med_template WHERE id = $1',
+          [id],
+        ),
+        items: (
+          await one('SELECT count(*)::int AS n FROM med_template_item WHERE template_id = $1', [id])
+        ).n,
+      })),
+    ),
   };
 }
 
@@ -296,6 +331,58 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
     expect(Object.keys(res.body.data)).toEqual(['ok']);
     expect(res.body.data.ok).toBe(true);
   },
+
+  // ---- prescription templates are CLINIC data: a clinic's templates (clinic-wide and personal) never reach another clinic
+  'GET /templates': async (x, y) => {
+    for (const who of ['doctor', 'admin'] as const) {
+      const res = await call('get', '/templates?includeRetired=true&limit=50', x.tokens[who]);
+      expect(res.status).toBe(200);
+      const listed = res.body.data.items.map((t: { id: string }) => t.id);
+      expect(listed).not.toContain(y.templateId);
+      expect(listed).not.toContain(y.personalTemplateId);
+    }
+  },
+  'GET /templates/:id': async (x, y) => {
+    for (const id of [y.templateId, y.personalTemplateId])
+      for (const who of ['doctor', 'admin'] as const)
+        expect((await call('get', `/templates/${id}`, x.tokens[who])).status).toBe(404);
+  },
+  'GET /templates/:id/load': async (x, y) => {
+    for (const id of [y.templateId, y.personalTemplateId])
+      expect((await call('get', `/templates/${id}/load`, x.tokens.doctor)).status).toBe(404);
+  },
+  'POST /templates': async (x, y) => {
+    // creating in my own clinic never shows up in the other one
+    const made = await call('post', '/templates', x.tokens.doctor, {
+      name: `Attacker's clinic-wide template ${x.name} (FAKE)`,
+      visibility: 'clinic',
+      items: [{ medicineId: templateMedicineId, frequency: 'OD' }],
+    });
+    expect(made.status).toBe(201);
+    const seen = await call('get', '/templates?limit=50', y.tokens.doctor);
+    expect(seen.body.data.items.map((t: { id: string }) => t.id)).not.toContain(made.body.data.id);
+  },
+  'PUT /templates/:id': async (x, y) => {
+    for (const id of [y.templateId, y.personalTemplateId])
+      for (const who of ['doctor', 'admin'] as const)
+        expect(
+          (
+            await call('put', `/templates/${id}`, x.tokens[who], {
+              name: 'Hijacked (FAKE)',
+              visibility: 'clinic',
+              items: [{ medicineId: templateMedicineId, frequency: 'SOS' }],
+            })
+          ).status,
+        ).toBe(404);
+  },
+  'POST /templates/:id/retire': async (x, y) => {
+    for (const id of [y.templateId, y.personalTemplateId])
+      expect((await call('post', `/templates/${id}/retire`, x.tokens.admin)).status).toBe(404);
+  },
+  'POST /templates/:id/restore': async (x, y) => {
+    for (const id of [y.templateId, y.personalTemplateId])
+      expect((await call('post', `/templates/${id}/restore`, x.tokens.admin)).status).toBe(404);
+  },
 };
 
 /** Routes whose data is the caller's own user or global static text, so there is no other clinic's data to reach. */
@@ -313,6 +400,7 @@ const NOT_CLINIC_SCOPED = [
  */
 const SHARED_REFERENCE_DATA = [
   'GET /medicines',
+  'GET /medicines/categories',
   'GET /medicines/:id',
   'POST /medicines',
   'PATCH /medicines/:id',

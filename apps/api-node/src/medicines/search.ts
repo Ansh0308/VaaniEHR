@@ -50,7 +50,10 @@ export interface MedicineView {
   atcCode: string | null;
   /** Where the row came from; present on every item. */
   source: string;
+  /** The PDF page (the page index in the file). */
   sourcePage: number | null;
+  /** The page number printed on the page: one lower than the PDF page. Show both ("PDF p. 27, printed 26"). */
+  sourcePagePrinted: number | null;
   nlemRef: string | null;
   healthcareLevels: string | null;
   sourceNotes: string | null;
@@ -84,6 +87,7 @@ export function toView(row: MedicineRow, brands: BrandRow[]): MedicineView {
     atcCode: row.atc_code,
     source: row.source,
     sourcePage: row.source_page,
+    sourcePagePrinted: row.source_page === null ? null : row.source_page - 1,
     nlemRef: row.nlem_ref,
     healthcareLevels: row.healthcare_levels,
     sourceNotes: row.source_notes,
@@ -134,11 +138,43 @@ async function expandTerms(db: Queryable, q: string): Promise<string[]> {
   return [...terms];
 }
 
+export type MedicineSort = 'name' | 'strength' | 'form' | 'category' | 'page' | 'reviewed';
+
+/** Whitelisted ORDER BY expressions: the request only ever picks a key from this table. */
+const SORT_SQL: Record<MedicineSort, string> = {
+  name: 'lower(m.generic_name)',
+  strength: "coalesce(m.strength, '')",
+  form: "coalesce(m.dose_form, '')",
+  category: "coalesce(m.therapeutic_category, '')",
+  page: 'm.source_page',
+  reviewed: 'm.reviewed_on',
+};
+
 export interface SearchOptions {
   q?: string | undefined;
   limit: number;
   offset: number;
   includeRetired: boolean;
+  /** Top-level category (the section title) to keep. */
+  category?: string | undefined;
+  /** Used for the plain list only; a search is ordered by relevance (generic names first). */
+  sort?: MedicineSort | undefined;
+  order?: 'asc' | 'desc' | undefined;
+}
+
+/** The top-level categories with the number of active medicine rows in each. */
+export async function listCategories(
+  db: Queryable,
+  includeRetired: boolean,
+): Promise<Array<{ name: string; count: number }>> {
+  const r = await db.query<{ name: string; count: number }>(
+    `SELECT split_part(therapeutic_category, ' > ', 1) AS name, count(*)::int AS count
+       FROM medicine_master
+      WHERE therapeutic_category IS NOT NULL AND ($1 OR retired_at IS NULL)
+      GROUP BY 1 ORDER BY 1`,
+    [includeRetired],
+  );
+  return r.rows;
 }
 
 export async function searchMedicines(
@@ -154,9 +190,11 @@ export async function searchMedicines(
       await db.query<Hit>(
         `SELECT m.*, count(*) OVER () AS total FROM medicine_master m
           WHERE ($1 OR m.retired_at IS NULL)
-          ORDER BY lower(m.generic_name), coalesce(m.dose_form, ''), coalesce(m.strength, ''), m.id
+            AND ($4::text IS NULL OR split_part(m.therapeutic_category, ' > ', 1) = $4)
+          ORDER BY ${SORT_SQL[options.sort ?? 'name']} ${options.order === 'desc' ? 'DESC' : 'ASC'} NULLS LAST,
+                   lower(m.generic_name), coalesce(m.dose_form, ''), coalesce(m.strength, ''), m.id
           LIMIT $2 OFFSET $3`,
-        [options.includeRetired, options.limit, options.offset],
+        [options.includeRetired, options.limit, options.offset, options.category ?? null],
       )
     ).rows;
   } else {
@@ -192,9 +230,17 @@ export async function searchMedicines(
              FROM gen FULL JOIN br ON br.id = gen.id)
          SELECT m.*, h.by_generic, count(*) OVER () AS total
            FROM hits h JOIN medicine_master m ON m.id = h.id
+          WHERE ($6::text IS NULL OR split_part(m.therapeutic_category, ' > ', 1) = $6)
           ORDER BY h.tier DESC, lower(m.generic_name), coalesce(m.dose_form, ''), coalesce(m.strength, ''), m.id
           LIMIT $4 OFFSET $5`,
-        [terms, terms.map(escapeLike), options.includeRetired, options.limit, options.offset],
+        [
+          terms,
+          terms.map(escapeLike),
+          options.includeRetired,
+          options.limit,
+          options.offset,
+          options.category ?? null,
+        ],
       )
     ).rows;
   }

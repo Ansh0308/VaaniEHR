@@ -2372,7 +2372,11 @@
                 "MEDICINE_RETIRED",
                 "MEDICINE_RESTORED",
                 "MEDICINE_BRAND_ADDED",
-                "MEDICINE_BRAND_RETIRED"
+                "MEDICINE_BRAND_RETIRED",
+                "TEMPLATE_CREATED",
+                "TEMPLATE_UPDATED",
+                "TEMPLATE_RETIRED",
+                "TEMPLATE_RESTORED"
               ]
             }
           },
@@ -2564,7 +2568,11 @@
                       "MEDICINE_RETIRED",
                       "MEDICINE_RESTORED",
                       "MEDICINE_BRAND_ADDED",
-                      "MEDICINE_BRAND_RETIRED"
+                      "MEDICINE_BRAND_RETIRED",
+                      "TEMPLATE_CREATED",
+                      "TEMPLATE_UPDATED",
+                      "TEMPLATE_RETIRED",
+                      "TEMPLATE_RESTORED"
                     ]
                   },
                   "from": {
@@ -2793,6 +2801,46 @@
             }
           },
           {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "name",
+              "type": "string",
+              "enum": [
+                "name",
+                "strength",
+                "form",
+                "category",
+                "page",
+                "reviewed"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
             "name": "includeRetired",
             "in": "query",
             "required": false,
@@ -2871,6 +2919,10 @@
                                 "type": "string"
                               },
                               "sourcePage": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "sourcePagePrinted": {
                                 "nullable": true,
                                 "type": "number"
                               },
@@ -2960,6 +3012,7 @@
                               "atcCode",
                               "source",
                               "sourcePage",
+                              "sourcePagePrinted",
                               "nlemRef",
                               "healthcareLevels",
                               "sourceNotes",
@@ -3179,6 +3232,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -3265,6 +3322,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -3324,6 +3382,99 @@
         ],
         "x-audit-actions": [
           "MEDICINE_CREATED"
+        ]
+      }
+    },
+    "/medicines/categories": {
+      "get": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "The top-level categories (NLEM sections) with the number of medicine rows in each",
+        "operationId": "getMedicinesCategories",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "categories": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "count"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "categories"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.read",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin",
+          "researcher"
         ]
       }
     },
@@ -3410,6 +3561,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -3496,6 +3651,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -3714,6 +3870,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -3800,6 +3960,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -3955,6 +4116,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -4041,6 +4206,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -4196,6 +4362,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -4282,6 +4452,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -4470,6 +4641,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -4556,6 +4731,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -4721,6 +4897,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "sourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "nlemRef": {
                           "nullable": true,
                           "type": "string"
@@ -4807,6 +4987,7 @@
                         "atcCode",
                         "source",
                         "sourcePage",
+                        "sourcePagePrinted",
                         "nlemRef",
                         "healthcareLevels",
                         "sourceNotes",
@@ -4876,6 +5057,1945 @@
         ],
         "x-audit-actions": [
           "MEDICINE_BRAND_RETIRED"
+        ]
+      }
+    },
+    "/templates": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "List the templates the caller may see: their own and the clinic-wide ones of their clinic",
+        "operationId": "getTemplates",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "mine",
+                "clinic"
+              ]
+            }
+          },
+          {
+            "name": "includeRetired",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "visibility": {
+                                "type": "string",
+                                "enum": [
+                                  "personal",
+                                  "clinic"
+                                ]
+                              },
+                              "ownerId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "ownerName": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "ownedByMe": {
+                                "type": "boolean"
+                              },
+                              "itemCount": {
+                                "type": "number"
+                              },
+                              "retired": {
+                                "type": "boolean"
+                              },
+                              "updatedAt": {
+                                "type": "string"
+                              },
+                              "canEdit": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "visibility",
+                              "ownerId",
+                              "ownerName",
+                              "ownedByMe",
+                              "itemCount",
+                              "retired",
+                              "updatedAt",
+                              "canEdit"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "offset": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "total",
+                        "limit",
+                        "offset"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      },
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Create a template (personal or clinic-wide) with at least one item",
+        "operationId": "postTemplates",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "personal",
+                      "clinic"
+                    ]
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "maxItems": 40,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "medicineId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "dose": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "frequency": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "OD",
+                            "BD",
+                            "TDS",
+                            "QID",
+                            "SOS"
+                          ]
+                        },
+                        "duration": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "instructions": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [
+                        "medicineId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "visibility",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "clinic"
+                          ]
+                        },
+                        "ownerId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "ownerName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ownedByMe": {
+                          "type": "boolean"
+                        },
+                        "itemCount": {
+                          "type": "number"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "medicineRetired": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "medicineRetired"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "visibility",
+                        "ownerId",
+                        "ownerName",
+                        "ownedByMe",
+                        "itemCount",
+                        "retired",
+                        "updatedAt",
+                        "canEdit",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.write",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "TEMPLATE_CREATED"
+        ]
+      }
+    },
+    "/templates/{id}": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Read one template with its ordered items",
+        "operationId": "getTemplatesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "clinic"
+                          ]
+                        },
+                        "ownerId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "ownerName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ownedByMe": {
+                          "type": "boolean"
+                        },
+                        "itemCount": {
+                          "type": "number"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "medicineRetired": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "medicineRetired"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "visibility",
+                        "ownerId",
+                        "ownerName",
+                        "ownedByMe",
+                        "itemCount",
+                        "retired",
+                        "updatedAt",
+                        "canEdit",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      },
+      "put": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Replace a template (name, visibility, items). Its owner may edit it; an admin may edit a clinic-wide one; only the owner can change its visibility.",
+        "operationId": "putTemplatesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "personal",
+                      "clinic"
+                    ]
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "maxItems": 40,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "medicineId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "dose": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "frequency": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "OD",
+                            "BD",
+                            "TDS",
+                            "QID",
+                            "SOS"
+                          ]
+                        },
+                        "duration": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "instructions": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [
+                        "medicineId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "visibility",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "clinic"
+                          ]
+                        },
+                        "ownerId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "ownerName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ownedByMe": {
+                          "type": "boolean"
+                        },
+                        "itemCount": {
+                          "type": "number"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "medicineRetired": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "medicineRetired"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "visibility",
+                        "ownerId",
+                        "ownerName",
+                        "ownedByMe",
+                        "itemCount",
+                        "retired",
+                        "updatedAt",
+                        "canEdit",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.write",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "TEMPLATE_UPDATED"
+        ]
+      }
+    },
+    "/templates/{id}/load": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Load a template: its items in order, ready to drop into a prescription. An item whose medicine has been retired is returned and flagged (MEDICINE_RETIRED), never dropped or replaced.",
+        "operationId": "getTemplatesIdLoad",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "template": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "visibility": {
+                              "type": "string",
+                              "enum": [
+                                "personal",
+                                "clinic"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "visibility"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "problem": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "MEDICINE_RETIRED"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "problem"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "position": {
+                                "type": "number"
+                              },
+                              "code": {
+                                "type": "string",
+                                "enum": [
+                                  "MEDICINE_RETIRED"
+                                ]
+                              },
+                              "medicineId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              }
+                            },
+                            "required": [
+                              "position",
+                              "code",
+                              "medicineId"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "hasRetiredMedicine": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "template",
+                        "items",
+                        "warnings",
+                        "hasRetiredMedicine"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      }
+    },
+    "/templates/{id}/retire": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Retire a template (hidden from the default list and not loadable; never deleted)",
+        "operationId": "postTemplatesIdRetire",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "clinic"
+                          ]
+                        },
+                        "ownerId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "ownerName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ownedByMe": {
+                          "type": "boolean"
+                        },
+                        "itemCount": {
+                          "type": "number"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "medicineRetired": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "medicineRetired"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "visibility",
+                        "ownerId",
+                        "ownerName",
+                        "ownedByMe",
+                        "itemCount",
+                        "retired",
+                        "updatedAt",
+                        "canEdit",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.write",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "TEMPLATE_RETIRED"
+        ]
+      }
+    },
+    "/templates/{id}/restore": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Restore a retired template",
+        "operationId": "postTemplatesIdRestore",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "visibility": {
+                          "type": "string",
+                          "enum": [
+                            "personal",
+                            "clinic"
+                          ]
+                        },
+                        "ownerId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "ownerName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ownedByMe": {
+                          "type": "boolean"
+                        },
+                        "itemCount": {
+                          "type": "number"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "position": {
+                                "type": "number"
+                              },
+                              "medicine": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "genericName": {
+                                    "type": "string"
+                                  },
+                                  "strength": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "doseForm": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "route": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "source": {
+                                    "type": "string"
+                                  },
+                                  "sourcePage": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sourcePagePrinted": {
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "reviewStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "reviewed",
+                                      "not_reviewed"
+                                    ]
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "genericName",
+                                  "strength",
+                                  "doseForm",
+                                  "route",
+                                  "source",
+                                  "sourcePage",
+                                  "sourcePagePrinted",
+                                  "reviewStatus",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "dose": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "frequency": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "OD",
+                                  "BD",
+                                  "TDS",
+                                  "QID",
+                                  "SOS"
+                                ]
+                              },
+                              "duration": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "instructions": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "medicineRetired": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "position",
+                              "medicine",
+                              "dose",
+                              "frequency",
+                              "duration",
+                              "instructions",
+                              "medicineRetired"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "visibility",
+                        "ownerId",
+                        "ownerName",
+                        "ownedByMe",
+                        "itemCount",
+                        "retired",
+                        "updatedAt",
+                        "canEdit",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "template.write",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "TEMPLATE_RESTORED"
         ]
       }
     }

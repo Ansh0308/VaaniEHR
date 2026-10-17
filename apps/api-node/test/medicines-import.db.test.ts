@@ -249,7 +249,7 @@ describe('the runtime role cannot set a review or delete', () => {
     expect(row?.reviewed_by).toBeNull();
   });
 
-  it('has no DELETE privilege on medicines or brands, and cannot touch the Gujarati table or templates', async () => {
+  it('has no DELETE privilege on medicines or brands, and cannot change the Gujarati table or delete templates', async () => {
     await expect(
       h.appPool.query(`DELETE FROM medicine_master WHERE generic_name = 'Drug-W'`),
     ).rejects.toMatchObject({ code: '42501' });
@@ -261,7 +261,9 @@ describe('the runtime role cannot set a review or delete', () => {
         `INSERT INTO medicine_translit_gu (gu_text, latin_text, source, reviewed_by, reviewed_on) VALUES ('ક','k','t','x','2026-01-01')`,
       ),
     ).rejects.toMatchObject({ code: '42501' });
-    await expect(h.appPool.query('SELECT 1 FROM med_template')).rejects.toMatchObject({
+    // templates are used by the template API (Phase 3B): readable, but a template is retired, never deleted
+    await expect(h.appPool.query('SELECT 1 FROM med_template')).resolves.toBeTruthy();
+    await expect(h.appPool.query('DELETE FROM med_template')).rejects.toMatchObject({
       code: '42501',
     });
   });

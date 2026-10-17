@@ -8,6 +8,7 @@ import type { RouteDef } from '../http/routeRegistry.js';
 import { medicineRoutes } from '../medicines/routes.js';
 import { patientRoutes } from '../patients/routes.js';
 import { sessionRoutes } from '../sessions/routes.js';
+import { templateRoutes } from '../templates/routes.js';
 
 export const API_PREFIX = '/api/v1';
 
@@ -19,5 +20,6 @@ export function allRoutes(config: Config): RouteDef[] {
     ...consentRoutes(),
     ...auditRoutes(),
     ...medicineRoutes(),
+    ...templateRoutes(),
   ];
 }

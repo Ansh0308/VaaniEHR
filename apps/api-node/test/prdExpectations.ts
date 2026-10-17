@@ -32,4 +32,14 @@ export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenti
   'POST /medicines/:id/restore': ['admin'],
   'POST /medicines/:id/brands': ['admin'],
   'POST /medicines/:id/brands/:brandId/retire': ['admin'],
+  'GET /medicines/categories': ['doctor', 'staff', 'admin', 'researcher'],
+  // Prescription templates (FR-F5-04, PG-13: admin and doctor). Resource rules (personal / clinic-wide) are tested in
+  // templates.db.test.ts and clinic-isolation.db.test.ts.
+  'GET /templates': ['doctor', 'admin'],
+  'GET /templates/:id': ['doctor', 'admin'],
+  'GET /templates/:id/load': ['doctor', 'admin'],
+  'POST /templates': ['doctor', 'admin'],
+  'PUT /templates/:id': ['doctor', 'admin'],
+  'POST /templates/:id/retire': ['doctor', 'admin'],
+  'POST /templates/:id/restore': ['doctor', 'admin'],
 };

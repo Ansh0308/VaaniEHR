@@ -14,6 +14,8 @@ let sessionId: string;
 let patientId: string;
 let medicineId: string;
 let brandId: string;
+let templateId: string;
+let tplMedicineId: string;
 const tokens: Partial<Record<Role | 'anonymous', string>> = {};
 
 beforeAll(async () => {
@@ -48,6 +50,24 @@ beforeAll(async () => {
       [medicineId],
     )
   ).rows[0]?.id as string;
+
+  tplMedicineId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO medicine_master (generic_name, source) VALUES ('Drug-T (FAKE)', 'rbac test fixture') RETURNING id`,
+    )
+  ).rows[0]?.id as string;
+  // a clinic-wide template owned by the doctor: the doctor (owner) and an admin may edit it
+  templateId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO med_template (name, owner_user_id, clinic_id, visibility)
+       VALUES ('RBAC demo template (FAKE)', $1, $2, 'clinic') RETURNING id`,
+      [h.seed.users.find((u) => u.email === SEED_EMAIL.doctor1)?.id, clinicId],
+    )
+  ).rows[0]?.id as string;
+  await h.db.owner.query(
+    `INSERT INTO med_template_item (template_id, medicine_id, position, frequency) VALUES ($1, $2, 0, 'OD')`,
+    [templateId, tplMedicineId],
+  );
 
   sessionId = (
     await h.db.owner.query<{ id: string }>(
@@ -113,6 +133,28 @@ const fixture = (route: RouteDef): Call => {
       path: `/medicines/${medicineId}/brands`,
       body: { brandName: 'Brand-N (FAKE)', source: 'rbac test' },
     },
+    'GET /medicines/categories': { path: '/medicines/categories' },
+    'GET /templates': { path: '/templates' },
+    'GET /templates/:id': { path: `/templates/${templateId}` },
+    'GET /templates/:id/load': { path: `/templates/${templateId}/load` },
+    'POST /templates': {
+      path: '/templates',
+      body: {
+        name: 'RBAC new template (FAKE)',
+        visibility: 'personal',
+        items: [{ medicineId: tplMedicineId, frequency: 'BD' }],
+      },
+    },
+    'PUT /templates/:id': {
+      path: `/templates/${templateId}`,
+      body: {
+        name: 'RBAC demo template (FAKE)',
+        visibility: 'clinic',
+        items: [{ medicineId: tplMedicineId, frequency: 'TDS' }],
+      },
+    },
+    'POST /templates/:id/retire': { path: `/templates/${templateId}/retire` },
+    'POST /templates/:id/restore': { path: `/templates/${templateId}/restore` },
     'POST /medicines/:id/brands/:brandId/retire': {
       path: `/medicines/${medicineId}/brands/${brandId}/retire`,
     },

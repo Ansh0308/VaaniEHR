@@ -69,6 +69,10 @@
     "MEDICINE_RESTORED": "Medicine restored",
     "MEDICINE_BRAND_ADDED": "Brand added",
     "MEDICINE_BRAND_RETIRED": "Brand retired",
-    "MEDICINE_TRANSLIT_LOADED": "Gujarati search list loaded"
+    "MEDICINE_TRANSLIT_LOADED": "Gujarati search list loaded",
+    "TEMPLATE_CREATED": "Template created",
+    "TEMPLATE_UPDATED": "Template edited",
+    "TEMPLATE_RETIRED": "Template retired",
+    "TEMPLATE_RESTORED": "Template restored"
   }
 }

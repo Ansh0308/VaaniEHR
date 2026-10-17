@@ -10,7 +10,14 @@
 import { z } from 'zod';
 import { errors } from '../http/errors.js';
 import { permRoute, type RouteDef } from '../http/routeRegistry.js';
-import { brandsFor, getMedicine, searchMedicines, toView, type MedicineRow } from './search.js';
+import {
+  brandsFor,
+  getMedicine,
+  listCategories,
+  searchMedicines,
+  toView,
+  type MedicineRow,
+} from './search.js';
 
 const MAX_LIST = 50;
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -20,6 +27,11 @@ const listQuery = z.object({
   q: z.string().trim().max(80).optional(),
   limit: z.coerce.number().int().min(1).max(MAX_LIST).default(20),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
+  /** Keep one top-level category (the section title; see GET /medicines/categories). */
+  category: z.string().trim().min(1).max(300).optional(),
+  /** Order of the plain list (a search is ordered by relevance). */
+  sort: z.enum(['name', 'strength', 'form', 'category', 'page', 'reviewed']).default('name'),
+  order: z.enum(['asc', 'desc']).default('asc'),
   /** Admin only: also list retired rows. */
   includeRetired: z
     .enum(['true', 'false'])
@@ -101,6 +113,7 @@ const medicineView = z.object({
   atcCode: z.string().nullable(),
   source: z.string(),
   sourcePage: z.number().nullable(),
+  sourcePagePrinted: z.number().nullable(),
   nlemRef: z.string().nullable(),
   healthcareLevels: z.string().nullable(),
   sourceNotes: z.string().nullable(),
@@ -159,9 +172,26 @@ export function medicineRoutes(): RouteDef[] {
           limit: ctx.query.limit,
           offset: ctx.query.offset,
           includeRetired,
+          category: ctx.query.category,
+          sort: ctx.query.sort,
+          order: ctx.query.order,
         });
         return { data: { items, total, limit: ctx.query.limit, offset: ctx.query.offset } };
       },
+    }),
+
+    permRoute('medicine.read', {
+      method: 'get',
+      path: '/medicines/categories',
+      tag: 'Medicines',
+      summary: 'The top-level categories (NLEM sections) with the number of medicine rows in each',
+      audit: [],
+      response: z.object({
+        categories: z.array(z.object({ name: z.string(), count: z.number() })),
+      }),
+      handler: async (ctx) => ({
+        data: { categories: await listCategories(ctx.db, false) },
+      }),
     }),
 
     permRoute<IdParams>('medicine.read', {

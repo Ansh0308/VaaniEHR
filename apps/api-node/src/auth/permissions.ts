@@ -28,6 +28,11 @@ export const PERMISSIONS = {
   // only admins write. Retire, never delete (ADR-D23).
   'medicine.read': ['doctor', 'staff', 'admin', 'researcher'],
   'medicine.write': ['admin'],
+  // prescription templates (FR-F5-04, PG-13: admin and doctor). Staff and researcher have no use for them. Beyond this
+  // table the handlers apply resource rules: personal templates are visible to their owner only, a clinic-wide one is
+  // editable by its owner or an admin (ADR-D24).
+  'template.read': ['doctor', 'admin'],
+  'template.write': ['doctor', 'admin'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type PermissionId = keyof typeof PERMISSIONS;

@@ -27,6 +27,10 @@ export const AUDIT_ACTIONS = [
   'MEDICINE_RESTORED',
   'MEDICINE_BRAND_ADDED',
   'MEDICINE_BRAND_RETIRED',
+  'TEMPLATE_CREATED',
+  'TEMPLATE_UPDATED',
+  'TEMPLATE_RETIRED',
+  'TEMPLATE_RESTORED',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
