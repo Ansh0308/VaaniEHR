@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 4A in progress: steps 1-2 of 10 done (engine interface + MockEngine; VAD segmenter + Silero backend). Plan in the 2026-10-17 conversation; details in docs/ASR.md and docs/vendor-notes.md. Steps 1-6 first, then 7-10 on the owner's go.
+> **Resume status (one line, updated after every step):** Phase 4A in progress: steps 1-3 of 10 done (engine interface + MockEngine; VAD; usage log + spend caps). Plan in the 2026-10-17 conversation; details in docs/ASR.md and docs/vendor-notes.md. Steps 1-6 first, then 7-10 on the owner's go.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
