@@ -130,11 +130,24 @@ describe('OpenAPI', () => {
 
 describe('web and API agree on the template frequency codes', () => {
   it("the web app's code list equals FREQUENCY_CODES, and every code has a label in both languages", () => {
-    const web = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'api', 'templates.ts'), 'utf8');
+    const web = readFileSync(
+      join(__dirname, '..', '..', 'web', 'src', 'api', 'templates.ts'),
+      'utf8',
+    );
     const block = /FREQUENCY_CODES = \[([^\]]*)\]/.exec(web)?.[1] ?? '';
     expect([...block.matchAll(/'([A-Z]+)'/g)].map((m) => m[1])).toEqual([...FREQUENCY_CODES]);
     for (const lang of ['en', 'gu']) {
-      const file = join(__dirname, '..', '..', 'web', 'src', 'i18n', 'locales', lang, 'templates.json');
+      const file = join(
+        __dirname,
+        '..',
+        '..',
+        'web',
+        'src',
+        'i18n',
+        'locales',
+        lang,
+        'templates.json',
+      );
       const labels = JSON.parse(readFileSync(file, 'utf8')).frequency as Record<string, string>;
       expect(Object.keys(labels).sort(), lang).toEqual([...FREQUENCY_CODES].sort());
     }
