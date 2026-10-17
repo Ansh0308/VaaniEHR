@@ -1,0 +1,4 @@
+# Optional: real voice-activity detection (Phase 4A step 2). Brings CPU torch (large). Not needed for tests or CI.
+-r requirements.txt
+silero-vad==6.2.3
+torch==2.14.1

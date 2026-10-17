@@ -57,7 +57,11 @@ function directNpm() {
 
 function directPython() {
   const rows = [];
-  for (const file of ['apps/asr-py/requirements.txt', 'apps/asr-py/requirements-dev.txt']) {
+  for (const file of [
+    'apps/asr-py/requirements.txt',
+    'apps/asr-py/requirements-dev.txt',
+    'apps/asr-py/requirements-vad.txt',
+  ]) {
     if (!existsSync(join(ROOT, file))) continue;
     for (const line of read(file).split(/\r?\n/)) {
       const m = line.trim().match(/^([A-Za-z0-9_.-]+)==([^\s#;]+)/);

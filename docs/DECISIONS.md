@@ -246,6 +246,11 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | fastapi | Python service framework named in the PRD stack (§11: asr-py). |
 | pydantic | Validation of asr-py settings (and, later, extraction schemas, FR-F3-01); also a hard dependency of fastapi. |
 | uvicorn | ASGI server that runs the FastAPI app. |
+| websockets | WebSocket support for uvicorn (the audio endpoint, ADR-D25) and the client to Sarvam's realtime API. BSD-3-Clause. Owner approved 2026-10-17. |
+| numpy | Audio frames for the VAD and engines. BSD-3-Clause. Owner approved 2026-10-17. |
+| cryptography | AES-256-GCM encryption of stored audio (NFR-SEC-03). Apache-2.0 or BSD. Owner approved 2026-10-17. |
+| silero-vad | Voice-activity detection (FR-F2-02), MIT, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| torch | Required by silero-vad (CPU build), BSD-3-Clause, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
 | httpx | Required by FastAPI's TestClient for API tests (dev only). |
 | pytest | Python test runner (NFR-MAINT-01). |
 | ruff | Python linter and formatter (one fast tool for lint + format). |

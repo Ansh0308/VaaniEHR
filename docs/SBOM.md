@@ -60,12 +60,17 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | vitest | 4.1.11 | dev | apps/api-node/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
 | npm | vitest | 4.1.11 | dev | packages/rules/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
 | npm | zod | 4.6.7 | runtime | apps/api-node/package.json | MIT | Runtime validation of environment variables and request bodies (Phase 1.1 API conventions, NFR-SEC-01). |
+| pip | cryptography | 50.0.2 | runtime | apps/asr-py/requirements.txt | Apache-2.0 OR BSD-3-Clause | AES-256-GCM encryption of stored audio (NFR-SEC-03). Apache-2.0 or BSD. Owner approved 2026-10-17. |
 | pip | fastapi | 0.143.0 | runtime | apps/asr-py/requirements.txt | MIT | Python service framework named in the PRD stack (§11: asr-py). |
 | pip | httpx | 0.28.1 | dev | apps/asr-py/requirements-dev.txt | BSD-3-Clause | Required by FastAPI's TestClient for API tests (dev only). |
+| pip | numpy | 2.4.6 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Audio frames for the VAD and engines. BSD-3-Clause. Owner approved 2026-10-17. |
 | pip | pydantic | 2.14.1 | runtime | apps/asr-py/requirements.txt | MIT | Validation of asr-py settings (and, later, extraction schemas, FR-F3-01); also a hard dependency of fastapi. |
 | pip | pytest | 9.1.1 | dev | apps/asr-py/requirements-dev.txt | MIT | Python test runner (NFR-MAINT-01). |
 | pip | ruff | 0.17.0 | dev | apps/asr-py/requirements-dev.txt | MIT | Python linter and formatter (one fast tool for lint + format). |
+| pip | silero-vad | 6.2.3 | runtime | apps/asr-py/requirements-vad.txt | MIT License | Voice-activity detection (FR-F2-02), MIT, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| pip | torch | 2.14.1 | runtime | apps/asr-py/requirements-vad.txt | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | Required by silero-vad (CPU build), BSD-3-Clause, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
 | pip | uvicorn | 0.54.0 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause | ASGI server that runs the FastAPI app. |
+| pip | websockets | 17.2 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause | WebSocket support for uvicorn (the audio endpoint, ADR-D25) and the client to Sarvam's realtime API. BSD-3-Clause. Owner approved 2026-10-17. |
 
 ### Version choices accepted by the owner (2026-10-14)
 
@@ -81,7 +86,7 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 
 ## 2. Licence review summary
 
-- npm packages in lockfile: 541; pip distributions installed: 26
+- npm packages in lockfile: 541; pip distributions installed: 40
 - Packages needing review or with unverified licence: 3
 
 | Ecosystem | Package | Version | Declared licence | Status |
@@ -685,25 +690,39 @@ Not adopted yet: DDInter 2.0 (CC BY-NC-SA 4.0, non-commercial: licence check fir
 | annotated-types | 0.8.0 | MIT | ok (permissive) |
 | anyio | 4.15.1 | MIT | ok (permissive) |
 | certifi | 2026.7.22 | MPL-2.0 | ok (permissive) |
+| cffi | 2.1.1 | MIT-0 | ok (permissive) |
 | click | 8.5.0 | BSD-3-Clause | ok (permissive) |
 | colorama | 0.4.6 | BSD License | ok (permissive) |
+| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause | ok (permissive) |
 | fastapi | 0.143.0 | MIT | ok (permissive) |
+| filelock | 4.2.0 | MIT | ok (permissive) |
+| fsspec | 2026.9.0 | BSD-3-Clause | ok (permissive) |
 | h11 | 0.16.0 | MIT | ok (permissive) |
 | httpcore | 1.0.9 | BSD-3-Clause | ok (permissive) |
 | httpx | 0.28.1 | BSD-3-Clause | ok (permissive) |
 | idna | 3.20 | BSD-3-Clause | ok (permissive) |
 | iniconfig | 2.3.1 | MIT | ok (permissive) |
+| Jinja2 | 3.1.6 | BSD License | ok (permissive) |
+| MarkupSafe | 3.0.4 | BSD-3-Clause | ok (permissive) |
+| mpmath | 1.3.0 | BSD | ok (permissive) |
+| networkx | 3.6.1 | BSD-3-Clause | ok (permissive) |
+| numpy | 2.4.6 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | ok (permissive) |
 | opentelemetry-api | 1.45.1 | Apache-2.0 | ok (permissive) |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | ok (permissive) |
 | pip | 22.3 | MIT | ok (permissive) |
 | pluggy | 1.6.0 | MIT | ok (permissive) |
+| pycparser | 3.11 | BSD-3-Clause | ok (permissive) |
 | pydantic | 2.14.1 | MIT | ok (permissive) |
 | pydantic_core | 2.50.1 | MIT | ok (permissive) |
 | Pygments | 2.21.0 | BSD-2-Clause | ok (permissive) |
 | pytest | 9.1.1 | MIT | ok (permissive) |
 | ruff | 0.17.0 | MIT | ok (permissive) |
-| setuptools | 65.5.0 | MIT License | ok (permissive) |
+| setuptools | 84.0.0 | MIT | ok (permissive) |
+| silero-vad | 6.2.3 | MIT License | ok (permissive) |
 | starlette | 1.8.0 | BSD-3-Clause | ok (permissive) |
+| sympy | 1.14.0 | BSD | ok (permissive) |
+| torch | 2.14.1 | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | ok (permissive) |
 | typing-inspection | 0.4.4 | MIT | ok (permissive) |
 | typing_extensions | 4.16.0 | PSF-2.0 | ok (permissive) |
 | uvicorn | 0.54.0 | BSD-3-Clause | ok (permissive) |
+| websockets | 17.2 | BSD-3-Clause | ok (permissive) |
