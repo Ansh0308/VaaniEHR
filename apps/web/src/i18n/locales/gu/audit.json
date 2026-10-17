@@ -61,6 +61,7 @@
     "CONSENT_WITHDRAWN": "સંમતિ પાછી ખેંચી",
     "AUDIT_EXPORTED": "ઑડિટ લૉગ નિકાસ થયો",
     "SEED_APPLIED": "નકલી ડેટા લોડ થયો",
+    "ASR_TOKEN_ISSUED": "સ્પીચ સેવાનો ઍક્સેસ ટોકન અપાયો",
     "MEDICINE_IMPORTED": "દવાની યાદી આયાત થઈ",
     "MEDICINE_CODES_LOADED": "દવાના કોડ લોડ થયા",
     "MEDICINE_CREATED": "દવા ઉમેરાઈ",

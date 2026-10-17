@@ -2328,6 +2328,130 @@
         ]
       }
     },
+    "/sessions/{id}/asr-token": {
+      "post": {
+        "tags": [
+          "Speech"
+        ],
+        "summary": "Doctor: get a 120-second token to stream audio to the speech service; refused unless audio and AI-processing consent are on record",
+        "operationId": "postSessionsIdAsrToken",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        },
+                        "expiresInSeconds": {
+                          "type": "number"
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "expiresAt",
+                        "expiresInSeconds",
+                        "scopes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "asr.token",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "ASR_TOKEN_ISSUED"
+        ]
+      }
+    },
     "/audit": {
       "get": {
         "tags": [
@@ -2364,6 +2488,7 @@
                 "CONSENT_WITHDRAWN",
                 "AUDIT_EXPORTED",
                 "SEED_APPLIED",
+                "ASR_TOKEN_ISSUED",
                 "MEDICINE_IMPORTED",
                 "MEDICINE_CODES_LOADED",
                 "MEDICINE_TRANSLIT_LOADED",
@@ -2560,6 +2685,7 @@
                       "CONSENT_WITHDRAWN",
                       "AUDIT_EXPORTED",
                       "SEED_APPLIED",
+                      "ASR_TOKEN_ISSUED",
                       "MEDICINE_IMPORTED",
                       "MEDICINE_CODES_LOADED",
                       "MEDICINE_TRANSLIT_LOADED",

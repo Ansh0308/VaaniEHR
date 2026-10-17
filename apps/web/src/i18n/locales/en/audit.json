@@ -61,6 +61,7 @@
     "CONSENT_WITHDRAWN": "Consent withdrawn",
     "AUDIT_EXPORTED": "Audit log exported",
     "SEED_APPLIED": "Fake data loaded",
+    "ASR_TOKEN_ISSUED": "Speech access token issued",
     "MEDICINE_IMPORTED": "Medicine list imported",
     "MEDICINE_CODES_LOADED": "Medicine codes loaded",
     "MEDICINE_CREATED": "Medicine added",

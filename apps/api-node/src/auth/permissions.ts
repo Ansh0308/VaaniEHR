@@ -15,6 +15,9 @@ export const PERMISSIONS = {
   'session.read': ['doctor', 'staff', 'admin'],
   // the signed-in doctor's OWN sessions only (the handler also filters by doctor and clinic)
   'session.listMine': ['doctor'],
+  // speech service access (Phase 4A): only the session's own doctor starts recording (PRD 2.2)
+  'asr.token': ['doctor'],
+
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],

@@ -19,6 +19,8 @@ export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenti
   'GET /sessions/:id': ['doctor', 'staff', 'admin'],
   'GET /sessions/:id/consent': ['doctor', 'staff', 'admin'],
   'POST /sessions/:id/consent': ['doctor', 'staff', 'admin'],
+  // only the session's own doctor starts recording (PRD 2.2); consent is checked again inside the route
+  'POST /sessions/:id/asr-token': ['doctor'],
   'POST /sessions/:id/consent/withdraw': ['doctor', 'staff', 'admin'],
   'GET /audit': ['admin', 'researcher'],
   'GET /audit/verify': ['admin'],

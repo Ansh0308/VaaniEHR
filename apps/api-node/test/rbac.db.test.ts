@@ -15,6 +15,7 @@ let patientId: string;
 let medicineId: string;
 let brandId: string;
 let templateId: string;
+let consentedSessionId: string;
 let tplMedicineId: string;
 const tokens: Partial<Record<Role | 'anonymous', string>> = {};
 
@@ -69,6 +70,28 @@ beforeAll(async () => {
     [templateId, tplMedicineId],
   );
 
+  // a second session whose audio + AI-processing consent is already on record, for the speech-token route
+  consentedSessionId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO consultation_session (clinicos_patient_id, clinicos_doctor_id, clinicos_clinic_id)
+       VALUES ($1, $2, $3) RETURNING id`,
+      [patientId, h.seed.users.find((u) => u.email === SEED_EMAIL.doctor1)?.id, clinicId],
+    )
+  ).rows[0]?.id as string;
+  for (const scope of ['audio', 'ai_processing']) {
+    await h.db.owner.query(
+      `INSERT INTO consent_event (session_id, clinic_id, scope, granted, notice_version, notice_language, source,
+         recorded_by_user_id, recorded_by_role, ts)
+       VALUES ($1,$2,$3,true,'0.1','en','staff',$4,'staff',now())`,
+      [
+        consentedSessionId,
+        clinicId,
+        scope,
+        h.seed.users.find((u) => u.email === SEED_EMAIL.staff)?.id,
+      ],
+    );
+  }
+
   sessionId = (
     await h.db.owner.query<{ id: string }>(
       `INSERT INTO consultation_session (clinicos_patient_id, clinicos_doctor_id, clinicos_clinic_id)
@@ -112,6 +135,7 @@ const fixture = (route: RouteDef): Call => {
     'GET /sessions': { path: '/sessions' },
     'GET /sessions/:id': { path: `/sessions/${sessionId}` },
     'GET /sessions/:id/consent': { path: `/sessions/${sessionId}/consent` },
+    'POST /sessions/:id/asr-token': { path: `/sessions/${consentedSessionId}/asr-token` },
     'POST /sessions/:id/consent': { path: `/sessions/${sessionId}/consent`, body: consentGrant },
     'POST /sessions/:id/consent/withdraw': {
       path: `/sessions/${sessionId}/consent/withdraw`,

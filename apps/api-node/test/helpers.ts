@@ -9,6 +9,7 @@ import { loadConfig, type Config } from '../src/config/env.js';
 import { createRealtime, type Realtime } from '../src/realtime/socket.js';
 
 /** A strong-looking secret that exists only inside tests (not a real secret). */
+export const TEST_INTERNAL_SECRET = 'unit-test-internal-secret-0123456789abcdef-0123456789';
 export const TEST_SECRET = 'unit-test-only-secret-0123456789abcdef-0123456789';
 
 export const TEST_CLINIC_ID = 'c0ffee00-0000-4000-8000-0000000000c1';
@@ -30,6 +31,7 @@ export const baseEnv = {
   DATABASE_URL: 'postgres://vaani:test-password@localhost:5433/vaaniehr_test',
   AUTH_PROVIDER: 'dev',
   DEV_AUTH_SECRET: TEST_SECRET,
+  INTERNAL_SERVICE_SECRET: TEST_INTERNAL_SECRET,
 } as const;
 
 export function testConfig(overrides: Record<string, string | undefined> = {}): Config {

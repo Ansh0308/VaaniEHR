@@ -242,6 +242,14 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
       );
     }
   },
+  'POST /sessions/:id/asr-token': async (x, y) => {
+    // another clinic's session is "not found" for the doctor; other roles are refused by role first
+    for (const role of ['admin', 'staff', 'doctor'] as const) {
+      expect(
+        (await call('post', `/sessions/${y.sessionId}/asr-token`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+    }
+  },
   'POST /sessions/:id/consent': async (x, y) => {
     const body = {
       scopes: ['whatsapp'],

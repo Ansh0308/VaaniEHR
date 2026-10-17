@@ -17,6 +17,8 @@ const rawSchema = z.object({
     ),
   AUTH_PROVIDER: z.enum(['dev', 'clinicos']).default('dev'),
   DEV_AUTH_SECRET: z.string().optional(),
+  // Phase 4A: signs the short-lived tokens that let asr-py accept audio (same value in apps/asr-py/.env)
+  INTERNAL_SERVICE_SECRET: z.string().optional(),
   DEV_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(3600),
   CORS_ORIGIN: z.url().default('http://localhost:5173'),
   SIMULATED_DATA_ONLY: z.enum(['true', 'false']).default('true'),
@@ -36,6 +38,7 @@ export interface Config {
   databaseUrl: string;
   authProvider: 'dev' | 'clinicos';
   devAuthSecret: string | undefined;
+  internalServiceSecret: string | undefined;
   devTokenTtlSeconds: number;
   corsOrigin: string;
   /** Always true in this research prototype (acted/simulated data only). */
@@ -88,6 +91,15 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       problems.push('DEV_AUTH_SECRET: must be at least 32 characters');
     }
   }
+  if (v.INTERNAL_SERVICE_SECRET !== undefined && v.INTERNAL_SERVICE_SECRET !== '') {
+    if (PLACEHOLDER.test(v.INTERNAL_SERVICE_SECRET)) {
+      problems.push(
+        'INTERNAL_SERVICE_SECRET: still a REPLACE_ME placeholder (run `npm run setup:env`)',
+      );
+    } else if (v.INTERNAL_SERVICE_SECRET.length < 32) {
+      problems.push('INTERNAL_SERVICE_SECRET: must be at least 32 characters');
+    }
+  }
   if (v.BCRYPT_COST < 10 && v.NODE_ENV !== 'test') {
     problems.push('BCRYPT_COST: must be at least 10 outside tests (default 12)');
   }
@@ -103,6 +115,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     databaseUrl: v.DATABASE_URL,
     authProvider: v.AUTH_PROVIDER,
     devAuthSecret: v.DEV_AUTH_SECRET,
+    internalServiceSecret: v.INTERNAL_SERVICE_SECRET || undefined,
     devTokenTtlSeconds: v.DEV_TOKEN_TTL_SECONDS,
     corsOrigin: v.CORS_ORIGIN,
     simulatedDataOnly: true,
