@@ -60,6 +60,15 @@
     "CONSENT_GRANTED": "Consent given",
     "CONSENT_WITHDRAWN": "Consent withdrawn",
     "AUDIT_EXPORTED": "Audit log exported",
-    "SEED_APPLIED": "Fake data loaded"
+    "SEED_APPLIED": "Fake data loaded",
+    "MEDICINE_IMPORTED": "Medicine list imported",
+    "MEDICINE_CODES_LOADED": "Medicine codes loaded",
+    "MEDICINE_CREATED": "Medicine added",
+    "MEDICINE_UPDATED": "Medicine edited",
+    "MEDICINE_RETIRED": "Medicine retired",
+    "MEDICINE_RESTORED": "Medicine restored",
+    "MEDICINE_BRAND_ADDED": "Brand added",
+    "MEDICINE_BRAND_RETIRED": "Brand retired",
+    "MEDICINE_TRANSLIT_LOADED": "Gujarati search list loaded"
   }
 }

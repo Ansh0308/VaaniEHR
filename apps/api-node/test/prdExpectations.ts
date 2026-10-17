@@ -23,4 +23,13 @@ export const PRD_EXPECTED: Record<string, readonly Role[] | 'public' | 'authenti
   'GET /audit': ['admin', 'researcher'],
   'GET /audit/verify': ['admin'],
   'POST /audit/export': ['admin'], // PG-16 CSV export: admin only (ADR-D21)
+  // Medicine master (FR-F5): reference data every role may read; admins write (ADR-D23). Written by hand from the PRD.
+  'GET /medicines': ['doctor', 'staff', 'admin', 'researcher'],
+  'GET /medicines/:id': ['doctor', 'staff', 'admin', 'researcher'],
+  'POST /medicines': ['admin'],
+  'PATCH /medicines/:id': ['admin'],
+  'POST /medicines/:id/retire': ['admin'],
+  'POST /medicines/:id/restore': ['admin'],
+  'POST /medicines/:id/brands': ['admin'],
+  'POST /medicines/:id/brands/:brandId/retire': ['admin'],
 };

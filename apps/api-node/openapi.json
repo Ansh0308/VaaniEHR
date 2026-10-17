@@ -2363,7 +2363,16 @@
                 "CONSENT_GRANTED",
                 "CONSENT_WITHDRAWN",
                 "AUDIT_EXPORTED",
-                "SEED_APPLIED"
+                "SEED_APPLIED",
+                "MEDICINE_IMPORTED",
+                "MEDICINE_CODES_LOADED",
+                "MEDICINE_TRANSLIT_LOADED",
+                "MEDICINE_CREATED",
+                "MEDICINE_UPDATED",
+                "MEDICINE_RETIRED",
+                "MEDICINE_RESTORED",
+                "MEDICINE_BRAND_ADDED",
+                "MEDICINE_BRAND_RETIRED"
               ]
             }
           },
@@ -2546,7 +2555,16 @@
                       "CONSENT_GRANTED",
                       "CONSENT_WITHDRAWN",
                       "AUDIT_EXPORTED",
-                      "SEED_APPLIED"
+                      "SEED_APPLIED",
+                      "MEDICINE_IMPORTED",
+                      "MEDICINE_CODES_LOADED",
+                      "MEDICINE_TRANSLIT_LOADED",
+                      "MEDICINE_CREATED",
+                      "MEDICINE_UPDATED",
+                      "MEDICINE_RETIRED",
+                      "MEDICINE_RESTORED",
+                      "MEDICINE_BRAND_ADDED",
+                      "MEDICINE_BRAND_RETIRED"
                     ]
                   },
                   "from": {
@@ -2732,6 +2750,2132 @@
         "x-permission": "audit.verify",
         "x-allowed-roles": [
           "admin"
+        ]
+      }
+    },
+    "/medicines": {
+      "get": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Search medicines by generic or brand name (case-insensitive, English or Gujarati); generic names rank first. Without q: alphabetical list.",
+        "operationId": "getMedicines",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
+            }
+          },
+          {
+            "name": "includeRetired",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "genericName": {
+                                "type": "string"
+                              },
+                              "strength": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "doseForm": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "route": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "therapeuticCategory": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "nlemYear": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "snomedCode": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "atcCode": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              },
+                              "sourcePage": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "nlemRef": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "healthcareLevels": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "sourceNotes": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "alsoListedIn": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "reviewStatus": {
+                                "type": "string",
+                                "enum": [
+                                  "reviewed",
+                                  "not_reviewed"
+                                ]
+                              },
+                              "reviewedOn": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "reviewedBy": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "retired": {
+                                "type": "boolean"
+                              },
+                              "brands": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    },
+                                    "brandName": {
+                                      "type": "string"
+                                    },
+                                    "manufacturer": {
+                                      "nullable": true,
+                                      "type": "string"
+                                    },
+                                    "source": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "brandName",
+                                    "manufacturer",
+                                    "source"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "matchedOn": {
+                                "type": "string",
+                                "enum": [
+                                  "generic",
+                                  "brand"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "genericName",
+                              "strength",
+                              "doseForm",
+                              "route",
+                              "therapeuticCategory",
+                              "nlemYear",
+                              "snomedCode",
+                              "atcCode",
+                              "source",
+                              "sourcePage",
+                              "nlemRef",
+                              "healthcareLevels",
+                              "sourceNotes",
+                              "alsoListedIn",
+                              "reviewStatus",
+                              "reviewedOn",
+                              "reviewedBy",
+                              "retired",
+                              "brands"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "offset": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "total",
+                        "limit",
+                        "offset"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.read",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin",
+          "researcher"
+        ]
+      },
+      "post": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: add a medicine (a source is required; it starts as not reviewed)",
+        "operationId": "postMedicines",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "genericName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "strength": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "doseForm": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "route": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "therapeuticCategory": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "nlemYear": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1990,
+                    "maximum": 2100
+                  },
+                  "sourcePage": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000
+                  },
+                  "sourceNotes": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "genericName",
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_CREATED"
+        ]
+      }
+    },
+    "/medicines/{id}": {
+      "get": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Read one medicine with its source, review status and brands",
+        "operationId": "getMedicinesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.read",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin",
+          "researcher"
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: edit a medicine. An edit clears any review (reviewed_on / reviewed_by become empty). Codes and review fields cannot be set here.",
+        "operationId": "patchMedicinesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "genericName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "strength": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "doseForm": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "route": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "therapeuticCategory": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "nlemYear": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1990,
+                    "maximum": 2100
+                  },
+                  "sourcePage": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000
+                  },
+                  "sourceNotes": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_UPDATED"
+        ]
+      }
+    },
+    "/medicines/{id}/retire": {
+      "post": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: retire a medicine (it is hidden from search; rows are never deleted)",
+        "operationId": "postMedicinesIdRetire",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_RETIRED"
+        ]
+      }
+    },
+    "/medicines/{id}/restore": {
+      "post": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: restore a retired medicine",
+        "operationId": "postMedicinesIdRestore",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_RESTORED"
+        ]
+      }
+    },
+    "/medicines/{id}/brands": {
+      "post": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: add a brand name to a medicine (optional child; a source is required)",
+        "operationId": "postMedicinesIdBrands",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brandName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "manufacturer": {
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "brandName",
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_BRAND_ADDED"
+        ]
+      }
+    },
+    "/medicines/{id}/brands/{brandId}/retire": {
+      "post": {
+        "tags": [
+          "Medicines"
+        ],
+        "summary": "Admin: retire a brand name (brands are never deleted)",
+        "operationId": "postMedicinesIdBrandsBrandIdRetire",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "brandId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "genericName": {
+                          "type": "string"
+                        },
+                        "strength": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "doseForm": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "route": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "therapeuticCategory": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nlemYear": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "snomedCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "atcCode": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "sourcePage": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "nlemRef": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "healthcareLevels": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sourceNotes": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "alsoListedIn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "reviewStatus": {
+                          "type": "string",
+                          "enum": [
+                            "reviewed",
+                            "not_reviewed"
+                          ]
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "retired": {
+                          "type": "boolean"
+                        },
+                        "brands": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "brandName": {
+                                "type": "string"
+                              },
+                              "manufacturer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "brandName",
+                              "manufacturer",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matchedOn": {
+                          "type": "string",
+                          "enum": [
+                            "generic",
+                            "brand"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "genericName",
+                        "strength",
+                        "doseForm",
+                        "route",
+                        "therapeuticCategory",
+                        "nlemYear",
+                        "snomedCode",
+                        "atcCode",
+                        "source",
+                        "sourcePage",
+                        "nlemRef",
+                        "healthcareLevels",
+                        "sourceNotes",
+                        "alsoListedIn",
+                        "reviewStatus",
+                        "reviewedOn",
+                        "reviewedBy",
+                        "retired",
+                        "brands"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "medicine.write",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "MEDICINE_BRAND_RETIRED"
         ]
       }
     }

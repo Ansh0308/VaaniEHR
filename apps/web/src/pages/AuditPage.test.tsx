@@ -1,4 +1,5 @@
 // PG-16 Audit log: filters (user, action, date), verify badge, paging, CSV export, researcher's reduced view.
+import { AUDIT_ACTIONS } from '../api/auditActions';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupApp, IDS, renderApp, type Handler } from '../test-utils/harness';
@@ -185,7 +186,7 @@ describe('filters', () => {
     expect(options).toContain('Any action');
     expect(options).toContain('Audit log exported');
     expect(options).toContain('Consent withdrawn');
-    expect(options.length).toBe(12);
+    expect(options.length).toBe(AUDIT_ACTIONS.length + 1); // every action the API can write, plus "Any action"
   });
 
   it('"Filter by this user" in a row applies the user filter', async () => {

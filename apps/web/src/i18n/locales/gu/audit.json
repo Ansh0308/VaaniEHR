@@ -60,6 +60,15 @@
     "CONSENT_GRANTED": "સંમતિ આપી",
     "CONSENT_WITHDRAWN": "સંમતિ પાછી ખેંચી",
     "AUDIT_EXPORTED": "ઑડિટ લૉગ નિકાસ થયો",
-    "SEED_APPLIED": "નકલી ડેટા લોડ થયો"
+    "SEED_APPLIED": "નકલી ડેટા લોડ થયો",
+    "MEDICINE_IMPORTED": "દવાની યાદી આયાત થઈ",
+    "MEDICINE_CODES_LOADED": "દવાના કોડ લોડ થયા",
+    "MEDICINE_CREATED": "દવા ઉમેરાઈ",
+    "MEDICINE_UPDATED": "દવા સુધારાઈ",
+    "MEDICINE_RETIRED": "દવા નિવૃત્ત કરાઈ",
+    "MEDICINE_RESTORED": "દવા પાછી લવાઈ",
+    "MEDICINE_BRAND_ADDED": "બ્રાન્ડ ઉમેરાઈ",
+    "MEDICINE_BRAND_RETIRED": "બ્રાન્ડ નિવૃત્ત કરાઈ",
+    "MEDICINE_TRANSLIT_LOADED": "ગુજરાતી શોધ યાદી લોડ થઈ"
   }
 }

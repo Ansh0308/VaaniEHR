@@ -27,7 +27,12 @@ let h: Harness;
 let A: World;
 let B: World;
 
-const call = (method: 'get' | 'post' | 'put', path: string, token: string, body?: object) => {
+const call = (
+  method: 'get' | 'post' | 'put' | 'patch',
+  path: string,
+  token: string,
+  body?: object,
+) => {
   const r = request(h.app)
     [method](`/api/v1${path}`)
     .set(...bearer(token));
@@ -301,6 +306,22 @@ const NOT_CLINIC_SCOPED = [
   'GET /consent/notice',
 ];
 
+/**
+ * DOCUMENTED EXEMPTION (ADR-D23): the medicine master is shared reference data, not clinic data, so these routes have no
+ * clinic filter. The test below pins that behaviour down so nobody mistakes it for a leak, and so it is noticed when it
+ * changes. In a multi-clinic deployment a separate platform-admin role must own the writes (Phase 12 item).
+ */
+const SHARED_REFERENCE_DATA = [
+  'GET /medicines',
+  'GET /medicines/:id',
+  'POST /medicines',
+  'PATCH /medicines/:id',
+  'POST /medicines/:id/retire',
+  'POST /medicines/:id/restore',
+  'POST /medicines/:id/brands',
+  'POST /medicines/:id/brands/:brandId/retire',
+];
+
 describe.each([
   ['clinic A attacks clinic B', () => [A, B] as const],
   ['clinic B attacks clinic A', () => [B, A] as const],
@@ -336,9 +357,37 @@ describe('the world is really two clinics', () => {
   });
 });
 
+describe('medicines are shared reference data (the documented clinic-isolation exemption, ADR-D23)', () => {
+  it('a medicine added by clinic A is visible to clinic B, and an admin of either clinic can edit it', async () => {
+    const created = await call('post', '/medicines', A.tokens.admin, {
+      genericName: 'Drug-Shared (FAKE)',
+      source: 'isolation test fixture',
+    });
+    expect(created.status).toBe(201);
+    const id = created.body.data.id as string;
+    for (const w of [A, B]) {
+      const read = await call('get', `/medicines/${id}`, w.tokens.doctor);
+      expect(read.status).toBe(200);
+      expect(read.body.data.genericName).toBe('Drug-Shared (FAKE)');
+      const found = await call('get', '/medicines?q=drug-shared', w.tokens.researcher);
+      expect(found.body.data.items.map((m: { id: string }) => m.id)).toContain(id);
+    }
+    // known limitation, recorded here on purpose: clinic B's admin can change what clinic A's admin created
+    const edited = await call('patch', `/medicines/${id}`, B.tokens.admin, { strength: '5 mg' });
+    expect(edited.status).toBe(200);
+    // ...but a doctor, staff member or researcher of any clinic cannot write
+    for (const token of [B.tokens.doctor, B.tokens.staff, B.tokens.researcher])
+      expect((await call('patch', `/medicines/${id}`, token, { strength: '9 mg' })).status).toBe(
+        403,
+      );
+  });
+});
+
 describe('coverage: every route is accounted for', () => {
   it('every registry route has an isolation case or is explicitly not clinic-scoped', () => {
     const registry = allRoutes(h.config).map((r) => `${r.method.toUpperCase()} ${r.path}`);
-    expect([...Object.keys(ISOLATION), ...NOT_CLINIC_SCOPED].sort()).toEqual([...registry].sort());
+    expect(
+      [...Object.keys(ISOLATION), ...NOT_CLINIC_SCOPED, ...SHARED_REFERENCE_DATA].sort(),
+    ).toEqual([...registry].sort());
   });
 });

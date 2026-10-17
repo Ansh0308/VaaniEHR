@@ -24,6 +24,10 @@ export const PERMISSIONS = {
   'audit.verify': ['admin'],
   // CSV export (ADR-D21): admin only. The researcher reads anonymised rows on screen but cannot take a file away.
   'audit.export': ['admin'],
+  // medicine master (FR-F5-01..05): every signed-in role reads it (the researcher too: it is public reference data);
+  // only admins write. Retire, never delete (ADR-D23).
+  'medicine.read': ['doctor', 'staff', 'admin', 'researcher'],
+  'medicine.write': ['admin'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type PermissionId = keyof typeof PERMISSIONS;

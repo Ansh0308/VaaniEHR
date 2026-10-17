@@ -39,6 +39,7 @@
     "@types/supertest": "7.2.1",
     "@vitest/coverage-v8": "4.1.11",
     "node-pg-migrate": "8.0.4",
+    "pdfjs-dist": "5.5.207",
     "socket.io-client": "4.8.4",
     "supertest": "7.3.1",
     "tsx": "4.23.15",

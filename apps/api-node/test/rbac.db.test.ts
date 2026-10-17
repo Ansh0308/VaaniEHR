@@ -12,6 +12,8 @@ import { PRD_EXPECTED } from './prdExpectations.js';
 let h: Harness;
 let sessionId: string;
 let patientId: string;
+let medicineId: string;
+let brandId: string;
 const tokens: Partial<Record<Role | 'anonymous', string>> = {};
 
 beforeAll(async () => {
@@ -34,6 +36,18 @@ beforeAll(async () => {
   ).rows[0]?.id as string;
   patientUserId = patientUser;
   tokens.patient = await freshToken('patient');
+
+  medicineId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO medicine_master (generic_name, source) VALUES ('Drug-R (FAKE)', 'rbac test fixture') RETURNING id`,
+    )
+  ).rows[0]?.id as string;
+  brandId = (
+    await h.db.owner.query<{ id: string }>(
+      `INSERT INTO medicine_brand (medicine_id, brand_name, source) VALUES ($1, 'Brand-R (FAKE)', 'rbac test fixture') RETURNING id`,
+      [medicineId],
+    )
+  ).rows[0]?.id as string;
 
   sessionId = (
     await h.db.owner.query<{ id: string }>(
@@ -86,6 +100,22 @@ const fixture = (route: RouteDef): Call => {
     'GET /audit': { path: '/audit' },
     'GET /audit/verify': { path: '/audit/verify' },
     'POST /audit/export': { path: '/audit/export', body: {} },
+    'GET /medicines': { path: '/medicines?q=drug' },
+    'GET /medicines/:id': { path: `/medicines/${medicineId}` },
+    'POST /medicines': {
+      path: '/medicines',
+      body: { genericName: 'Drug-N (FAKE)', source: 'rbac test' },
+    },
+    'PATCH /medicines/:id': { path: `/medicines/${medicineId}`, body: { strength: '5 mg' } },
+    'POST /medicines/:id/retire': { path: `/medicines/${medicineId}/retire` },
+    'POST /medicines/:id/restore': { path: `/medicines/${medicineId}/restore` },
+    'POST /medicines/:id/brands': {
+      path: `/medicines/${medicineId}/brands`,
+      body: { brandName: 'Brand-N (FAKE)', source: 'rbac test' },
+    },
+    'POST /medicines/:id/brands/:brandId/retire': {
+      path: `/medicines/${medicineId}/brands/${brandId}/retire`,
+    },
   };
   const call = calls[key];
   if (!call) throw new Error(`rbac.db.test: no request fixture for ${key}; add one`);
