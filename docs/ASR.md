@@ -55,3 +55,9 @@ Reference script share: Gujarati 47.8%, Devanagari 23.9%, Latin 28.4%. Script-aw
 - `translate` was not run: it outputs English only, so it cannot match this reference.
 - On this clip `codemix` is the only mode that keeps English words in Latin (42% of its letters) and has the lowest scores. No mode writes Hindi in Devanagari: codemix, transcribe and verbatim put all Indic text in Gujarati script (Devanagari 0%), translit writes everything in Latin. So none of them reproduces the reference's three-script convention; after script mapping codemix is closest. Keyterms made no difference to the script-aware score.
 
+## Known limitation: Hindi script (2026-10-18)
+Sarvam does not output Hindi in Devanagari in any mode tried (codemix, transcribe, verbatim: Gujarati script; translit: Latin). A reference or reader that expects Devanagari will see the same word spelled in another script. The interface shows the engine's text unchanged and does not transliterate it (script-aware scoring in this document maps Devanagari to Gujarati only for measuring). See PRD_ERRATA 46.
+
+## Browser screen (Phase 4B Run 1)
+`/consult/:sessionId` (doctor). Needs `VITE_ASR_WS_URL` at build time (default `ws://localhost:8000`) and asr-py with `ALLOWED_ORIGINS` including the web origin. Keyterms are not sent (off until OCI-015 is reviewed). `ASR_VAD=none` turns off silence trimming (used by the e2e run).
+

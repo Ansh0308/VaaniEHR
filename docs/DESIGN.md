@@ -66,6 +66,11 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 - **Gujarati:** all new text has Gujarati placeholders; the page shows the "needs review" mark in Gujarati. Frequency labels are placeholders too.
 - **Found by the real-browser scan, fixed:** a narrow Gujarati column header made the sort button 43px wide (now `min-w-11`).
 
+## Phase 4B consultation screen (RecordBar, TranscriptPane)
+- **RecordBar:** state in words with an icon (the recording state uses a filled circle and the word "Recording", never colour alone), an elapsed timer, Start/Stop at 44px or more, a live region for state changes, `role="alert"` for errors, the consent state inside the bar (missing consents named, link to the consent screen), and a "Next speaker is" radio group (Unknown / Doctor / Patient).
+- **TranscriptPane:** a permanent dashed "Draft — doctor must review" label; each segment shows speaker (icon + word), time, a language badge, the text with the right `lang`, and a per-segment speaker radio group (44px targets) and an Edit button that opens an inline text area. Partial text is grey italic with "Listening: this text may change." and approximate time; final text is full-strength. Edited segments get an "Edited" badge and a details block with the engine's original text.
+- **Left out on purpose:** confidence figures or underlines (none exist for Sarvam), transliteration, a Pause control.
+
 ## Premium polish (ADR-D22)
 - Same palette, fonts and light theme. New tokens: `--shadow-lift`, `--shadow-press`, `--motion-slow`, `--ease-out-expo`. New utilities in `index.css`: `.bg-aurora`, `.glass`, `.lift`, `.press`, `.shimmer`, `.row-hover`, `.field-focus`, `.float-slow`.
 - Motion components live in `components/motion/motion.tsx` (`MotionRoot`, `Reveal`, `Stagger`/`StaggerItem`, `CountUp`, `PageTransition`). The login hero and the waveform are `aria-hidden` decoration with no text.
