@@ -64,7 +64,6 @@
   },
   "transcript": {
     "confirmed": "Confirmed",
-
     "empty": "Nothing recorded yet.",
     "speakerLegend": "Speaker of segment {{n}}",
     "speaker": {
@@ -83,5 +82,48 @@
     "original": "Original text from the speech engine",
     "listening": "Listening: this text may change.",
     "inMemory": "Edits are kept on this screen only for now."
+  },
+  "facts": {
+    "region": "Facts from the transcript",
+    "title": "Facts",
+    "testMode": "Test mode - sample extraction",
+    "intro": "Facts are suggestions taken from the saved transcript. Nothing is a fact until you confirm it. Nothing runs until you press the button.",
+    "extract": "Extract facts",
+    "addManual": "Add a fact by hand",
+    "blocked": {
+      "empty": "There is no transcript yet.",
+      "unsaved": "Wait until the transcript shows as saved.",
+      "recording": "Stop the recording first.",
+      "consent": "Audio and AI-processing consent are needed."
+    },
+    "error": {
+      "cap_reached": "The usage limit for the language model has been reached. Try again later.",
+      "rate_limited": "The language model is busy right now (rate limit). Try again in a minute.",
+      "model_unavailable": "The language model could not be reached. Try again later.",
+      "real_data_blocked": "A real language model is set up but is not allowed for this data. Nothing was sent.",
+      "consent": "Consent is needed at this moment (audio and AI processing). Open the consent screen.",
+      "not_configured": "The fact service is not set up on this server.",
+      "network": "The fact service could not be reached.",
+      "other": "The facts could not be extracted.",
+      "save": "The change could not be saved. The list was refreshed."
+    },
+    "empty": "No facts yet. Press Extract facts, or add one by hand.",
+    "type": {
+      "symptom": "Symptoms",
+      "duration": "Duration",
+      "severity": "Severity",
+      "vital": "Vitals",
+      "allergy": "Allergies",
+      "past_condition": "Past conditions",
+      "current_medicine": "Current medicines",
+      "red_flag_mention": "Red-flag mentions"
+    },
+    "typeLabel": "Type",
+    "valueLabel": "Fact",
+    "notPresent": "Not present",
+    "uncertain": "Uncertain",
+    "addSave": "Add fact",
+    "keys": "Keyboard: with a fact focused, press C to confirm, R to reject, E to edit. These keys do nothing while you type.",
+    "arrived": "New facts arrived: {{count}}"
   }
 }

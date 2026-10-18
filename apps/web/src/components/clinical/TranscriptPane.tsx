@@ -28,6 +28,22 @@ export interface TranscriptSegment {
   edited?: boolean;
   /** confirmed by the doctor: shown as such, no longer editable */
   locked?: boolean;
+  /** the words a fact is based on: shown highlighted (with a visible underline, not colour alone) */
+  mark?: string;
+}
+
+function Marked({ text, mark }: { text: string; mark?: string | undefined }) {
+  const at = mark ? text.indexOf(mark) : -1;
+  if (!mark || at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="rounded-sm bg-selected px-0.5 text-ink underline decoration-2 underline-offset-4">
+        {mark}
+      </mark>
+      {text.slice(at + mark.length)}
+    </>
+  );
 }
 
 const SPEAKERS: SegmentSpeaker[] = ['unknown', 'doctor', 'patient'];
@@ -117,7 +133,7 @@ function SegmentRow({
             lang={language}
             className={cn('min-w-0 flex-1 text-base', segment.final ? 'text-ink' : 'text-body')}
           >
-            {segment.text}
+            <Marked text={segment.text} mark={segment.mark} />
           </p>
           {segment.final && onEditSave && !segment.locked ? (
             <IconButton

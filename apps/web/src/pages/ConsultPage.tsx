@@ -11,9 +11,11 @@ import { errorText } from '../api/errorText';
 import type { ConsentState } from '../api/types';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
+import { FactsPanel, type ExtractBlock } from '../components/clinical/FactsPanel';
 import { RecordBar } from '../components/clinical/RecordBar';
 import { TranscriptPane, type TranscriptSegment } from '../components/clinical/TranscriptPane';
 import { NeedsReview } from '../components/NeedsReview';
+import { useFacts, type Fact } from '../facts/useFacts';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Overlay';
@@ -32,6 +34,13 @@ export function ConsultPage() {
   const toast = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const save = useTranscriptSave(sessionId, rec.segments, { onConfirmed: () => rec.lockAll() });
+  const facts = useFacts(sessionId);
+  const [peek, setPeek] = useState<Fact | null>(null);
+
+  // after a save the server may have marked facts stale (their words changed): read the list again
+  useEffect(() => {
+    if (save.state === 'saved') void facts.reload();
+  }, [save.state]);
 
   // a doctor coming back sees what was saved before (confirmed segments are shown locked)
   const hydrated = useRef(false);
@@ -75,6 +84,9 @@ export function ConsultPage() {
       originalText: s.originalText,
       edited: s.edited,
       locked: s.locked,
+      ...(peek && peek.evidenceQuote && peek.sourceSegmentSeq === s.seq
+        ? { mark: peek.evidenceQuote }
+        : {}),
     })),
     ...(rec.partial
       ? [
@@ -90,6 +102,20 @@ export function ConsultPage() {
         ]
       : []),
   ];
+
+  const consentOk =
+    consent.state.status === 'ready' &&
+    consent.state.data.scopes.audio.granted &&
+    consent.state.data.scopes.ai_processing.granted;
+  const blocked: ExtractBlock = !consentOk
+    ? 'consent'
+    : rec.state === 'recording' || rec.state === 'connecting'
+      ? 'recording'
+      : rec.segments.length === 0
+        ? 'empty'
+        : save.state !== 'saved'
+          ? 'unsaved'
+          : null;
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -139,6 +165,25 @@ export function ConsultPage() {
       ) : null}
 
       <TranscriptPane segments={segments} onSpeaker={rec.setSpeaker} onEditSave={rec.editText} />
+
+      <FactsPanel
+        facts={facts.facts}
+        sentenceOf={(seq) =>
+          seq === null ? null : (rec.segments.find((s) => s.seq === seq)?.text ?? null)
+        }
+        mode={facts.mode}
+        blocked={blocked}
+        busy={facts.busy}
+        extracting={facts.extracting}
+        error={facts.error}
+        announcement={facts.announcement}
+        onExtract={() => void facts.extract()}
+        onConfirm={(id) => void facts.confirm(id)}
+        onReject={(id) => void facts.reject(id)}
+        onEdit={(id, body) => void facts.edit(id, body)}
+        onAdd={facts.add}
+        onPeek={setPeek}
+      />
 
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card p-4">
         <p

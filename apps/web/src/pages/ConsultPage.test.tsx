@@ -454,3 +454,120 @@ describe('saving the draft transcript (ADR-D28)', () => {
     expect(within(item).getByText('Doctor')).toBeTruthy();
   });
 });
+
+describe('facts panel', () => {
+  const savedTranscript = () => ({
+    data: {
+      segments: [
+        {
+          seq: 0,
+          speaker: 'patient',
+          originalText: 'I have fever since two days',
+          editedText: null,
+          text: 'I have fever since two days',
+          language: 'en-IN',
+          startMs: 0,
+          endMs: 900,
+          engine: 'mock',
+          engineVersion: '1.0',
+          status: 'draft',
+        },
+      ],
+      draftCount: 1,
+      confirmedCount: 0,
+    },
+  });
+  const heard = (over: Record<string, unknown> = {}) => ({
+    id: 'f1',
+    type: 'symptom',
+    value: 'fever',
+    negated: false,
+    uncertain: false,
+    speaker: 'patient',
+    source: 'extracted',
+    sourceSegmentSeq: 0,
+    spanStart: 7,
+    spanEnd: 12,
+    evidenceQuote: 'fever',
+    matchType: 'exact',
+    status: 'heard',
+    edited: false,
+    originalValue: null,
+    pipeline: 'grounded',
+    model: 'sample-extraction',
+    conceptId: null,
+    snomedId: null,
+    confirmedAt: null,
+    ...over,
+  });
+  const list = (facts: unknown[]) => ({
+    data: { facts, heardCount: facts.length, confirmedCount: 0, rejectedCount: 0, staleCount: 0 },
+  });
+
+  it('Extract facts asks for a consent token, calls the speech service once, then shows the facts', async () => {
+    let extracted = false;
+    const app = await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/transcript': savedTranscript,
+      'GET /extraction/mode': () => ({ data: { mode: 'sample', model: 'sample-extraction' } }),
+      'GET /sessions/:id/facts': () => list(extracted ? [heard()] : []),
+      'POST /sessions/:id/extract': () => {
+        extracted = true;
+        return { data: { mode: 'sample', summary: { inserted: 1 } } };
+      },
+    });
+    expect(await screen.findByText('Test mode - sample extraction')).toBeTruthy();
+    const button = (await screen.findByRole('button', {
+      name: 'Extract facts',
+    })) as HTMLButtonElement;
+    await waitFor(() => expect(button.disabled).toBe(false));
+    expect(app.callsTo('POST', `/sessions/${SESSION}/extract`)).toHaveLength(0); // never by itself
+    fireEvent.click(button);
+    expect(await screen.findByRole('group', { name: /Symptoms: fever/ })).toBeTruthy();
+    expect(app.callsTo('POST', `/sessions/${SESSION}/asr-token`)).toHaveLength(1);
+    expect(app.callsTo('POST', `/sessions/${SESSION}/extract`)).toHaveLength(1);
+    expect(screen.getByText('New facts arrived: 1')).toBeTruthy();
+  });
+
+  it('shows a rate limit in plain words', async () => {
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/transcript': savedTranscript,
+      'GET /sessions/:id/facts': () => list([]),
+      'POST /sessions/:id/extract': () => ({
+        status: 429,
+        error: { code: 'rate_limited', message: 'x' },
+      }),
+    });
+    const button = (await screen.findByRole('button', {
+      name: 'Extract facts',
+    })) as HTMLButtonElement;
+    await waitFor(() => expect(button.disabled).toBe(false));
+    fireEvent.click(button);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/busy right now/);
+  });
+
+  it('focusing a fact highlights its words in the transcript; c confirms through the API', async () => {
+    const patches: unknown[] = [];
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/transcript': savedTranscript,
+      'GET /sessions/:id/facts': () => list([heard()]),
+      'PATCH /sessions/:id/facts/:factId': (req) => {
+        patches.push(req.body);
+        return { data: heard({ status: 'confirmed' }) };
+      },
+    });
+    const chip = await screen.findByRole('group', { name: /Symptoms: fever/ });
+    fireEvent.focus(chip);
+    expect(document.querySelector('mark')?.textContent).toBe('fever');
+    expect(screen.getByRole('note').textContent).toContain('I have fever since two days');
+    fireEvent.keyDown(chip, { key: 'c' });
+    await waitFor(() => expect(patches).toEqual([{ action: 'confirm' }]));
+  });
+
+  it('a stale fact says the text changed', async () => {
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/transcript': savedTranscript,
+      'GET /sessions/:id/facts': () => list([heard({ status: 'stale' })]),
+    });
+    expect(await screen.findByText('Text changed - re-check')).toBeTruthy();
+  });
+});

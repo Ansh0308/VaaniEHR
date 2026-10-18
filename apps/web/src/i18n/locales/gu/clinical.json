@@ -44,9 +44,20 @@
   "fact": {
     "confirmAction": "{{value}} ની પુષ્ટિ કરો",
     "confirmed": "પુષ્ટિ થઈ",
+    "editAction": "{{value}} સુધારો",
+    "editCancel": "રદ કરો",
+    "editSave": "ફેરફાર સાચવો",
+    "editValue": "તથ્ય",
+    "group": "{{label}}: {{value}}",
     "heard": "સાંભળ્યું",
-    "negated": "ના",
+    "manual": "હાથે ઉમેર્યું",
+    "notPresent": "હાજર નથી",
+    "original": "મૂળ રૂપે:",
     "rejectAction": "{{value}} નકારો",
+    "rejected": "નકાર્યું",
+    "sentence": "કહ્યું:",
+    "stale": "લખાણ બદલાયું - ફરી તપાસો",
+    "staleHelp": "આ તથ્ય જે શબ્દોમાંથી આવ્યું તે બદલાયા છે. હજુ લાગુ પડતું હોય તો જ ફરી પુષ્ટિ કરો.",
     "uncertain": "અનિશ્ચિત"
   },
   "medicine": {

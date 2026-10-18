@@ -44,9 +44,20 @@
   "fact": {
     "confirmAction": "Confirm {{value}}",
     "confirmed": "Confirmed",
+    "editAction": "Edit {{value}}",
+    "editCancel": "Cancel",
+    "editSave": "Save change",
+    "editValue": "Fact",
+    "group": "{{label}}: {{value}}",
     "heard": "Heard",
-    "negated": "No",
+    "manual": "Added by hand",
+    "notPresent": "Not present",
+    "original": "Extracted as:",
     "rejectAction": "Reject {{value}}",
+    "rejected": "Rejected",
+    "sentence": "Said:",
+    "stale": "Text changed - re-check",
+    "staleHelp": "The words this fact came from were edited. Confirm it again only if it still applies.",
     "uncertain": "Uncertain"
   },
   "medicine": {
