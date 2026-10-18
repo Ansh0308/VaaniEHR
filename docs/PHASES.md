@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 4B Run 2 nearly done: saved transcripts + autosave + confirm (ADR-D28), eval command (npm run eval:asr) and ASR_EVAL_GUIDE, manual test guide in ASR.md. Waiting on the owner: OCI-016, Sarvam written reply, OCI-015. Details: docs/ASR.md.
+> **Resume status (one line, updated after every step):** Phase 5A Run 1 in progress (extraction backend with a MOCK model only): mutation-style transcript tests done; next schema + routes, pipeline, eval, docs. Details: docs/EXTRACTION.md (to come).
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
