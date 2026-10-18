@@ -334,13 +334,9 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         out("gold problems:\n  " + "\n  ".join(problems))
         return 2
     env = {**os.environ}
-    try:
-        base = build_provider(env, settings.llm_cache_dir)
-    except ProviderError as exc:
-        out(f"language model not available: {exc}")
-        return 2
-    if base.name != "mock":
-        # a hosted model may log prompts: only declared-simulated text, and only on an explicit --yes-run
+    if env.get("LLM_PROVIDER", "mock") != "mock":
+        # a hosted model may log prompts: only declared-simulated text, and only on an explicit --yes-run.
+        # This check replaces LLM_ALLOW_REAL_DATA for the evaluation (that switch still guards the live consult path).
         try:
             for case in cases:
                 if not case.synthetic:
@@ -348,6 +344,13 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         except NotSimulatedRefused as exc:
             out(f"refused: {exc}")
             return 2
+        env["LLM_ALLOW_REAL_DATA"] = "true"
+    try:
+        base = build_provider(env, settings.llm_cache_dir)
+    except ProviderError as exc:
+        out(f"language model not available: {exc}")
+        return 2
+    if base.name != "mock":
         names = ["plain", "constrained", "grounded"] if args.pipeline == "all" else [args.pipeline]
         planned = len(cases) * len(names)
         out(

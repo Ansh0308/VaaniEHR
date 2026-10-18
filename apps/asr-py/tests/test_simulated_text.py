@@ -57,7 +57,6 @@ def env(monkeypatch, tmp_path, url):
     monkeypatch.setenv("LLM_BASE_URL", url)
     monkeypatch.setenv("LLM_MODEL", "fake-model")
     monkeypatch.setenv("LLM_API_KEY", KEY)
-    monkeypatch.setenv("LLM_ALLOW_REAL_DATA", "true")
     monkeypatch.setenv("ASR_DATA_DIR", str(tmp_path / "data"))
 
 
