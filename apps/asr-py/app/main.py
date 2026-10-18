@@ -8,11 +8,13 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.asr.mock import DEMO_SCRIPT, MockEngine
 from app.asr.sarvam import SarvamEngine
 from app.config import Settings, load_settings
 from app.consent import ConsentGuard
+from app.extract_api import register_extraction
 from app.internal_api import InternalApi
 from app.purge import run_purge
 from app.storage import AudioStore
@@ -98,7 +100,14 @@ def create_app(services: Services) -> FastAPI:
             },
         }
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(services.settings.allowed_origins),
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
     register(app, services)
+    register_extraction(app, services)
     return app
 
 
