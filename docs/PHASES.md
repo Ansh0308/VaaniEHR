@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 5A Run 1 in progress (extraction backend with a MOCK model only): mutation-style transcript tests done; next schema + routes, pipeline, eval, docs. Details: docs/EXTRACTION.md (to come).
+> **Resume status (one line, updated after every step):** Phase 5A Run 1 complete (extraction backend on a MOCK model: extracted_fact + routes, pipeline, eval, ADR-D29/D30; no real LLM call). Run 2 (real provider, entity linking, consult-screen button) not started. Waiting on the owner: LLM key and terms, OCI-016/017/018, gold-label review. Details: docs/EXTRACTION_EVAL_GUIDE.md.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
