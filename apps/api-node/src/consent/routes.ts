@@ -171,13 +171,13 @@ export function consentRoutes(): RouteDef[] {
         // (the audio is deleted by the speech service). Doctor-confirmed text stays: it is part of the record.
         if (stopRecording) {
           const deleted = await deleteDraftSegments(ctx.db, session.id);
-          if (deleted > 0) {
+          if (deleted.segments > 0 || deleted.facts > 0) {
             await ctx.audit({
               action: 'TRANSCRIPT_DRAFT_DELETED',
               resourceType: 'transcript',
               resourceId: session.id,
               sessionId: session.id,
-              meta: { segmentCount: deleted },
+              meta: { segmentCount: deleted.segments, factCount: deleted.facts },
             });
           }
         }

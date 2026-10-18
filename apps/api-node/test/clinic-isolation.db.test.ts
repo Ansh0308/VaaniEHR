@@ -3,6 +3,7 @@
 // The attacker always uses a role that IS allowed on the route (admin where possible, since staff/admin are
 // clinic-wide), so what stops the request is the clinic boundary, not RBAC.
 // A new route fails the coverage test at the bottom until it is added to ISOLATION or NOT_CLINIC_SCOPED.
+import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { hashPassword } from '../src/auth/password.js';
@@ -253,6 +254,33 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
     }
   },
   // ---- saved transcripts are clinic data (and a doctor's own): another clinic's session is "not found"
+  'GET /sessions/:id/facts': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect((await call('get', `/sessions/${y.sessionId}/facts`, x.tokens[role])).status).toBe(
+        role === 'doctor' ? 404 : 403,
+      );
+  },
+  'POST /sessions/:id/facts': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/facts`, x.tokens[role], {
+            type: 'symptom',
+            value: 'x',
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'PATCH /sessions/:id/facts/:factId': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('patch', `/sessions/${y.sessionId}/facts/${randomUUID()}`, x.tokens[role], {
+            action: 'reject',
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   'GET /sessions/:id/transcript': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)
       expect(
@@ -440,6 +468,8 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
 
 /** Routes whose data is the caller's own user or global static text, so there is no other clinic's data to reach. */
 const NOT_CLINIC_SCOPED = [
+  'GET /internal/sessions/:id/transcript-segments',
+  'POST /internal/sessions/:id/facts',
   // INTERNAL service-signed routes (ADR-D26): no user, no clinic filter; the clinic of an asset comes from its session
   'POST /internal/audio-assets',
   'POST /internal/audio-assets/:id/deleted',

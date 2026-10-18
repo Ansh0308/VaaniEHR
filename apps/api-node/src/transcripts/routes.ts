@@ -7,6 +7,7 @@ import { getEffectiveConsent } from '../consent/service.js';
 import type { Queryable } from '../db/tx.js';
 import { errors } from '../http/errors.js';
 import { permRoute, type RouteDef } from '../http/routeRegistry.js';
+import { markStaleForSegments } from '../facts/service.js';
 import { loadSession } from '../sessions/service.js';
 
 const idParams = z.object({ id: z.uuid() });
@@ -94,13 +95,30 @@ async function readSegments(db: Queryable, sessionId: string) {
   };
 }
 
-/** Removes the UNCONFIRMED draft text of a session (consent withdrawn). Confirmed text is kept. Returns how many rows. */
-export async function deleteDraftSegments(db: Queryable, sessionId: string): Promise<number> {
-  const r = await db.query(
+/**
+ * Consent withdrawn (ADR-D28, ADR-D29): removes the UNCONFIRMED draft transcript text AND every fact that the doctor has
+ * not confirmed (heard, rejected, stale). Doctor-confirmed text and confirmed facts are kept; a confirmed fact whose
+ * draft segment is deleted keeps its evidence quote and records that the segment is gone. Returns the two counts.
+ */
+export async function deleteDraftSegments(
+  db: Queryable,
+  sessionId: string,
+): Promise<{ segments: number; facts: number }> {
+  const facts = await db.query(
+    "DELETE FROM extracted_fact WHERE session_id = $1 AND status <> 'confirmed'",
+    [sessionId],
+  );
+  await db.query(
+    `UPDATE extracted_fact SET source_segment_id = NULL, segment_deleted_at = now(), updated_at = now()
+      WHERE session_id = $1 AND source_segment_id IN
+        (SELECT id FROM transcript_segment WHERE session_id = $1 AND status = 'draft')`,
+    [sessionId],
+  );
+  const segments = await db.query(
     "DELETE FROM transcript_segment WHERE session_id = $1 AND status = 'draft'",
     [sessionId],
   );
-  return r.rowCount ?? 0;
+  return { segments: segments.rowCount ?? 0, facts: facts.rowCount ?? 0 };
 }
 
 export function transcriptRoutes(): RouteDef[] {
@@ -176,12 +194,14 @@ export function transcriptRoutes(): RouteDef[] {
             s.map((x) => x.engineVersion),
           ],
         );
+        // a segment whose text changed makes its facts stale (the doctor re-confirms them); nothing is rewritten
+        const staleFactCount = await markStaleForSegments(ctx.db, session.id, seqs);
         await ctx.audit({
           action: 'TRANSCRIPT_SAVED',
           resourceType: 'transcript',
           resourceId: session.id,
           sessionId: session.id,
-          meta: { segmentCount: s.length },
+          meta: { segmentCount: s.length, staleFactCount },
         });
         return { data: await readSegments(ctx.db, session.id) };
       },

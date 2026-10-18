@@ -191,7 +191,7 @@ describe('withdrawal (ADR-D28)', () => {
       [sessionId],
     );
     expect(audit.rows).toHaveLength(1);
-    expect(audit.rows[0]?.meta).toEqual({ segmentCount: 1 });
+    expect(audit.rows[0]?.meta).toEqual({ segmentCount: 1, factCount: 0 });
     expect((await put(doctor, [seg(9)])).body.error.code).toBe('CONSENT_REQUIRED');
     expect((await confirm(doctor)).status).toBe(403);
   });
@@ -205,7 +205,7 @@ describe('what the audit log holds', () => {
     expect(rows.rows.length).toBeGreaterThanOrEqual(4);
     const all = JSON.stringify(rows.rows);
     expect(all).not.toMatch(/fixture words|corrected|rewritten/);
-    for (const row of rows.rows) expect(Object.keys(row.meta ?? {})).toEqual(['segmentCount']);
+    for (const row of rows.rows) expect(Object.keys(row.meta ?? {})).toContain('segmentCount');
   });
 
   it('unknown sessions are "not found"', async () => {

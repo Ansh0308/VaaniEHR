@@ -2865,6 +2865,11 @@
                 "TRANSCRIPT_SAVED",
                 "TRANSCRIPT_CONFIRMED",
                 "TRANSCRIPT_DRAFT_DELETED",
+                "FACTS_EXTRACTED",
+                "FACT_ADDED",
+                "FACT_CONFIRMED",
+                "FACT_REJECTED",
+                "FACT_EDITED",
                 "MEDICINE_IMPORTED",
                 "MEDICINE_CODES_LOADED",
                 "MEDICINE_TRANSLIT_LOADED",
@@ -3067,6 +3072,11 @@
                       "TRANSCRIPT_SAVED",
                       "TRANSCRIPT_CONFIRMED",
                       "TRANSCRIPT_DRAFT_DELETED",
+                      "FACTS_EXTRACTED",
+                      "FACT_ADDED",
+                      "FACT_CONFIRMED",
+                      "FACT_REJECTED",
+                      "FACT_EDITED",
                       "MEDICINE_IMPORTED",
                       "MEDICINE_CODES_LOADED",
                       "MEDICINE_TRANSLIT_LOADED",
@@ -8153,6 +8163,1184 @@
         ],
         "x-audit-actions": [
           "TRANSCRIPT_CONFIRMED"
+        ]
+      }
+    },
+    "/sessions/{id}/facts": {
+      "get": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: list the facts extracted from one of the doctor's own sessions (heard until confirmed)",
+        "operationId": "getSessionsIdFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "heard",
+                "confirmed",
+                "rejected",
+                "stale"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "facts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "symptom",
+                                  "duration",
+                                  "severity",
+                                  "vital",
+                                  "allergy",
+                                  "past_condition",
+                                  "current_medicine",
+                                  "red_flag_mention"
+                                ]
+                              },
+                              "value": {
+                                "type": "string"
+                              },
+                              "negated": {
+                                "type": "boolean"
+                              },
+                              "uncertain": {
+                                "type": "boolean"
+                              },
+                              "speaker": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "doctor",
+                                  "patient"
+                                ]
+                              },
+                              "source": {
+                                "type": "string",
+                                "enum": [
+                                  "extracted",
+                                  "manual"
+                                ]
+                              },
+                              "sourceSegmentSeq": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "spanStart": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "spanEnd": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "evidenceQuote": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "matchType": {
+                                "nullable": true,
+                                "type": "string",
+                                "enum": [
+                                  "exact",
+                                  "fuzzy"
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "heard",
+                                  "confirmed",
+                                  "rejected",
+                                  "stale"
+                                ]
+                              },
+                              "edited": {
+                                "type": "boolean"
+                              },
+                              "originalValue": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "pipeline": {
+                                "type": "string"
+                              },
+                              "model": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "conceptId": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "snomedId": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "confirmedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "type",
+                              "value",
+                              "negated",
+                              "uncertain",
+                              "speaker",
+                              "source",
+                              "sourceSegmentSeq",
+                              "spanStart",
+                              "spanEnd",
+                              "evidenceQuote",
+                              "matchType",
+                              "status",
+                              "edited",
+                              "originalValue",
+                              "pipeline",
+                              "model",
+                              "conceptId",
+                              "snomedId",
+                              "confirmedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "heardCount": {
+                          "type": "number"
+                        },
+                        "confirmedCount": {
+                          "type": "number"
+                        },
+                        "rejectedCount": {
+                          "type": "number"
+                        },
+                        "staleCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "facts",
+                        "heardCount",
+                        "confirmedCount",
+                        "rejectedCount",
+                        "staleCount"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      },
+      "post": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: add a fact by hand (flagged manual; it has no source span and is confirmed at once)",
+        "operationId": "postSessionsIdFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "symptom",
+                      "duration",
+                      "severity",
+                      "vital",
+                      "allergy",
+                      "past_condition",
+                      "current_medicine",
+                      "red_flag_mention"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "negated": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "uncertain": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "speaker": {
+                    "default": null,
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "doctor",
+                      "patient"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "symptom",
+                            "duration",
+                            "severity",
+                            "vital",
+                            "allergy",
+                            "past_condition",
+                            "current_medicine",
+                            "red_flag_mention"
+                          ]
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "negated": {
+                          "type": "boolean"
+                        },
+                        "uncertain": {
+                          "type": "boolean"
+                        },
+                        "speaker": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "extracted",
+                            "manual"
+                          ]
+                        },
+                        "sourceSegmentSeq": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanStart": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanEnd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "evidenceQuote": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "matchType": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "exact",
+                            "fuzzy"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "heard",
+                            "confirmed",
+                            "rejected",
+                            "stale"
+                          ]
+                        },
+                        "edited": {
+                          "type": "boolean"
+                        },
+                        "originalValue": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pipeline": {
+                          "type": "string"
+                        },
+                        "model": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "snomedId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "confirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "value",
+                        "negated",
+                        "uncertain",
+                        "speaker",
+                        "source",
+                        "sourceSegmentSeq",
+                        "spanStart",
+                        "spanEnd",
+                        "evidenceQuote",
+                        "matchType",
+                        "status",
+                        "edited",
+                        "originalValue",
+                        "pipeline",
+                        "model",
+                        "conceptId",
+                        "snomedId",
+                        "confirmedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FACT_ADDED"
+        ]
+      }
+    },
+    "/sessions/{id}/facts/{factId}": {
+      "patch": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: confirm, reject or edit one fact. A stale fact (its source text changed) is re-confirmed only if its evidence quote is still in the segment",
+        "operationId": "patchSessionsIdFactsFactId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "factId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "confirm",
+                      "reject",
+                      "edit"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "negated": {
+                    "type": "boolean"
+                  },
+                  "uncertain": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "symptom",
+                            "duration",
+                            "severity",
+                            "vital",
+                            "allergy",
+                            "past_condition",
+                            "current_medicine",
+                            "red_flag_mention"
+                          ]
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "negated": {
+                          "type": "boolean"
+                        },
+                        "uncertain": {
+                          "type": "boolean"
+                        },
+                        "speaker": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "extracted",
+                            "manual"
+                          ]
+                        },
+                        "sourceSegmentSeq": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanStart": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanEnd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "evidenceQuote": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "matchType": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "exact",
+                            "fuzzy"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "heard",
+                            "confirmed",
+                            "rejected",
+                            "stale"
+                          ]
+                        },
+                        "edited": {
+                          "type": "boolean"
+                        },
+                        "originalValue": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pipeline": {
+                          "type": "string"
+                        },
+                        "model": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "snomedId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "confirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "value",
+                        "negated",
+                        "uncertain",
+                        "speaker",
+                        "source",
+                        "sourceSegmentSeq",
+                        "spanStart",
+                        "spanEnd",
+                        "evidenceQuote",
+                        "matchType",
+                        "status",
+                        "edited",
+                        "originalValue",
+                        "pipeline",
+                        "model",
+                        "conceptId",
+                        "snomedId",
+                        "confirmedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FACT_CONFIRMED",
+          "FACT_REJECTED",
+          "FACT_EDITED"
+        ]
+      }
+    },
+    "/internal/sessions/{id}/transcript-segments": {
+      "get": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Service: segment ids, order, speaker and TEXT of a session for extraction (needs audio and AI-processing consent; no patient, clinic or user data)",
+        "operationId": "getInternalSessionsIdTranscriptSegments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "segments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "segmentId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "seq": {
+                                "type": "number"
+                              },
+                              "speaker": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "doctor",
+                                  "patient"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "segmentId",
+                              "seq",
+                              "speaker",
+                              "text"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "segments"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/internal/sessions/{id}/facts": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Service: submit extracted facts as \"heard\" (grounded facts only; stale, invalid and duplicate ones are counted and skipped)",
+        "operationId": "postInternalSessionsIdFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "pipeline": {
+                    "type": "string",
+                    "enum": [
+                      "plain",
+                      "constrained",
+                      "grounded"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "droppedUngrounded": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "facts": {
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "segmentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "symptom",
+                            "duration",
+                            "severity",
+                            "vital",
+                            "allergy",
+                            "past_condition",
+                            "current_medicine",
+                            "red_flag_mention"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "negated": {
+                          "type": "boolean"
+                        },
+                        "uncertain": {
+                          "type": "boolean"
+                        },
+                        "speaker": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "spanStart": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "spanEnd": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "evidenceQuote": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 1000
+                        },
+                        "matchType": {
+                          "type": "string",
+                          "enum": [
+                            "exact",
+                            "fuzzy"
+                          ]
+                        },
+                        "segmentTextHash": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "segmentId",
+                        "type",
+                        "value",
+                        "negated",
+                        "uncertain",
+                        "speaker",
+                        "spanStart",
+                        "spanEnd",
+                        "evidenceQuote",
+                        "matchType",
+                        "segmentTextHash"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "runId",
+                  "pipeline",
+                  "model",
+                  "droppedUngrounded",
+                  "facts"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "inserted": {
+                          "type": "number"
+                        },
+                        "duplicates": {
+                          "type": "number"
+                        },
+                        "staleRejected": {
+                          "type": "number"
+                        },
+                        "invalidRejected": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "inserted",
+                        "duplicates",
+                        "staleRejected",
+                        "invalidRejected"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ],
+        "x-audit-actions": [
+          "FACTS_EXTRACTED"
         ]
       }
     }

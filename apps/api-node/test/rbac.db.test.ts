@@ -153,6 +153,28 @@ const fixture = (route: RouteDef): Call => {
     'GET /internal/sessions/:id/consent-status': {
       path: `/internal/sessions/${sessionId}/consent-status`,
     },
+    'GET /sessions/:id/facts': { path: `/sessions/${consentedSessionId}/facts` },
+    'POST /sessions/:id/facts': {
+      path: `/sessions/${consentedSessionId}/facts`,
+      body: { type: 'symptom', value: 'fixture symptom' },
+    },
+    'PATCH /sessions/:id/facts/:factId': {
+      path: `/sessions/${consentedSessionId}/facts/${consentedSessionId}`,
+      body: { action: 'reject' },
+    },
+    'GET /internal/sessions/:id/transcript-segments': {
+      path: `/internal/sessions/${consentedSessionId}/transcript-segments`,
+    },
+    'POST /internal/sessions/:id/facts': {
+      path: `/internal/sessions/${consentedSessionId}/facts`,
+      body: {
+        runId: consentedSessionId,
+        pipeline: 'grounded',
+        model: 'mock',
+        droppedUngrounded: 0,
+        facts: [],
+      },
+    },
     'GET /sessions/:id/transcript': { path: `/sessions/${consentedSessionId}/transcript` },
     'PUT /sessions/:id/transcript/segments': {
       path: `/sessions/${consentedSessionId}/transcript/segments`,

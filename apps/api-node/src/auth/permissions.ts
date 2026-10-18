@@ -22,6 +22,10 @@ export const PERMISSIONS = {
   'transcript.read': ['doctor'],
   'transcript.write': ['doctor'],
 
+  // extracted facts (Phase 5A): the session's own doctor only
+  'fact.read': ['doctor'],
+  'fact.write': ['doctor'],
+
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],

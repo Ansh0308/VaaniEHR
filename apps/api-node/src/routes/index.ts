@@ -7,6 +7,8 @@ import { authRoutes } from '../auth/routes.js';
 import type { Config } from '../config/env.js';
 import { consentRoutes } from '../consent/routes.js';
 import type { RouteDef } from '../http/routeRegistry.js';
+import { factInternalRoutes } from '../facts/internalRoutes.js';
+import { factRoutes } from '../facts/routes.js';
 import { medicineRoutes } from '../medicines/routes.js';
 import { patientRoutes } from '../patients/routes.js';
 import { sessionRoutes } from '../sessions/routes.js';
@@ -27,5 +29,7 @@ export function allRoutes(config: Config): RouteDef[] {
     ...medicineRoutes(),
     ...templateRoutes(),
     ...transcriptRoutes(),
+    ...factRoutes(),
+    ...factInternalRoutes(),
   ];
 }

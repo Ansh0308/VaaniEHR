@@ -26,12 +26,18 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/asr-token': ['doctor'],
   // saved transcripts: the session's own doctor only (ADR-D28); saving also needs consent at that moment
   'GET /sessions/:id/transcript': ['doctor'],
+  // extracted facts: the session's own doctor only (ADR-D29)
+  'GET /sessions/:id/facts': ['doctor'],
+  'POST /sessions/:id/facts': ['doctor'],
+  'PATCH /sessions/:id/facts/:factId': ['doctor'],
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
   // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)
   'POST /internal/audio-assets': 'service',
   'POST /internal/audio-assets/:id/deleted': 'service',
   'GET /internal/sessions/:id/consent-status': 'service',
+  'GET /internal/sessions/:id/transcript-segments': 'service',
+  'POST /internal/sessions/:id/facts': 'service',
   'POST /sessions/:id/consent/withdraw': ['doctor', 'staff', 'admin'],
   'GET /audit': ['admin', 'researcher'],
   'GET /audit/verify': ['admin'],
