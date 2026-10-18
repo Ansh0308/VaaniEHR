@@ -112,10 +112,7 @@ function SegmentRow({
         <div className="flex items-start gap-2">
           <p
             lang={language}
-            className={cn(
-              'min-w-0 flex-1 text-base',
-              segment.final ? 'text-ink' : 'text-body italic',
-            )}
+            className={cn('min-w-0 flex-1 text-base', segment.final ? 'text-ink' : 'text-body')}
           >
             {segment.text}
           </p>

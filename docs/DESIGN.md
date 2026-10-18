@@ -68,7 +68,7 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 
 ## Phase 4B consultation screen (RecordBar, TranscriptPane)
 - **RecordBar:** state in words with an icon (the recording state uses a filled circle and the word "Recording", never colour alone), an elapsed timer, Start/Stop at 44px or more, a live region for state changes, `role="alert"` for errors, the consent state inside the bar (missing consents named, link to the consent screen), and a "Next speaker is" radio group (Unknown / Doctor / Patient).
-- **TranscriptPane:** a permanent dashed "Draft — doctor must review" label; each segment shows speaker (icon + word), time, a language badge, the text with the right `lang`, and a per-segment speaker radio group (44px targets) and an Edit button that opens an inline text area. Partial text is grey italic with "Listening: this text may change." and approximate time; final text is full-strength. Edited segments get an "Edited" badge and a details block with the engine's original text.
+- **TranscriptPane:** a permanent dashed "Draft — doctor must review" label; each segment shows speaker (icon + word), time, a language badge, the text with the right `lang`, and a per-segment speaker radio group (44px targets) and an Edit button that opens an inline text area. Partial text is grey (no italics: Gujarati has none) with "Listening: this text may change." and approximate time; final text is full-strength. Edited segments get an "Edited" badge and a details block with the engine's original text.
 - **Left out on purpose:** confidence figures or underlines (none exist for Sarvam), transliteration, a Pause control.
 
 ## Premium polish (ADR-D22)
