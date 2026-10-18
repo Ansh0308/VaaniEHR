@@ -788,7 +788,12 @@ try {
   }
 } catch (error) {
   // Playwright error text can quote locators but never the typed values; print only the message's first line.
-  failures.push(`stopped by an error: ${String(error?.message ?? error).split('\n').slice(0, 6).join(' / ')}`);
+  failures.push(
+    `stopped by an error: ${String(error?.message ?? error)
+      .split('\n')
+      .slice(0, 6)
+      .join(' / ')}`,
+  );
 } finally {
   await browser?.close();
   for (const child of spawned) killTree(child);

@@ -82,3 +82,9 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 - Fredoka only for page titles; ClinicOS uses it more widely. Its fonts have no Gujarati, so Noto Sans Gujarati is an explicit fallback.
 - Buttons are not pill-shaped; no uppercase or tracking (both harm Gujarati).
 - Dark theme is out of scope for 1.2 (the token layers are ready for it).
+
+## Phase 5B patterns (facts panel)
+- **FactChip:** four states, each an icon plus words (Heard = dashed + ear; Confirmed = heavy solid + check; Rejected = dotted + cross; "Text changed - re-check" = heavy dashed + warning). Negation is "Not present" with a ban icon and a struck-through value; uncertain is a question-mark icon plus the word. No colour-only meaning, no italics (Gujarati), no confidence figure. The chip is a focusable group: hover or focus reveals the supporting sentence in a `role="note"`; `c`, `r`, `e` act only when the chip itself has focus (not in its edit form, not with Ctrl/Alt/Meta). Actions are 44px icon buttons with names that include the value.
+- **FactsPanel:** a single column that works at 375px: title, "Test mode - sample extraction" tag when no real model is used, the Extract facts button (never automatic) and Add by hand, plain-word errors in a blocked banner, facts grouped under type headings, the key help line, and a visually hidden polite live region for new facts.
+- **TranscriptPane highlight:** the words a focused fact came from are wrapped in `<mark>` with a thick underline and a pale background (visible without colour).
+- All new Gujarati strings are placeholders and need review by a Gujarati speaker and the clinician.
