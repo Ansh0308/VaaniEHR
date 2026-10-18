@@ -38,7 +38,26 @@
     "protocol": "Recording stopped because of a technical error.",
     "connection_lost": "The connection was lost and could not be restored. Recording stopped."
   },
+  "save": {
+    "saved": "All changes saved",
+    "unsaved": "Unsaved changes",
+    "saving": "Saving",
+    "error": "Could not save. Trying again; you can also press Save now.",
+    "blocked": "Not saved: consent for audio and AI processing is not on record.",
+    "saveNow": "Save now"
+  },
+  "confirm": {
+    "button": "Confirm transcript",
+    "title": "Confirm this transcript?",
+    "body": "Confirmed text becomes part of the record and can no longer be changed or deleted. Unconfirmed draft text is deleted if consent is withdrawn.",
+    "yes": "Confirm",
+    "cancel": "Cancel",
+    "done": "Transcript confirmed",
+    "failed": "The transcript could not be confirmed. Check that it is saved and consent is on record."
+  },
   "transcript": {
+    "confirmed": "Confirmed",
+
     "empty": "Nothing recorded yet.",
     "speakerLegend": "Speaker of segment {{n}}",
     "speaker": {

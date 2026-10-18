@@ -296,3 +296,161 @@ describe('what the screen never shows or stores', () => {
     );
   });
 });
+
+describe('saving the draft transcript (ADR-D28)', () => {
+  const savedRoutes = (put: Handler, extra: Record<string, Handler> = {}) => ({
+    'GET /sessions/:id/transcript': () => ({
+      data: { segments: [], draftCount: 0, confirmedCount: 0 },
+    }),
+    'PUT /sessions/:id/transcript/segments': put,
+    ...extra,
+  });
+  const okPut: Handler = () => ({ data: { segments: [], draftCount: 1, confirmedCount: 0 } });
+  const speak = async (text = 'saved words') => {
+    await start();
+    await waitFor(() => expect(sockets).toHaveLength(1));
+    await flush();
+    sockets[0]?.server({
+      type: 'final',
+      segment: {
+        kind: 'final',
+        startMs: 100,
+        endMs: 1100,
+        text,
+        language: 'gu-IN',
+        engine: 'mock',
+        engineVersion: '1.0',
+      },
+    });
+  };
+
+  it('autosaves shortly after the text changes, with the engine text, speaker and engine; the text is not in the URL', async () => {
+    const app = await open(consentWith(true, true), 'en', savedRoutes(okPut));
+    await speak();
+    expect(await screen.findByText('Unsaved changes')).toBeTruthy();
+    await waitFor(
+      () => expect(app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)).toHaveLength(1),
+      {
+        timeout: 5000,
+      },
+    );
+    const call = app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)[0];
+    expect(call?.path).not.toContain('saved');
+    expect(call?.body).toEqual({
+      segments: [
+        {
+          seq: 0,
+          speaker: 'unknown',
+          originalText: 'saved words',
+          editedText: null,
+          language: 'gu-IN',
+          startMs: 100,
+          endMs: 1100,
+          engine: 'mock',
+          engineVersion: '1.0',
+        },
+      ],
+    });
+    expect(await screen.findByText('All changes saved')).toBeTruthy();
+  });
+
+  it('an edit is saved as editedText with the engine text kept as the original', async () => {
+    const app = await open(consentWith(true, true), 'en', savedRoutes(okPut));
+    await speak('ગલામાં');
+    await waitFor(
+      () => expect(app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)).toHaveLength(1),
+      { timeout: 5000 },
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit segment 1' }));
+    fireEvent.change(screen.getByLabelText('Text of segment 1'), { target: { value: 'ગળામાં' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(
+      () => expect(app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)).toHaveLength(2),
+      { timeout: 5000 },
+    );
+    const body = app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)[1]?.body as {
+      segments: Array<{ originalText: string; editedText: string }>;
+    };
+    expect(body.segments[0]).toMatchObject({ originalText: 'ગલામાં', editedText: 'ગળામાં' });
+  });
+
+  it('says plainly when saving is refused because consent is gone, and does not retry', async () => {
+    const app = await open(
+      consentWith(true, true),
+      'en',
+      savedRoutes(() => ({ status: 403, error: { code: 'CONSENT_REQUIRED', message: 'x' } })),
+    );
+    await speak();
+    expect(
+      await screen.findByText(
+        /Not saved: consent for audio and AI processing/,
+        {},
+        { timeout: 5000 },
+      ),
+    ).toBeTruthy();
+    expect(app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)).toHaveLength(1);
+    expect(
+      (screen.getByRole('button', { name: 'Confirm transcript' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it('Confirm asks first, then confirms and locks every segment', async () => {
+    const app = await open(
+      consentWith(true, true),
+      'en',
+      savedRoutes(okPut, {
+        'POST /sessions/:id/transcript/confirm': () => ({
+          data: { segments: [], draftCount: 0, confirmedCount: 1 },
+        }),
+      }),
+    );
+    await speak();
+    await waitFor(
+      () => expect(app.callsTo('PUT', `/sessions/${SESSION}/transcript/segments`)).toHaveLength(1),
+      { timeout: 5000 },
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Stop' }));
+    sockets[0]?.server({ type: 'closed', audioSeconds: 2 });
+    await screen.findByText('Ready');
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm transcript' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(app.callsTo('POST', `/sessions/${SESSION}/transcript/confirm`)).toHaveLength(0);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() =>
+      expect(app.callsTo('POST', `/sessions/${SESSION}/transcript/confirm`)).toHaveLength(1),
+    );
+    const item = (await screen.findByText('saved words')).closest('li') as HTMLElement;
+    expect(await within(item).findByText('Confirmed')).toBeTruthy();
+    expect(within(item).queryByRole('button', { name: 'Edit segment 1' })).toBeNull();
+    expect(within(item).queryByRole('radio')).toBeNull();
+  });
+
+  it('shows what was saved before when a doctor comes back, with confirmed text locked', async () => {
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/transcript': () => ({
+        data: {
+          segments: [
+            {
+              seq: 0,
+              speaker: 'doctor',
+              originalText: 'old words',
+              editedText: null,
+              text: 'old words',
+              language: 'en-IN',
+              startMs: 0,
+              endMs: 900,
+              engine: 'mock',
+              engineVersion: '1.0',
+              status: 'confirmed',
+            },
+          ],
+          draftCount: 0,
+          confirmedCount: 1,
+        },
+      }),
+    });
+    const item = (await screen.findByText('old words')).closest('li') as HTMLElement;
+    expect(within(item).getByText('Confirmed')).toBeTruthy();
+    expect(within(item).getByText('Doctor')).toBeTruthy();
+  });
+});

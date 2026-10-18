@@ -26,6 +26,8 @@ export interface TranscriptSegment {
   /** the engine's own text, when the doctor has changed `text` */
   originalText?: string;
   edited?: boolean;
+  /** confirmed by the doctor: shown as such, no longer editable */
+  locked?: boolean;
 }
 
 const SPEAKERS: SegmentSpeaker[] = ['unknown', 'doctor', 'patient'];
@@ -77,6 +79,7 @@ function SegmentRow({
         {segment.edited ? (
           <Badge className="border-dashed">{t('consult:transcript.edited')}</Badge>
         ) : null}
+        {segment.locked ? <Badge>{t('consult:transcript.confirmed')}</Badge> : null}
       </div>
 
       {editing ? (
@@ -116,7 +119,7 @@ function SegmentRow({
           >
             {segment.text}
           </p>
-          {segment.final && onEditSave ? (
+          {segment.final && onEditSave && !segment.locked ? (
             <IconButton
               icon={Pencil}
               label={t('consult:transcript.edit', { n })}
@@ -141,7 +144,7 @@ function SegmentRow({
         </details>
       ) : null}
 
-      {segment.final && onSpeaker ? (
+      {segment.final && onSpeaker && !segment.locked ? (
         <fieldset className="flex flex-wrap items-center gap-2">
           <legend className="sr-only">{t('consult:transcript.speakerLegend', { n })}</legend>
           {SPEAKERS.map((speaker) => (

@@ -15,6 +15,12 @@ export type Speaker = 'unknown' | 'doctor' | 'patient';
 
 export interface LiveSegment {
   id: string;
+  /** order number within the session (the key used when the transcript is saved) */
+  seq: number;
+  engine: string;
+  engineVersion: string | null;
+  /** confirmed by the doctor: part of the record, no longer editable */
+  locked: boolean;
   startMs: number;
   endMs: number;
   text: string;
@@ -67,12 +73,17 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
               setPartial({ text: wire.text, language: wire.language });
               return;
             }
+            const seq = counter.current;
             counter.current += 1;
             setPartial(null);
             setSegments((list) => [
               ...list,
               {
-                id: `seg-${counter.current}`,
+                id: `seg-${seq}`,
+                seq,
+                engine: wire.engine,
+                engineVersion: wire.engineVersion ?? null,
+                locked: false,
                 startMs: wire.startMs,
                 endMs: wire.endMs,
                 text: wire.text,
@@ -110,20 +121,34 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
   const stop = useCallback(() => void client.stop(), [client]);
   const setSpeaker = useCallback(
     (id: string, speaker: Speaker) =>
-      setSegments((list) => list.map((s) => (s.id === id ? { ...s, speaker } : s))),
+      setSegments((list) => list.map((s) => (s.id === id && !s.locked ? { ...s, speaker } : s))),
     [],
   );
   const editText = useCallback(
     (id: string, text: string) =>
       setSegments((list) =>
         list.map((s) =>
-          s.id === id ? { ...s, text, edited: text.trim() !== s.originalText.trim() } : s,
+          s.id === id && !s.locked
+            ? { ...s, text, edited: text.trim() !== s.originalText.trim() }
+            : s,
         ),
       ),
     [],
   );
 
+  /** Puts previously saved segments on the screen (a doctor coming back to a session). */
+  const load = useCallback((saved: LiveSegment[]) => {
+    counter.current = saved.reduce((max, s) => Math.max(max, s.seq + 1), counter.current);
+    setSegments(saved);
+  }, []);
+  const lockAll = useCallback(
+    () => setSegments((list) => list.map((s) => ({ ...s, locked: true }))),
+    [],
+  );
+
   return {
+    load,
+    lockAll,
     state,
     error,
     reconnecting,

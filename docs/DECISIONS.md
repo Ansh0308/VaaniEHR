@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D27 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D28 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -209,6 +209,14 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Transcript = draft.** Every transcript view carries "Draft — doctor must review". Every segment starts as speaker unknown; the doctor sets it per segment, and a "next speaker is" choice on the RecordBar sets it for segments that arrive afterwards. Inline edits keep the engine's original text beside the edited text; edits stay in memory in this run (saving comes with the transcript API).
 - **Nothing invented.** No confidence is shown (Sarvam gives none; PRD_ERRATA 41, 45); partial results show approximate times; text is shown exactly as the engine wrote it, with no transliteration (PRD_ERRATA 46).
 - **Safer defaults chosen.** Sarvam mode stays `codemix`; keyterms are OFF (the page sends none) until the clinician reviews OCI-015; no pause control in Run 1 (a pause would hold an open consented stream in an extra state); the ASR engine name is not shown on this screen (research mode comes with the evaluation console).
+
+## D28 - Phase 4B Run 2: saved transcripts and the withdrawal rule (2026-10-18)
+- **Table and routes.** `transcript_segment` (migration 0010): per session and sequence number, the engine's ORIGINAL text (never changed afterwards), the doctor's edited text, speaker (unknown/doctor/patient), language, times, engine and version, status `draft` or `confirmed`. `GET /sessions/:id/transcript`, `PUT /sessions/:id/transcript/segments` (autosave: create or update drafts by sequence number) and `POST /sessions/:id/transcript/confirm`, all for the session's own doctor only (`transcript.read` / `transcript.write`), clinic-scoped (another clinic's or doctor's session is "not found").
+- **Consent at save time.** Saving and confirming need audio + ai_processing consent at that moment (403 CONSENT_REQUIRED otherwise). Reading what is already saved does not.
+- **Confirmed text is part of the record.** Confirming turns every draft segment into confirmed text with a time and the doctor's id. A trigger makes a confirmed segment unchangeable and undeletable for the runtime role, and no segment's engine text can be rewritten. (Erasure requests, PG-20, will need an explicit owner-run procedure; the trigger does not stop the database owner.)
+- **Withdrawal rule (default chosen, to be confirmed: OCI-016).** When audio or ai_processing consent is withdrawn: the audio is deleted (asr-py purge, ADR-D26), UNCONFIRMED draft transcript text is deleted in the same transaction as the withdrawal (audited as TRANSCRIPT_DRAFT_DELETED with a count), and doctor-CONFIRMED text is kept because it has become part of the clinical record. This is the safer reading for the person who withdrew only as far as unreviewed machine text is concerned; keeping confirmed text is a legal and clinical question for the owner and the clinician.
+- **What is logged.** Transcript text goes only into the table and the HTTPS response to the doctor. The audit rows hold the session id and a segment COUNT (a test fails if any text appears in them), the autosave sends text only in the request body (never a URL), and the page writes nothing to browser storage or the console.
+- **Autosave on the consult screen.** Changes are saved 1.5 s after they stop and immediately when a recording ends; a failed save is retried up to 5 times then left to "Save now"; a refusal for missing consent stops saving and says so. The state is written in words with an icon and announced politely. "Confirm transcript" asks first, saves anything pending, then locks the segments. A returning doctor sees what was saved (confirmed segments locked).
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
 - **Docker:** installed with WSL2 (daemon must be running to use compose).

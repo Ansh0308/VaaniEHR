@@ -1,10 +1,12 @@
 // PG-06 Consultation (doctor): consent-gated recording and a DRAFT live transcript (Phase 4B Run 1).
 // Recording needs audio + AI-processing consent on record (the server enforces it again when the token is issued and
 // while streaming). Transcript edits stay in this page's memory for now; saving comes with the transcript API.
-import { useEffect } from 'react';
+import { CircleAlert, CircleCheck, FileCheck2, LoaderCircle, Save } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useAsrRecording } from '../asr/useAsrRecording';
+import { fromSaved, useTranscriptSave, type SavedTranscript } from '../asr/useTranscriptSave';
 import { errorText } from '../api/errorText';
 import type { ConsentState } from '../api/types';
 import { useRequest } from '../api/useRequest';
@@ -14,6 +16,8 @@ import { TranscriptPane, type TranscriptSegment } from '../components/clinical/T
 import { NeedsReview } from '../components/NeedsReview';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Overlay';
+import { useToast } from '../components/ui/Toast';
 import { Skeleton } from '../components/ui/Feedback';
 
 export function ConsultPage() {
@@ -25,6 +29,34 @@ export function ConsultPage() {
     [api, sessionId],
   );
   const rec = useAsrRecording(sessionId);
+  const toast = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const save = useTranscriptSave(sessionId, rec.segments, { onConfirmed: () => rec.lockAll() });
+
+  // a doctor coming back sees what was saved before (confirmed segments are shown locked)
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (hydrated.current) return;
+    let alive = true;
+    api
+      .get<SavedTranscript>(`/sessions/${sessionId}/transcript`)
+      .then((saved) => {
+        if (!alive || hydrated.current || saved.segments.length === 0) return;
+        hydrated.current = true;
+        const live = fromSaved(saved.segments);
+        rec.load(live);
+        save.markSaved(live);
+      })
+      .catch(() => undefined); // nothing saved yet, or not readable: start empty
+    return () => {
+      alive = false;
+    };
+  }, [api, sessionId]);
+
+  // when a recording ends, what is still unsaved is saved at once
+  useEffect(() => {
+    if (rec.state === 'idle' || rec.state === 'error') void save.saveNow();
+  }, [rec.state]);
 
   // a withdrawal reported by the speech service means the stored consent state changed: read it again
   useEffect(() => {
@@ -42,6 +74,7 @@ export function ConsultPage() {
       endMs: s.endMs,
       originalText: s.originalText,
       edited: s.edited,
+      locked: s.locked,
     })),
     ...(rec.partial
       ? [
@@ -95,6 +128,70 @@ export function ConsultPage() {
       )}
 
       <TranscriptPane segments={segments} onSpeaker={rec.setSpeaker} onEditSave={rec.editText} />
+
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card p-4">
+        <p
+          role="status"
+          className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink"
+        >
+          {save.state === 'saving' ? (
+            <LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />
+          ) : save.state === 'saved' ? (
+            <CircleCheck aria-hidden="true" className="size-5" />
+          ) : (
+            <CircleAlert aria-hidden="true" className="size-5" />
+          )}
+          {t(`consult:save.${save.state}`)}
+        </p>
+        {save.state === 'unsaved' || save.state === 'error' ? (
+          <Button icon={Save} onClick={() => void save.saveNow()}>
+            {t('consult:save.saveNow')}
+          </Button>
+        ) : null}
+        <Button
+          variant="primary"
+          icon={FileCheck2}
+          disabled={
+            rec.segments.length === 0 ||
+            rec.segments.every((s) => s.locked) ||
+            rec.state === 'recording' ||
+            rec.state === 'connecting' ||
+            save.state === 'blocked'
+          }
+          onClick={() => setConfirmOpen(true)}
+        >
+          {t('consult:confirm.button')}
+        </Button>
+      </div>
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title={t('consult:confirm.title')}
+        description={t('consult:confirm.body')}
+        footer={
+          <>
+            <Button onClick={() => setConfirmOpen(false)}>{t('consult:confirm.cancel')}</Button>
+            <Button
+              variant="primary"
+              onClick={() =>
+                void save.confirm().then((ok) => {
+                  setConfirmOpen(false);
+                  toast.push(
+                    ok
+                      ? { kind: 'clear', title: t('consult:confirm.done') }
+                      : { kind: 'blocked', title: t('consult:confirm.failed') },
+                  );
+                })
+              }
+            >
+              {t('consult:confirm.yes')}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-base text-ink">{t('consult:draftNote')}</p>
+      </Modal>
     </div>
   );
 }
