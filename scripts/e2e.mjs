@@ -255,13 +255,14 @@ try {
     ...process.env,
     VITE_API_BASE_URL: API,
     VITE_ASR_WS_URL: ASR,
+    VITE_ASR_HTTP_URL: `http://127.0.0.1:${ASR_PORT}`,
   });
   // the speech service runs with the MOCK engine only: no key, no vendor call, no network beyond this machine
   const internalSecret = randomBytes(32).toString('hex');
   const asrData = mkdtempSync(join(tmpdir(), 'vaani-asr-'));
   asrDataDir = asrData;
   const asrEnv = { ...process.env };
-  for (const secret of ['SARVAM_API_KEY', 'HF_TOKEN']) delete asrEnv[secret];
+  for (const secret of ['SARVAM_API_KEY', 'HF_TOKEN', 'LLM_API_KEY']) delete asrEnv[secret];
   const venvPython = join(
     root,
     'apps',
@@ -280,6 +281,8 @@ try {
         SIMULATED_DATA_ONLY: 'true',
         ASR_PY_PORT: String(ASR_PORT),
         ASR_ENABLE_MOCK: 'true',
+        LLM_PROVIDER: 'mock', // the test-mode sample extraction: no language model, no network
+        LLM_ALLOW_REAL_DATA: 'false',
         ASR_DEFAULT_ENGINE: 'mock',
         ASR_VAD: 'none',
         ALLOWED_ORIGINS: WEB,
@@ -508,6 +511,44 @@ try {
       sockets.length === 1 && sockets[0] === `${ASR}/ws/sessions/${sessionId}/audio`,
       'one WebSocket to the speech service, and the token is not in its URL',
     );
+    // ---- Phase 5B: facts. Nothing runs until the doctor presses the button; the mock provider gives a labelled sample.
+    await page.getByText('All changes saved').waitFor({ timeout: 30_000 });
+    await page.getByText('Test mode - sample extraction').waitFor();
+    check(
+      (await page.getByRole('group', { name: /^Symptoms:/ }).count()) === 0,
+      'no fact appears before the doctor presses Extract facts',
+    );
+    await page.getByRole('button', { name: 'Extract facts' }).click();
+    const factA = page.getByRole('group', { name: 'Symptoms: Namaste, tav kyarthi' });
+    await factA.waitFor({ timeout: 30_000 });
+    check(await factA.getByText('Heard').isVisible(), 'an extracted fact starts as Heard');
+    await scan(page, 'en consultation (facts heard)');
+    await factA.hover();
+    await page.getByRole('note').waitFor();
+    check(
+      (await page.locator('mark').first().innerText()) === 'Namaste, tav kyarthi',
+      'hovering a fact highlights its words in the transcript',
+    );
+    await factA.getByRole('button', { name: /^Confirm / }).click();
+    await factA.getByText('Confirmed', { exact: true }).waitFor();
+    // edit the words the OTHER fact came from: that fact becomes stale
+    const seg2 = page.getByRole('listitem').filter({ hasText: 'Drug-A twice a day' });
+    await seg2.getByRole('button', { name: /^Edit segment/ }).click();
+    await page.getByLabel('Text of segment 2').fill('Something else entirely');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByText('Text changed - re-check').first().waitFor({ timeout: 30_000 });
+    await scan(page, 'en consultation (facts, one stale)');
+    await goInApp(page, '/doctor'); // leave and come back (a reload would sign the in-memory login out)
+    await page.getByRole('heading', { name: 'Doctor dashboard', level: 1 }).waitFor();
+    await goInApp(page, `/consult/${sessionId}`);
+    await page.getByRole('group', { name: 'Symptoms: Namaste, tav kyarthi' }).waitFor();
+    check(
+      await page
+        .getByRole('group', { name: 'Symptoms: Namaste, tav kyarthi' })
+        .getByText('Confirmed', { exact: true })
+        .isVisible(),
+      'the confirmation was stored (it survives a reload)',
+    );
     const stored = await page.evaluate(() => [
       ...Object.keys(window.localStorage),
       ...Object.keys(window.sessionStorage),
@@ -517,6 +558,32 @@ try {
       'nothing but the language choice is in browser storage',
     );
     await context.close();
+  }
+
+  // ------------------------------------------------ staff withdraws consent: heard and stale facts go, confirmed stays
+  {
+    const { context, page } = await newPage(browser);
+    await signIn(page, 'staff');
+    await page.getByLabel(/Session code/).fill(sessionId);
+    await page.getByRole('button', { name: 'Open consent page' }).click();
+    await page.getByRole('heading', { name: 'Consent', level: 1 }).waitFor();
+    await page.getByRole('button', { name: 'Withdraw consent' }).click();
+    await page.getByRole('dialog').getByRole('radio', { name: /Staff/ }).first().check();
+    await page.getByRole('button', { name: 'Withdraw all consent' }).click();
+    await page.getByText('Consent withdrawn').first().waitFor();
+    await signOut(page);
+    await context.close();
+    const doctor = await newPage(browser);
+    await signIn(doctor.page, 'doctor');
+    await goInApp(doctor.page, `/consult/${sessionId}`);
+    await doctor.page.getByRole('group', { name: 'Symptoms: Namaste, tav kyarthi' }).waitFor();
+    check(
+      (await doctor.page.getByText('Text changed - re-check').count()) === 0 &&
+        (await doctor.page.getByRole('group', { name: /^Symptoms:/ }).count()) === 1,
+      'withdrawal removed the heard and stale facts and kept the confirmed one',
+    );
+    await scan(doctor.page, 'en consultation (after withdrawal, confirmed fact kept)');
+    await doctor.context.close();
   }
 
   // ------------------------------------------------ admin: chain, filters, export
@@ -721,7 +788,7 @@ try {
   }
 } catch (error) {
   // Playwright error text can quote locators but never the typed values; print only the message's first line.
-  failures.push(`stopped by an error: ${String(error?.message ?? error).split('\n')[0]}`);
+  failures.push(`stopped by an error: ${String(error?.message ?? error).split('\n').slice(0, 6).join(' / ')}`);
 } finally {
   await browser?.close();
   for (const child of spawned) killTree(child);
