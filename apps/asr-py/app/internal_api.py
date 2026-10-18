@@ -39,6 +39,10 @@ class InternalApiPort(Protocol):
 
     async def consent_status(self, session_id: str) -> dict[str, Any]: ...
 
+    async def get_segments(self, session_id: str) -> list[dict[str, Any]]: ...
+
+    async def submit_facts(self, session_id: str, body: dict[str, Any]) -> dict[str, Any]: ...
+
 
 class InternalApi:
     def __init__(self, base_url: str, secret: str, timeout: float = 10.0) -> None:
@@ -92,4 +96,15 @@ class InternalApi:
     async def consent_status(self, session_id: str) -> dict[str, Any]:
         return await asyncio.to_thread(
             self._call, "GET", f"/internal/sessions/{session_id}/consent-status", None
+        )
+
+    async def get_segments(self, session_id: str) -> list[dict[str, Any]]:
+        data = await asyncio.to_thread(
+            self._call, "GET", f"/internal/sessions/{session_id}/transcript-segments", None
+        )
+        return list(data.get("segments", []))
+
+    async def submit_facts(self, session_id: str, body: dict[str, Any]) -> dict[str, Any]:
+        return await asyncio.to_thread(
+            self._call, "POST", f"/internal/sessions/{session_id}/facts", body
         )

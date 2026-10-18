@@ -1,0 +1,22 @@
+[
+ {
+  "text": "  Patient  has fever\n since two days ",
+  "normalised": "Patient has fever since two days",
+  "hash": "2452a71b20862dc16956f3223bb3740f6dfc763a5ce49d2a7766cef3094f216d"
+ },
+ {
+  "text": "ક્યારથી  છે",
+  "normalised": "ક્યારથી છે",
+  "hash": "9f658094c414041a173df07e0f85ea67cc460e9e8efa95527d8d61da9c351594"
+ },
+ {
+  "text": "école  ",
+  "normalised": "école",
+  "hash": "f0f772e182a4941e6fdef31116540b17be18ab0be3290d2d1df760251f859b24"
+ },
+ {
+  "text": "mixed  डॉक्टर \tdoctor",
+  "normalised": "mixed डॉक्टर doctor",
+  "hash": "87093c745767458d2b5098a02127916081e4d217a2b047edca495fca14007d01"
+ }
+]

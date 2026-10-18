@@ -38,6 +38,17 @@ class Settings(BaseModel):
     #: voice-activity trimming of the stream: silero (needs requirements-vad.txt) or none
     vad: Literal["silero", "none"] = "silero"
     sarvam_api_key: SecretStr | None = None
+    #: language model for fact extraction (Phase 5A). `mock` is the default and costs nothing.
+    llm_provider: Literal["mock", "openai_compatible"] = "mock"
+    llm_model: str = "mock-model"
+    llm_base_url: str = ""
+    llm_api_key: SecretStr | None = None
+    #: the real provider refuses to run unless this is true (free endpoints may log prompts: simulated data only)
+    llm_allow_real_data: bool = False
+    llm_monthly_cap_inr: float = Field(default=50.0, ge=0)
+    llm_monthly_cap_tokens: int = Field(default=200_000, ge=0)
+    llm_input_inr_per_million: float = Field(default=0.0, ge=0)
+    llm_output_inr_per_million: float = Field(default=0.0, ge=0)
     #: shared with api-node; signs the short-lived consent tokens (>= 32 characters)
     internal_service_secret: SecretStr | None = None
     #: 64 hex characters (32 bytes); encrypts stored audio. Losing it makes stored audio unrecoverable.
@@ -76,6 +87,10 @@ class Settings(BaseModel):
         return self.data_dir / "usage.jsonl"
 
     @property
+    def llm_usage_log_path(self) -> Path:
+        return self.data_dir / "llm-usage.jsonl"
+
+    @property
     def audio_dir(self) -> Path:
         return self.data_dir / "audio"
 
@@ -92,6 +107,14 @@ _PLAIN = {
     "INTERNAL_SERVICE_SECRET": "internal_service_secret",
     "AUDIO_MASTER_KEY": "audio_master_key",
     "SARVAM_API_KEY": "sarvam_api_key",
+    "LLM_PROVIDER": "llm_provider",
+    "LLM_MODEL": "llm_model",
+    "LLM_BASE_URL": "llm_base_url",
+    "LLM_API_KEY": "llm_api_key",
+    "LLM_MONTHLY_CAP_INR": "llm_monthly_cap_inr",
+    "LLM_MONTHLY_CAP_TOKENS": "llm_monthly_cap_tokens",
+    "LLM_INPUT_INR_PER_MILLION": "llm_input_inr_per_million",
+    "LLM_OUTPUT_INR_PER_MILLION": "llm_output_inr_per_million",
 }
 
 
@@ -105,6 +128,8 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         raw["allow_third_party_audio"] = (
             source["SARVAM_ALLOW_THIRD_PARTY_AUDIO"].strip().lower() == "true"
         )
+    if source.get("LLM_ALLOW_REAL_DATA", "").strip().lower() in ("true", "false"):
+        raw["llm_allow_real_data"] = source["LLM_ALLOW_REAL_DATA"].strip().lower() == "true"
     if source.get("ASR_ENABLE_MOCK", "").strip().lower() in ("true", "false"):
         raw["enable_mock"] = source["ASR_ENABLE_MOCK"].strip().lower() == "true"
     if "SIMULATED_DATA_ONLY" in source:
