@@ -1,19 +1,28 @@
 """Word error rate by plain edit distance (no dependency; jiwer comes with the evaluation phase).
 
-Both texts are lower-cased and split into words made of letters/digits (any script), so punctuation does not count.
+Both texts are lower-cased, Unicode-normalised and split into words at spaces; punctuation at a word's edge does not count.
 The result is exact counts, not a verdict: WER = (substitutions + deletions + insertions) / reference words.
 """
 
 from __future__ import annotations
 
-import re
+import unicodedata
 from dataclasses import dataclass
-
-_WORD = re.compile(r"[^\W_]+", re.UNICODE)
 
 
 def words(text: str) -> list[str]:
-    return _WORD.findall(text.lower())
+    """Words are whitespace-separated; punctuation and symbols at their edges are stripped. Combining marks
+    (Gujarati vowel signs) stay inside the word, so a Gujarati word is one word."""
+    out = []
+    for raw in unicodedata.normalize("NFC", text).lower().split():
+        start, end = 0, len(raw)
+        while start < end and unicodedata.category(raw[start])[0] in "PSZC":
+            start += 1
+        while end > start and unicodedata.category(raw[end - 1])[0] in "PSZC":
+            end -= 1
+        if end > start:
+            out.append(raw[start:end])
+    return out
 
 
 @dataclass(frozen=True)

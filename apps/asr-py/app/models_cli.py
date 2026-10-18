@@ -16,6 +16,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from app.asr.models import ALL_PINNED, PinnedModel
+from app.config import REPO_ROOT
 
 GB = 1_000_000_000
 
@@ -63,7 +64,7 @@ def main(
     target = (
         Path(argv[argv.index("--dir") + 1])
         if "--dir" in argv
-        else Path("data") / "models" / argv[1]
+        else REPO_ROOT / "data" / "models" / argv[1]
     )
     try:
         count, size = fetch(model)

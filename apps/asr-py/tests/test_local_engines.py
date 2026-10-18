@@ -132,7 +132,10 @@ def test_indicconformer_loads_the_pinned_revision_only_and_calls_gu_ctc(monkeypa
 
 
 # ------------------------------------------------------------------ faster-whisper
-def test_faster_whisper_uses_cpu_int8_gu_and_reports_a_model_score(monkeypatch):
+def test_faster_whisper_uses_cpu_int8_gu_and_reports_a_model_score(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "app.asr.fasterwhisper.REPO_ROOT", tmp_path
+    )  # no local copy: use the pinned repo
     seen = {}
 
     class Seg:

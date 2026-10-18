@@ -31,3 +31,14 @@ Pages: https://www.sarvam.ai/terms-of-service (v2.0, 29 Jul 2026; the text was c
 - **Own voice:** put the file in `audio/own/`, then run `python -m app.smoke own-list audio/own/clip01.wav --i-confirm-this-is-my-own-voice`. That command is YOUR statement that only you speak in the file; it records the file's SHA-256 in `audio/own/manifest.json`. Nobody else may run it for you.
 - **Usage report:** `python -m app.usage_report [YYYY-MM]` lists requests, audio minutes, billed minutes and INR per engine, and the paid minutes used against the monthly cap.
 
+## First smoke results (2026-10-18, owner's own 62.6 s clip, 94 reference words; numbers only, one clip proves little)
+| Engine | Seconds / cost | WER | Output script |
+| --- | --- | --- | --- |
+| Sarvam saaras:v4 codemix, no keyterms | 62.6 s billed, INR 0.52 | 42.6% (35 sub, 4 missing, 1 extra) | Gujarati script 57%, Latin 43% |
+| Sarvam, 50 unreviewed keyterms | 62.6 s billed, INR 0.52 | 43.6% (36 sub, 4 missing, 1 extra) | Gujarati 58%, Latin 42% |
+| faster-whisper small int8 (CPU), `gu` | 62.6 s, free, took 368 s | 74.5% (61 sub, 5 missing, 4 extra) | Devanagari 76%, Latin 24%, no Gujarati script |
+- The reference writes the Hindi parts in Devanagari and English words such as "doctor" in Gujarati script; Sarvam writes Hindi in Gujarati script and "doctor" in Latin. Many of its "errors" are script choices, not misheard words, so WER here mixes two things. Real word mistakes seen: બેસો to બેઠો, ગળામાં to ગલામાં, પણ છે to પંચે.
+- The keyterm list changed the score by +1 word (noise). No claim about keyterms follows from one clip.
+- WER bug found and fixed on the way: the first tokenizer split Gujarati words at vowel signs (150 "words" instead of 94). Scores above use the fixed tokenizer on the saved outputs.
+- Sarvam's event format worked as parsed (partials and finals with `text`, `session.end` billed seconds); first result after 0.5-0.7 s.
+

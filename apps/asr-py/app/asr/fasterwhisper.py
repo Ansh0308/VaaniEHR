@@ -18,6 +18,7 @@ import numpy as np
 from app.asr.local import UtteranceEngine
 from app.asr.models import WHISPER_MODELS
 from app.asr.types import Capabilities
+from app.config import REPO_ROOT
 from app.vad import EnergyBackend, VADBackend, VADConfig
 
 
@@ -41,6 +42,7 @@ class FasterWhisperEngine(UtteranceEngine):
         super().__init__(vad_backend, vad_config)
         if size not in WHISPER_MODELS:
             raise ValueError(f"model size must be one of {sorted(WHISPER_MODELS)}")
+        self._size = size
         self._pin = WHISPER_MODELS[size]
         self.version = f"{size}-int8-{self._pin.revision[:8]}"
         self._model: object | None = None
@@ -48,6 +50,11 @@ class FasterWhisperEngine(UtteranceEngine):
     def _load(self) -> object:
         from faster_whisper import WhisperModel  # noqa: PLC0415 - heavy, optional
 
+        local = (
+            REPO_ROOT / "data" / "models" / f"whisper-{self._size}"
+        )  # made by app.models_cli download
+        if local.exists():
+            return WhisperModel(str(local), device="cpu", compute_type="int8")
         return WhisperModel(
             self._pin.repo, device="cpu", compute_type="int8", revision=self._pin.revision
         )

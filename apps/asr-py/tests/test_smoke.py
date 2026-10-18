@@ -138,3 +138,10 @@ def test_wer_counts_are_exact():
     r = wer("one two three four", "one 2 three four five")
     assert (r.substitutions, r.deletions, r.insertions, r.reference_words) == (1, 0, 1, 4)
     assert wer("ક્યારથી છે", "ક્યારથી છે").wer == 0 and wer("a b", "").deletions == 2
+
+
+def test_a_gujarati_word_is_one_word_and_edge_punctuation_is_ignored():
+    from app.wer import words
+
+    assert words("ક્યારથી છે, તાવ?") == ["ક્યારથી", "છે", "તાવ"]
+    assert wer("તાવ છે.", "તાવ છે").wer == 0
