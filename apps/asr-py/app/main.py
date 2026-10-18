@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.asr.mock import DEMO_SCRIPT, MockEngine
+from app.asr.sarvam import SarvamEngine
 from app.config import Settings, load_settings
 from app.consent import ConsentGuard
 from app.internal_api import InternalApi
@@ -29,6 +30,13 @@ def build_services(settings: Settings) -> Services:
     engines = {}
     if settings.enable_mock:
         engines["mock"] = lambda: MockEngine(DEMO_SCRIPT)
+    spend = SpendGuard(usage, settings.monthly_cap_minutes, settings.smoke_max_seconds)
+    if settings.sarvam_api_key is not None:
+        sarvam_key = settings.sarvam_api_key.get_secret_value()
+        # live audio is never verified as the owner's own voice, so it flows only if the owner has allowed it
+        engines["sarvam"] = lambda: SarvamEngine(
+            sarvam_key, spend=spend, allow_third_party=settings.allow_third_party_audio
+        )
     return Services(
         settings=settings,
         guard=ConsentGuard(secret.get_secret_value()) if secret else None,

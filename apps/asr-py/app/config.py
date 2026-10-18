@@ -31,6 +31,9 @@ class Settings(BaseModel):
     #: engine used when the client does not name one; `mock` is only registered when enable_mock is true
     default_engine: str = "sarvam"
     enable_mock: bool = False
+    #: false until the owner has settled Sarvam's terms: only verified own-voice files may be sent (app/own_voice.py)
+    allow_third_party_audio: bool = False
+    sarvam_api_key: SecretStr | None = None
     #: shared with api-node; signs the short-lived consent tokens (>= 32 characters)
     internal_service_secret: SecretStr | None = None
     #: 64 hex characters (32 bytes); encrypts stored audio. Losing it makes stored audio unrecoverable.
@@ -83,6 +86,7 @@ _PLAIN = {
     "ASR_DEFAULT_ENGINE": "default_engine",
     "INTERNAL_SERVICE_SECRET": "internal_service_secret",
     "AUDIO_MASTER_KEY": "audio_master_key",
+    "SARVAM_API_KEY": "sarvam_api_key",
 }
 
 
@@ -92,6 +96,10 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     for variable, field in _PLAIN.items():
         if source.get(variable, "") != "":
             raw[field] = source[variable]
+    if source.get("SARVAM_ALLOW_THIRD_PARTY_AUDIO", "").strip().lower() in ("true", "false"):
+        raw["allow_third_party_audio"] = (
+            source["SARVAM_ALLOW_THIRD_PARTY_AUDIO"].strip().lower() == "true"
+        )
     if source.get("ASR_ENABLE_MOCK", "").strip().lower() in ("true", "false"):
         raw["enable_mock"] = source["ASR_ENABLE_MOCK"].strip().lower() == "true"
     if "SIMULATED_DATA_ONLY" in source:
