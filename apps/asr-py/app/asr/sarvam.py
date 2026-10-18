@@ -33,6 +33,8 @@ from app.usage import CapExceeded, SpendGuard
 
 DEFAULT_URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
 MODEL = "saaras:v4"
+#: documented modes for saaras:v4 (docs/vendor-notes.md); the default stays codemix
+MODES = ("transcribe", "translate", "verbatim", "translit", "codemix")
 
 
 class SarvamError(Exception):
@@ -61,8 +63,13 @@ class SarvamEngine(ASREngine):
         purpose: str = "stream",
         run_cap_seconds: float | None = None,
         url: str = DEFAULT_URL,
+        mode: str = "codemix",
     ) -> None:
         super().__init__()
+        if mode not in MODES:
+            raise ValueError(f"mode must be one of {MODES}")
+        self._mode = mode
+        self.version = MODEL if mode == "codemix" else f"{MODEL}/{mode}"
         self._key = api_key
         self._spend = spend
         self._allowed = allow_third_party or own_voice_verified
@@ -74,7 +81,7 @@ class SarvamEngine(ASREngine):
         params = {
             "language_code": language_hint or "auto",
             "model": MODEL,
-            "mode": "codemix",
+            "mode": self._mode,
             "encoding": "linear16",
             "sample_rate": "16000",
             "return_timestamps": "true",

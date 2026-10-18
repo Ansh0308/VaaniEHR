@@ -42,3 +42,16 @@ Pages: https://www.sarvam.ai/terms-of-service (v2.0, 29 Jul 2026; the text was c
 - WER bug found and fixed on the way: the first tokenizer split Gujarati words at vowel signs (150 "words" instead of 94). Scores above use the fixed tokenizer on the saved outputs.
 - Sarvam's event format worked as parsed (partials and finals with `text`, `session.end` billed seconds); first result after 0.5-0.7 s.
 
+## Sarvam modes on clip01, script-aware scoring (2026-10-18, no keyterms unless stated; 62.6 s, INR 0.52 per run; one clip)
+Reference script share: Gujarati 47.8%, Devanagari 23.9%, Latin 28.4%. Script-aware WER maps Devanagari onto Gujarati by Unicode offset (same word, other script = match); Latin is never mapped, and Latin-versus-Indic substitutions are counted separately.
+| Mode | Strict WER | Script-aware WER | Latin-vs-Indic mismatches | Output script G / D / L (%) |
+| --- | --- | --- | --- | --- |
+| codemix (default) | 42.6 | 25.5 | 10 | 57 / 0 / 43 |
+| codemix + 50 unreviewed keyterms | 43.6 | 25.5 | 10 | 58 / 0 / 42 |
+| transcribe | 64.9 | 46.8 | 20 | 100 / 0 / 0 |
+| verbatim | 63.8 | 44.7 | 23 | 100 / 0 / 0 |
+| translit | 77.7 | 77.7 | 69 | 0 / 0 / 100 |
+| faster-whisper small (for reference) | 74.5 | 64.9 | 8 | 0 / 76 / 24 |
+- `translate` was not run: it outputs English only, so it cannot match this reference.
+- On this clip `codemix` is the only mode that keeps English words in Latin (42% of its letters) and has the lowest scores. No mode writes Hindi in Devanagari: codemix, transcribe and verbatim put all Indic text in Gujarati script (Devanagari 0%), translit writes everything in Latin. So none of them reproduces the reference's three-script convention; after script mapping codemix is closest. Keyterms made no difference to the script-aware score.
+

@@ -35,7 +35,7 @@ def env(tmp_path, monkeypatch):
     settings = Settings(data_dir=tmp_path / "data")
     built = []
 
-    def factory(name, _settings, _spend, verified, terms):
+    def factory(name, _settings, _spend, verified, terms, mode="codemix"):
         built.append((name, verified, list(terms)))
         return type("PaidMock", (MockEngine,), {"name": name})(
             [{"start_ms": 0, "end_ms": 1000, "text": "namaste doctor tav che", "language": "gu-IN"}]
@@ -45,7 +45,7 @@ def env(tmp_path, monkeypatch):
         args = smoke.argparse.Namespace(
             engine="sarvam", file=str(clip), reference=str(own / "clip01.txt"),
             keyterms=str(tmp_path / "k.txt"), language="gu-IN", seconds=None, both=False,
-            no_keyterms=False, yes_spend=False,
+            no_keyterms=False, yes_spend=False, mode="codemix",
         )  # fmt: skip
         for key in extra:
             name, _, value = key.partition("=")
@@ -88,7 +88,11 @@ def test_a_listed_file_runs_logs_usage_and_reports_wer(env):
     list_own(env)
     code, text = env.go("yes_spend=True")
     assert code == 0 and env.built == [("sarvam", True, ["Drug-A", "Drug-B"])]
-    assert "WER 0.0%" in text and "0 substituted + 0 missing + 0 extra) / 4 reference words" in text
+    assert (
+        "strict WER 0.0%" in text
+        and "script-aware WER 0.0%" in text
+        and "0 substituted + 0 missing + 0 extra) / 4 reference words" in text
+    )
     line = json.loads((env.tmp / "data" / "usage.jsonl").read_text().splitlines()[0])
     assert (line["purpose"], line["engine"]) == ("smoke", "sarvam") and "text" not in line
 
@@ -145,3 +149,16 @@ def test_a_gujarati_word_is_one_word_and_edge_punctuation_is_ignored():
 
     assert words("ક્યારથી છે, તાવ?") == ["ક્યારથી", "છે", "તાવ"]
     assert wer("તાવ છે.", "તાવ છે").wer == 0
+
+
+def test_script_aware_scoring_maps_devanagari_to_gujarati_but_never_latin():
+    from app.wer import script_share, wer_report
+
+    ref = "डॉक्टर નમસ્તે doctor તાવ"
+    strict, aware = wer_report(ref, "ડૉક્ટર નમસ્તે ડૉક્ટર તાવ")
+    assert (
+        strict.substitutions == 2 and aware.substitutions == 1
+    )  # Devanagari word matches; Latin 'doctor' does not
+    assert aware.latin_indic_mismatches == 1
+    share = script_share("નમસ્તે डॉक्टर doctor")
+    assert share["gujarati"] > 0 and share["devanagari"] > 0 and share["latin"] > 0

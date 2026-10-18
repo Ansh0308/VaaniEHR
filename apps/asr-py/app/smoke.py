@@ -31,10 +31,10 @@ from app.config import REPO_ROOT, Settings, load_settings
 from app.keyterms import KeytermError, load_keyterms
 from app.own_voice import OWN_DIR, ThirdPartyAudioRefused, sha256_of, verify_own_voice
 from app.usage import PAID_ENGINES, CapExceeded, SpendGuard, UsageLog
-from app.wer import wer
+from app.wer import script_share, wer_report
 
 CHUNK_MS = 250
-EngineFactory = Callable[[str, Settings, SpendGuard, bool, list[str]], ASREngine]
+EngineFactory = Callable[..., ASREngine]
 
 
 def load_wav_16k_mono(path: Path, max_seconds: float) -> tuple[bytes, float]:
@@ -57,7 +57,12 @@ def load_wav_16k_mono(path: Path, max_seconds: float) -> tuple[bytes, float]:
 
 
 def default_engine(
-    name: str, settings: Settings, spend: SpendGuard, verified: bool, _terms: list[str]
+    name: str,
+    settings: Settings,
+    spend: SpendGuard,
+    verified: bool,
+    _terms: list[str],
+    mode: str = "codemix",
 ) -> ASREngine:
     if name == "sarvam":
         if settings.sarvam_api_key is None:
@@ -71,6 +76,7 @@ def default_engine(
             own_voice_verified=verified,
             purpose="smoke",
             run_cap_seconds=settings.smoke_max_seconds,
+            mode=mode,
         )
     from app.vad import EnergyBackend, SileroBackend  # noqa: PLC0415
 
@@ -193,7 +199,7 @@ def run_command(
     reference = Path(args.reference).read_text(encoding="utf-8") if args.reference else None
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     for label, variant_terms in variants:
-        engine = factory(args.engine, settings, spend, verified, variant_terms)
+        engine = factory(args.engine, settings, spend, verified, variant_terms, mode=args.mode)
         try:
             segments, first, took = asyncio.run(
                 _run_once(engine, pcm, args.language, variant_terms)
@@ -224,17 +230,22 @@ def run_command(
         )
         out(line)
         if reference is not None:
-            r = wer(reference, text)
+            strict, aware = wer_report(reference, text)
             out(
-                f"  WER {r.wer * 100:.1f}% = ({r.substitutions} substituted + {r.deletions} missing + "
-                f"{r.insertions} extra) / {r.reference_words} reference words"
+                f"  strict WER {strict.wer * 100:.1f}% = ({strict.substitutions} substituted + {strict.deletions} "
+                f"missing + {strict.insertions} extra) / {strict.reference_words} reference words"
+            )
+            out(
+                f"  script-aware WER {aware.wer * 100:.1f}% (Devanagari mapped to Gujarati); "
+                f"Latin-vs-Indic mismatches {aware.latin_indic_mismatches}; output script {script_share(text)}"
             )
         folder = settings.data_dir / "smoke"
         folder.mkdir(parents=True, exist_ok=True)
         slug = "kt" if variant_terms else "nokt"
-        (folder / f"{stamp}-{engine.name}-{slug}.json").write_text(
+        (folder / f"{stamp}-{engine.name}-{args.mode}-{slug}.json").write_text(
             json.dumps(
-                {"engine": engine.name, "version": engine.version, "text": text}, ensure_ascii=False
+                {"engine": engine.name, "version": engine.version, "mode": args.mode, "text": text},
+                ensure_ascii=False,
             ),
             encoding="utf-8",
         )
@@ -251,6 +262,7 @@ def main(argv: list[str], factory: EngineFactory = default_engine) -> int:
     run.add_argument("--keyterms", default=str(REPO_ROOT / "data" / "asr" / "keyterms.txt"))
     run.add_argument("--language", default="gu-IN")
     run.add_argument("--seconds", type=float)
+    run.add_argument("--mode", default="codemix", help="Sarvam mode (default codemix)")
     run.add_argument("--both", action="store_true")
     run.add_argument("--no-keyterms", action="store_true")
     run.add_argument("--yes-spend", action="store_true")
