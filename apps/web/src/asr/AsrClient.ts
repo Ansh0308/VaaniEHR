@@ -37,7 +37,7 @@ export interface WireSegment {
 
 export interface Capture {
   /** Begins delivering ~250 ms PCM16 frames. */
-  start(onFrame: (frame: ArrayBuffer) => void): void;
+  start(onFrame: (frame: ArrayBuffer) => void, onLevel?: (level: number) => void): void;
   /** Delivers the partly filled last frame, then resolves. */
   flush(): Promise<void>;
   /** Releases the microphone (stops every track). Safe to call twice. */
@@ -69,6 +69,10 @@ export interface AsrHandlers {
   onError: (kind: AsrErrorKind) => void;
   /** true while a dropped connection is being re-established */
   onReconnecting?: (reconnecting: boolean) => void;
+  /** microphone level 0..1, about four times a second while recording */
+  onLevel?: (level: number) => void;
+  /** the service finished: seconds of audio it received, and how many it passed to the engine after trimming silence */
+  onClosed?: (info: { audioSeconds: number; engineSeconds: number | null }) => void;
 }
 
 const OPEN = 1;
@@ -125,7 +129,10 @@ export class AsrClient {
       this.onConnectFailed(reason);
       return;
     }
-    this.capture.start((frame) => this.onFrame(frame));
+    this.capture.start(
+      (frame) => this.onFrame(frame),
+      (level) => this.handlers.onLevel?.(level),
+    );
     this.setState('recording');
   }
 
@@ -189,6 +196,11 @@ export class AsrClient {
             } else if (message.type === 'error') {
               this.lastError = String(message.code ?? '');
             } else if (message.type === 'closed') {
+              this.handlers.onClosed?.({
+                audioSeconds: Number(message.audioSeconds ?? 0),
+                engineSeconds:
+                  typeof message.engineSeconds === 'number' ? message.engineSeconds : null,
+              });
               this.finish();
             }
           };

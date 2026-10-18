@@ -40,14 +40,18 @@ export async function createBrowserCapture(onEnded: () => void): Promise<Capture
   });
 
   let onFrame: ((frame: ArrayBuffer) => void) | null = null;
+  let onLevel: ((level: number) => void) | null = null;
   let flushWaiter: (() => void) | null = null;
   node.port.onmessage = (event: MessageEvent) => {
     if (event.data instanceof ArrayBuffer) onFrame?.(event.data);
     else if ((event.data as { flushed?: boolean })?.flushed) flushWaiter?.();
+    else if (typeof (event.data as { level?: number })?.level === 'number')
+      onLevel?.((event.data as { level: number }).level);
   };
   return {
-    start(callback) {
+    start(callback, levelCallback) {
       onFrame = callback;
+      onLevel = levelCallback ?? null;
     },
     flush() {
       return new Promise<void>((resolve) => {
@@ -61,6 +65,7 @@ export async function createBrowserCapture(onEnded: () => void): Promise<Capture
     },
     stop() {
       onFrame = null;
+      onLevel = null;
       release();
       node.port.onmessage = null;
       source.disconnect();

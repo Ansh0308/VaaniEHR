@@ -120,12 +120,23 @@ export function ConsultPage() {
           consentLink={`/consult/${sessionId}/consent`}
           errorKind={rec.error}
           reconnecting={rec.reconnecting}
+          level={rec.level}
+          quiet={rec.quiet}
           nextSpeaker={rec.nextSpeaker}
           onNextSpeaker={rec.setNextSpeaker}
           onStart={rec.start}
           onStop={rec.stop}
         />
       )}
+
+      {rec.state === 'idle' && rec.lastRun && rec.lastRun.finals === 0 ? (
+        <Banner kind="acknowledge" live>
+          {t('consult:run.noSpeech', {
+            heard: rec.lastRun.audioSeconds.toFixed(1),
+            engine: (rec.lastRun.engineSeconds ?? rec.lastRun.audioSeconds).toFixed(1),
+          })}
+        </Banner>
+      ) : null}
 
       <TranscriptPane segments={segments} onSpeaker={rec.setSpeaker} onEditSave={rec.editText} />
 

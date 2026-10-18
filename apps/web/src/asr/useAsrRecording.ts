@@ -44,6 +44,15 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
   const [segments, setSegments] = useState<LiveSegment[]>([]);
   const [partial, setPartial] = useState<PartialText | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [level, setLevel] = useState(0);
+  const [lastRun, setLastRun] = useState<{
+    audioSeconds: number;
+    engineSeconds: number | null;
+    finals: number;
+  } | null>(null);
+  const runFinals = useRef(0);
+  const quietReports = useRef(0);
+  const [quiet, setQuiet] = useState(false);
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>('unknown');
   const nextSpeakerRef = useRef<Speaker>('unknown');
   nextSpeakerRef.current = nextSpeaker;
@@ -64,15 +73,25 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
           onState: (next) => {
             setState(next);
             if (next === 'recording' || next === 'connecting') setError(null);
-            if (next === 'idle' || next === 'error') setPartial(null);
+            if (next === 'idle' || next === 'error') {
+              setPartial(null);
+              setLevel(0);
+            }
           },
           onError: setError,
           onReconnecting: setReconnecting,
+          onLevel: (value) => {
+            setLevel(value);
+            quietReports.current = value < 0.01 ? quietReports.current + 1 : 0;
+            setQuiet(quietReports.current >= 12); // about 3 seconds with no sound at all
+          },
+          onClosed: (info) => setLastRun({ ...info, finals: runFinals.current }),
           onSegment: (wire: WireSegment) => {
             if (wire.kind === 'partial') {
               setPartial({ text: wire.text, language: wire.language });
               return;
             }
+            runFinals.current += 1;
             const seq = counter.current;
             counter.current += 1;
             setPartial(null);
@@ -115,6 +134,10 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
     if (state === 'idle' || state === 'error') {
       setElapsed(0);
       setError(null);
+      setLastRun(null);
+      runFinals.current = 0;
+      quietReports.current = 0;
+      setQuiet(false);
       void client.start('gu-IN');
     }
   }, [client, state]);
@@ -147,6 +170,9 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
   );
 
   return {
+    quiet,
+    level,
+    lastRun,
     load,
     lockAll,
     state,

@@ -22,6 +22,9 @@ export interface RecordBarProps {
   /** Why the last recording stopped (a key under consult:error). */
   errorKind?: string | null;
   reconnecting?: boolean;
+  /** microphone level 0..1 while recording, and whether nothing has been heard for a few seconds */
+  level?: number;
+  quiet?: boolean;
   nextSpeaker?: NextSpeaker;
   onNextSpeaker?: (speaker: NextSpeaker) => void;
   onStart?: () => void;
@@ -48,6 +51,8 @@ export function RecordBar({
   engine,
   errorKind,
   reconnecting = false,
+  level,
+  quiet = false,
   nextSpeaker,
   onNextSpeaker,
   onStart,
@@ -141,6 +146,30 @@ export function RecordBar({
           ) : null}
         </div>
       </div>
+
+      {live && level !== undefined ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-semibold text-ink">{t('consult:level.label')}</span>
+          <div
+            role="meter"
+            aria-label={t('consult:level.label')}
+            aria-valuemin={0}
+            aria-valuemax={1}
+            aria-valuenow={Math.min(1, level)}
+            className="h-3 min-w-40 flex-1 overflow-hidden rounded-full border border-control bg-sunken"
+          >
+            <div
+              className="h-full bg-ink transition-[width]"
+              style={{ width: `${Math.min(100, Math.round(level * 400))}%` }}
+            />
+          </div>
+          {quiet ? (
+            <span role="status" className="text-sm font-semibold text-acknowledge-fg">
+              {t('consult:level.quiet')}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {nextSpeaker && onNextSpeaker ? (
         <fieldset className="mt-3 flex flex-wrap items-center gap-2">

@@ -15,6 +15,8 @@ class PcmDownsampler extends AudioWorkletProcessor {
     this.phase = 0; // position of the next output sample, in input samples, relative to the start of the block
     this.frame = new Int16Array(FRAME_SAMPLES);
     this.filled = 0;
+    this.peak = 0; // loudest input sample since the last level report
+    this.sinceLevel = 0;
     this.port.onmessage = (event) => {
       if (event.data === 'flush') {
         this.emit(true);
@@ -34,6 +36,14 @@ class PcmDownsampler extends AudioWorkletProcessor {
   process(inputs) {
     const channel = inputs[0] && inputs[0][0];
     if (!channel || channel.length === 0) return true;
+    for (let i = 0; i < channel.length; i += 1)
+      this.peak = Math.max(this.peak, Math.abs(channel[i]));
+    this.sinceLevel += channel.length;
+    if (this.sinceLevel >= sampleRate / 4) {
+      this.port.postMessage({ level: this.peak }); // lets the page show a microphone level (0 to 1)
+      this.peak = 0;
+      this.sinceLevel = 0;
+    }
     let position = this.phase;
     while (position < channel.length) {
       const from = Math.floor(position);

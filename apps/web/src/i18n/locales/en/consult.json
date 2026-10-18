@@ -38,6 +38,13 @@
     "protocol": "Recording stopped because of a technical error.",
     "connection_lost": "The connection was lost and could not be restored. Recording stopped."
   },
+  "level": {
+    "label": "Microphone level",
+    "quiet": "No sound is reaching the microphone. Check that the right microphone is selected and not muted."
+  },
+  "run": {
+    "noSpeech": "No speech was recognised. The service heard {{heard}} s of audio and passed {{engine}} s to the speech engine after removing silence. Check the microphone level and try again."
+  },
   "save": {
     "saved": "All changes saved",
     "unsaved": "Unsaved changes",

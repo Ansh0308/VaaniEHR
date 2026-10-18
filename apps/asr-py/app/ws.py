@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
 import uuid
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, replace
@@ -192,7 +193,10 @@ def register(app: FastAPI, services: Services) -> None:
                         continue
                 yield item
 
+        finals_sent = 0
+
         async def pump() -> None:
+            nonlocal finals_sent
             try:
                 async for segment in engine.transcribe_stream(chunks(), language, keyterms):
                     if gate is not None:
@@ -201,6 +205,8 @@ def register(app: FastAPI, services: Services) -> None:
                             start_ms=gate.to_original_ms(segment.start_ms),
                             end_ms=gate.to_original_ms(segment.end_ms, end=True),
                         )
+                    if segment.kind == "final":
+                        finals_sent += 1
                     await ws.send_json({"type": segment.kind, "segment": segment_json(segment)})
             except WebSocketDisconnect:
                 raise
@@ -309,11 +315,25 @@ def register(app: FastAPI, services: Services) -> None:
                     pass  # the purge job registers it later
             except AudioStoreError:
                 asset_id = None
+        # content-free log line (no text, no audio): helps find out why a recording gave no transcript
+        logging.getLogger("uvicorn.error").info(
+            "audio stream ended: engine=%s received=%.1fs engine_got=%.1fs segments_sent=%d",
+            engine.name,
+            seconds,
+            engine.report.audio_seconds,
+            finals_sent,
+        )
         pcm.clear()
         if stop is not None and stop.code != 1001:
             raise stop
         with contextlib.suppress(Exception):
             await ws.send_json(
-                {"type": "closed", "audioSeconds": round(seconds, 3), "recordingId": asset_id}
+                {
+                    "type": "closed",
+                    "audioSeconds": round(seconds, 3),
+                    # what reached the engine after silence was trimmed (0 means no speech was detected)
+                    "engineSeconds": round(engine.report.audio_seconds, 3),
+                    "recordingId": asset_id,
+                }
             )
             await ws.close(code=1000)

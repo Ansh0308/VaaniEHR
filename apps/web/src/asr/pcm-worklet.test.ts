@@ -71,3 +71,20 @@ describe('pcm-downsampler', () => {
     expect(new Int16Array(posted[0] as ArrayBuffer).every((v) => v === 0)).toBe(true);
   });
 });
+
+describe('microphone level', () => {
+  it('reports the loudest sample about four times a second, and 0 for silence', () => {
+    markers.length = 0;
+    const loud = create();
+    for (let block = 0; block < 190; block += 1) loud.process([[sine(128, 48000, block * 128)]]);
+    const levels = markers.filter(
+      (m): m is { level: number } => typeof (m as { level?: number }).level === 'number',
+    );
+    expect(levels.length).toBeGreaterThanOrEqual(2);
+    expect(levels[0]?.level).toBeGreaterThan(0.45);
+    markers.length = 0;
+    const quiet = create();
+    for (let block = 0; block < 190; block += 1) quiet.process([[new Float32Array(128)]]);
+    expect(markers.every((m) => (m as { level?: number }).level === 0)).toBe(true);
+  });
+});
