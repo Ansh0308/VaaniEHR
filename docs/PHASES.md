@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 4A complete, steps 1-10 pushed (engines: mock, Sarvam, IndicConformer, faster-whisper; VAD gate, consent token, encrypted audio + purge, WebSocket, diarizer interface, smoke script, usage report). Waiting for the owner: `audio/own/manifest.json` entry for clip01.wav before the real Sarvam smoke test; Sarvam terms confirmation; Hugging Face terms for IndicConformer. Details: docs/ASR.md.
+> **Resume status (one line, updated after every step):** Phase 4A complete and pushed. Phase 4B Run 1 in progress: browser capture worklet + AsrClient controller done (apps/web/src/asr); next: RecordBar/TranscriptPane/ConsultPage UI, tests, e2e, docs. Details: docs/ASR.md.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
