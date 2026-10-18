@@ -202,7 +202,6 @@ export function DesignPage() {
       lang: 'gu',
       final: true,
       text: gu('design:demo.transcript.patient'),
-      lowConfidence: [gu('design:demo.transcript.unsure')],
     },
     {
       id: 's3',
@@ -558,7 +557,7 @@ export function DesignPage() {
         />
         <TranscriptPane
           segments={segments}
-          onEdit={() => toast.push({ title: t('design:clinical.editStub') })}
+          onEditSave={() => toast.push({ title: t('design:clinical.editStub') })}
         />
         <Demo title={t('design:clinical.facts')}>
           <div className="flex flex-wrap gap-3">

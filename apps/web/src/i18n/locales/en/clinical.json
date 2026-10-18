@@ -75,6 +75,7 @@
     "resume": "Resume",
     "start": "Start recording",
     "state": {
+      "connecting": "Connecting",
       "error": "Error",
       "idle": "Ready",
       "paused": "Paused",

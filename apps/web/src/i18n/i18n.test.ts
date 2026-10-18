@@ -19,6 +19,8 @@ import medicinesGu from './locales/gu/medicines.json';
 import patientsGu from './locales/gu/patients.json';
 import settingsGu from './locales/gu/settings.json';
 import clinicalEn from './locales/en/clinical.json';
+import consultEn from './locales/en/consult.json';
+import consultGu from './locales/gu/consult.json';
 import clinicalGu from './locales/gu/clinical.json';
 import designEn from './locales/en/design.json';
 import designGu from './locales/gu/design.json';
@@ -42,6 +44,7 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   settings: { en: settingsEn, gu: settingsGu },
   medicines: { en: medicinesEn, gu: medicinesGu },
   templates: { en: templatesEn, gu: templatesGu },
+  consult: { en: consultEn, gu: consultGu },
 };
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {

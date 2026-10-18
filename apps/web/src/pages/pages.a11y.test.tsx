@@ -229,6 +229,37 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'consultation (recording ready)',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}`,
+        language,
+        routes: {
+          'GET /sessions/:id/consent': () => ({
+            data: {
+              ...noConsent(),
+              scopes: Object.fromEntries(
+                ['audio', 'ai_processing', 'whatsapp'].map((k) => [
+                  k,
+                  {
+                    granted: k !== 'whatsapp',
+                    since: '2026-10-17T10:00:00.000Z',
+                    noticeVersion: '0.1',
+                    noticeLanguage: 'en',
+                    source: 'staff',
+                  },
+                ]),
+              ),
+              recordingAllowed: true,
+            },
+          }),
+        },
+      });
+      await screen.findByRole('button', { name: /Start recording|રેકોર્ડિંગ/ });
+    },
+  },
+  {
     name: 'medicine master',
     show: async (language) => {
       await renderApp({

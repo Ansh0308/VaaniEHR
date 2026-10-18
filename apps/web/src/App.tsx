@@ -3,6 +3,7 @@ import { homeFor, useAuth } from './auth/AuthContext';
 import { RequireAuth, RequireRole } from './auth/guards';
 import { AuditPage } from './pages/AuditPage';
 import { ConsentPage } from './pages/ConsentPage';
+import { ConsultPage } from './pages/ConsultPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DesignPage } from './pages/DesignPage';
 import { ForbiddenPage, NotFoundPage, ServerErrorPage } from './pages/ErrorPages';
@@ -45,6 +46,9 @@ export default function App() {
           </Route>
           <Route element={<RequireRole roles={['staff', 'admin']} />}>
             <Route path="patients" element={<PatientsPage />} />
+          </Route>
+          <Route element={<RequireRole roles={['doctor']} />}>
+            <Route path="consult/:sessionId" element={<ConsultPage />} />
           </Route>
           <Route element={<RequireRole roles={['doctor', 'staff', 'admin']} />}>
             <Route path="consult/:sessionId/consent" element={<ConsentPage />} />

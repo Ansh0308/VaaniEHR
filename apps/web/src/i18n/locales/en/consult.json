@@ -1,0 +1,61 @@
+{
+  "title": "Consultation",
+  "intro": "Record the conversation. The transcript is a draft made by a speech engine; you review and correct it.",
+  "openConsult": "Open the consultation screen",
+  "draft": "Draft — doctor must review",
+  "draftNote": "Nothing here is final. Speakers are unknown until you set them.",
+  "consent": {
+    "ok": "Consent on record: audio recording and AI processing.",
+    "missing": "Recording is off. Consent missing: {{list}}.",
+    "audio": "audio recording",
+    "aiProcessing": "AI processing",
+    "link": "Open the consent screen"
+  },
+  "nextSpeaker": {
+    "legend": "Next speaker is",
+    "unknown": "Unknown",
+    "doctor": "Doctor",
+    "patient": "Patient"
+  },
+  "status": {
+    "connecting": "Connecting to the speech service",
+    "recording": "Recording",
+    "reconnecting": "Connection lost. Reconnecting.",
+    "processing": "Finishing the transcript",
+    "idle": "Recording stopped",
+    "error": "Recording stopped because of an error"
+  },
+  "error": {
+    "mic_denied": "The microphone is blocked. Allow microphone access in the browser, then try again.",
+    "mic_unavailable": "No microphone was found.",
+    "mic_lost": "The microphone stopped (it was unplugged or another program took it).",
+    "consent_withdrawn": "Consent was withdrawn. Recording stopped and the audio held in this page was cleared.",
+    "spend_cap": "This month's speech-service allowance is used up. Recording stopped.",
+    "idle_timeout": "Recording stopped because no audio arrived for a while.",
+    "token": "The recording could not be authorised. Open the consent screen and try again.",
+    "not_configured": "The speech service is not set up on this server.",
+    "engine": "The speech engine stopped. You can type notes and carry on.",
+    "protocol": "Recording stopped because of a technical error.",
+    "connection_lost": "The connection was lost and could not be restored. Recording stopped."
+  },
+  "transcript": {
+    "empty": "Nothing recorded yet.",
+    "speakerLegend": "Speaker of segment {{n}}",
+    "speaker": {
+      "unknown": "Unknown",
+      "doctor": "Doctor",
+      "patient": "Patient"
+    },
+    "time": "{{from}} to {{to}}",
+    "approxTime": "about {{to}}",
+    "language": "Language: {{lang}}",
+    "edit": "Edit segment {{n}}",
+    "editLabel": "Text of segment {{n}}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edited": "Edited",
+    "original": "Original text from the speech engine",
+    "listening": "Listening: this text may change.",
+    "inMemory": "Edits are kept on this screen only for now."
+  }
+}

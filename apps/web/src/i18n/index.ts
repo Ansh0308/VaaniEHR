@@ -5,6 +5,7 @@ import { initReactI18next } from 'react-i18next';
 import enAudit from './locales/en/audit.json';
 import enAuth from './locales/en/auth.json';
 import enClinical from './locales/en/clinical.json';
+import enConsult from './locales/en/consult.json';
 import enConsent from './locales/en/consent.json';
 import enDashboard from './locales/en/dashboard.json';
 import enMedicines from './locales/en/medicines.json';
@@ -17,6 +18,7 @@ import enTemplates from './locales/en/templates.json';
 import guAudit from './locales/gu/audit.json';
 import guAuth from './locales/gu/auth.json';
 import guClinical from './locales/gu/clinical.json';
+import guConsult from './locales/gu/consult.json';
 import guConsent from './locales/gu/consent.json';
 import guDashboard from './locales/gu/dashboard.json';
 import guMedicines from './locales/gu/medicines.json';
@@ -42,6 +44,7 @@ export const NAMESPACES = [
   'settings',
   'medicines',
   'templates',
+  'consult',
 ] as const;
 
 export const resources = {
@@ -58,6 +61,7 @@ export const resources = {
     settings: enSettings,
     medicines: enMedicines,
     templates: enTemplates,
+    consult: enConsult,
   },
   gu: {
     common: guCommon,
@@ -72,6 +76,7 @@ export const resources = {
     settings: guSettings,
     medicines: guMedicines,
     templates: guTemplates,
+    consult: guConsult,
   },
 } as const;
 

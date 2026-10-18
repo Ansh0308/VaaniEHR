@@ -307,7 +307,21 @@ export function ConsentPage() {
       </header>
 
       {consent.recordingAllowed ? (
-        <Banner kind="clear" live title={t('consent:status.onTitle')}>
+        <Banner
+          kind="clear"
+          live
+          title={t('consent:status.onTitle')}
+          actions={
+            user?.role === 'doctor' ? (
+              <Link
+                to={`/consult/${session.id}`}
+                className="inline-flex min-h-11 items-center rounded-md border border-control bg-card px-4 font-semibold text-ink underline"
+              >
+                {t('consult:openConsult')}
+              </Link>
+            ) : undefined
+          }
+        >
           {t('consent:status.onBody')}
         </Banner>
       ) : (
