@@ -1,0 +1,22 @@
+{
+ "id": "synthetic03",
+ "synthetic": true,
+ "note": "SYNTHETIC test fixture made up for the evaluation code. Not clinical guidance, not real speech.",
+ "lines": [
+  "Please keep your file ready.",
+  "Thank you, I will wait here."
+ ],
+ "facts": [],
+ "mock_output": {
+  "facts": [
+   {
+    "type": "symptom",
+    "value": "fatigue",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s2",
+    "evidence_quote": "I will wait"
+   }
+  ]
+ }
+}

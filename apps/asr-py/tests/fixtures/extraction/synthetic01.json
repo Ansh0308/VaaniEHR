@@ -1,0 +1,77 @@
+{
+ "id": "synthetic01",
+ "synthetic": true,
+ "note": "SYNTHETIC test fixture made up for the evaluation code. Not clinical guidance, not real speech.",
+ "lines": [
+  "Patient says she has fever since two days.",
+  "Patient says there is no cough.",
+  "Doctor asks about allergies.",
+  "Patient says no known allergy."
+ ],
+ "facts": [
+  {
+   "type": "symptom",
+   "value": "fever",
+   "negated": false,
+   "uncertain": false,
+   "evidence_quote": "has fever"
+  },
+  {
+   "type": "duration",
+   "value": "2 days",
+   "negated": false,
+   "uncertain": false,
+   "evidence_quote": "since two days"
+  },
+  {
+   "type": "symptom",
+   "value": "cough",
+   "negated": true,
+   "uncertain": false,
+   "evidence_quote": "no cough"
+  },
+  {
+   "type": "allergy",
+   "value": "none",
+   "negated": true,
+   "uncertain": false,
+   "evidence_quote": "no known allergy"
+  }
+ ],
+ "mock_output": {
+  "facts": [
+   {
+    "type": "symptom",
+    "value": "fever",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s1",
+    "evidence_quote": "has fever"
+   },
+   {
+    "type": "duration",
+    "value": "2 days",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s1",
+    "evidence_quote": "since two days"
+   },
+   {
+    "type": "symptom",
+    "value": "cough",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s2",
+    "evidence_quote": "no cough"
+   },
+   {
+    "type": "symptom",
+    "value": "rash",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s3",
+    "evidence_quote": "a rash"
+   }
+  ]
+ }
+}

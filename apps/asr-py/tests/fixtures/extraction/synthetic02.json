@@ -1,0 +1,76 @@
+{
+ "id": "synthetic02",
+ "synthetic": true,
+ "note": "SYNTHETIC test fixture made up for the evaluation code. Not clinical guidance, not real speech.",
+ "lines": [
+  "Patient says maybe three days of headache.",
+  "Patient takes Drug-A twice a day.",
+  "Patient has had diabetes for five years."
+ ],
+ "facts": [
+  {
+   "type": "symptom",
+   "value": "headache",
+   "negated": false,
+   "uncertain": false,
+   "evidence_quote": "headache"
+  },
+  {
+   "type": "duration",
+   "value": "3 days",
+   "negated": false,
+   "uncertain": true,
+   "evidence_quote": "maybe three days"
+  },
+  {
+   "type": "current_medicine",
+   "value": "Drug-A twice a day",
+   "negated": false,
+   "uncertain": false,
+   "evidence_quote": "Drug-A twice a day"
+  },
+  {
+   "type": "past_condition",
+   "value": "diabetes 5 years",
+   "negated": false,
+   "uncertain": false,
+   "evidence_quote": "diabetes for five years"
+  }
+ ],
+ "mock_output": {
+  "facts": [
+   {
+    "type": "symptom",
+    "value": "headache",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s1",
+    "evidence_quote": "headache"
+   },
+   {
+    "type": "duration",
+    "value": "3 days",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s1",
+    "evidence_quote": "maybe three days"
+   },
+   {
+    "type": "current_medicine",
+    "value": "Drug-A",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s2",
+    "evidence_quote": "Drug-A twice a day"
+   },
+   {
+    "type": "past_condition",
+    "value": "diabetes",
+    "negated": false,
+    "uncertain": false,
+    "segment_id": "s3",
+    "evidence_quote": "diabetes for five years"
+   }
+  ]
+ }
+}

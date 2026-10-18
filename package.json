@@ -27,6 +27,7 @@
     "py:setup": "node scripts/py.mjs setup",
     "eval:asr": "node scripts/py.mjs exec -m app.eval",
     "usage:asr": "node scripts/py.mjs exec -m app.usage_report",
+    "eval:extraction": "node scripts/py.mjs exec -m app.eval_extraction",
     "lint:py": "node scripts/py.mjs ruff",
     "test:py": "node scripts/py.mjs pytest",
     "setup:env": "node scripts/setup-env.mjs",
