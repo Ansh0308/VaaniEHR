@@ -1,6 +1,6 @@
 # DECISIONS.md - Architecture Decision Records
 
-**ADR-D1 to ADR-D30 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
+**ADR-D1 to ADR-D32 are SETTLED - do not reopen without asking the owner.** (The PRD's own open decisions are called PRD-D1..PRD-D7 in this repo; PRD-D1 and PRD-D2 are closed by ADR-D1 and ADR-D2.)
 
 All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (project owner)**. Recorded by the assistant from the owner's instructions. Evidence for ClinicOS facts is in `CLINICOS_AUDIT.md` and `CLINICOS_INTEGRATION_FACTS.md`.
 
@@ -236,6 +236,19 @@ All records below: **Date 2026-10-14**, **Status: Accepted**, **Decider: Ansh (p
 - **Three pipelines (ablation).** `plain` (free text to JSON, lenient), `constrained` (strict schema), `grounded` (constrained + grounding, the only one that stores facts). The ungrounded count is the hallucination metric.
 - **Usage and caps.** `data/asr/llm-usage.jsonl`: model id, run date, prompt version/hash, tokens, cost estimate, counts kept/dropped, never text. Monthly caps `LLM_MONTHLY_CAP_INR` (50) and `LLM_MONTHLY_CAP_TOKENS` (200000) are checked before a paid call; the mock costs nothing.
 - **Not in this run.** Entity linking (concept ids, SNOMED), the real call, a button on the consult screen.
+
+## D31 - Phase 5A Run 2: the real model adapter, its caps and the evaluation gate (2026-10-18)
+- **Adapter.** `app/extraction/openai_compat.py`: an OpenAI-compatible chat-completions call (standard library only, no new dependency) configured by `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`. Temperature 0, `response_format: json_object` (`LLM_RESPONSE_FORMAT=none` turns it off for an endpoint that refuses it), and on OpenRouter `reasoning.exclude`. The reply is still checked by the strict schema of ADR-D30; a failure is a counted invalid reply, never repaired. The key goes only into the bearer header; error text names the HTTP status only, never the key, prompt or body.
+- **Retries and limits.** Exponential backoff (1, 2, 4 s, `Retry-After` honoured, capped at 30 s) on 429, 5xx and network errors; other 4xx are final. Concurrency 2 (`LLM_CONCURRENCY`). A HARD per-run request cap, default 60 (`LLM_REQUEST_CAP`): each attempt counts, and the request that would pass the cap is refused before it is sent. A monthly request cap `LLM_MONTHLY_CAP_REQUESTS` (default 1000) sits beside the existing INR and token caps; free models cost INR 0 but their requests still count.
+- **Cache.** Raw replies in `data/asr/llm-cache/` (git-ignored, file mode 0600), keyed by SHA-256 of (model, prompt version, hash of system+user text). A repeat is answered locally and is not a request. A new model or a new prompt file is a new key. Raw replies contain model output about simulated text; they never go to git.
+- **Evaluation gate.** With a real provider `python -m app.eval_extraction` sends ONLY (a) synthetic fixtures, and (b) clip texts listed in `audio/own/simulated_text_manifest.json` with their SHA-256 (editing a file breaks its listing). The owner creates that list with `npm run list:simulated-text -- clip02.txt ... --i-confirm-these-are-simulated-text`. Without `--yes-run` it prints the plan (cases, requests) and sends nothing. For this evaluation path the simulated-text check replaces `LLM_ALLOW_REAL_DATA`; that switch still blocks the live consult path (`extract_session`).
+- **Tests** use a fake local HTTP server; no real network and no real key.
+- **Results claim.** Any number from this evaluation applies to ONE model, ONE prompt version and a handful of small cases; it is not a general statement about the model or the method.
+
+## D32 - Phase 5A Run 2: entity linking (2026-10-18)
+- **Word list.** The owner's draft table (`data/concepts/concepts_draft.txt`) is converted by `python -m app.extraction.linking convert` to `data/concepts/concepts.json` (git-ignored; format in `docs/ENTITY_LINKING.md`). Every concept is `unreviewed` with an internal id (`c001`...) and `snomed_id` NULL; the loader refuses a SNOMED id on an unreviewed concept. Nothing in this list is clinical knowledge added by us; only the owner's words are used, plus the parts outside/inside a bracket as extra surface forms.
+- **Matching.** Lexical first (Unicode NFC, case-folded, punctuation removed, whole words), then fuzzy (same-length word run, ratio 0.85 or more, forms of 4+ characters only). A tie between two concepts is "ambiguous" and makes no link. Only `symptom` facts are linked. A link is a suggestion; it is not stored yet (no `concept_id` write in this run; the doctor-facing use is Phase 5B).
+- **Parrotlet-e (optional embedding linker): NOT added.** Checked on Hugging Face on 2026-10-18: `ekacare/parrotlet-e`, licence CC-BY-SA-4.0, base BAAI/bge-m3, 567,754,752 parameters (float32, about 2.3 GB), gated (automatic approval after accepting terms on the model page). The owner's token gets HTTP 403 on the model card until those terms are accepted, so its usage, pooling and terms text could not be read, and nothing could be loaded or tested. It is therefore not wired in and not in the SBOM. When the owner accepts the terms, it can be added behind a flag in `requirements-models.txt`.
 
 ## Owner answers applied 2026-10-14 (configuration, not new ADRs)
 - **Docker:** installed with WSL2 (daemon must be running to use compose).

@@ -37,3 +37,8 @@ npm run eval:extraction -- --pipeline all                      # plain, constrai
 npm run eval:extraction -- --fixtures apps/asr-py/tests/fixtures/extraction --texts ""   # the synthetic fixtures
 ```
 Results go to `data/asr/eval-extraction/` (git-ignored). Only aggregate numbers (the table in `results.md`) may be copied into docs; never transcript text. In Run 1 the model is the mock, so real clips score zero: that proves the pipeline, not the quality. Report the number of clips and speakers with every figure.
+
+## 8. The first real-model evaluation (Phase 5A Run 2)
+Setup is in OWNER_ACTIONS (provider switch, simulated-text list). `--yes-run` is required to send anything; only synthetic fixtures and clip texts listed as simulated are ever sent. The command reports per fact type precision, recall and F1, NEGATION F1 separately, the ungrounded count, and the invalid-JSON count; the usage log records requests used.
+Candidate models checked on the OpenRouter public list on 2026-10-18 (no key needed): `nvidia/nemotron-3.5-super-vl:free` (listed, context 1,000,000, supports `response_format` and structured outputs, free) and `xingchen-agi/xing4.0-29b-a4b:free` (listed, context 262,144, supports `response_format` and structured outputs, free). Free listings can change or disappear; the run records the model id and date.
+**Results table: none yet.** When a run is made, only aggregate numbers go here, with the model id, run date and prompt version (`extract_v1`); they describe that model on those few small cases and say nothing general. Do not tune the prompt between runs that are compared.
