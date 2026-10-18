@@ -248,3 +248,49 @@ def test_not_configured_means_not_available(tmp_path):
     env = Env(tmp_path)
     env.services.guard = None
     assert refused(env, {"type": "start", "token": token()}) == ("not_configured", 4503)
+
+
+def test_silence_is_trimmed_before_the_engine_and_times_are_mapped_back(tmp_path):
+    import numpy as np
+
+    from app.asr.types import Capabilities, Segment
+    from app.vad import EnergyBackend
+
+    received = []
+
+    class Probe(MockEngine):
+        name, version = "probe", "0"
+        capabilities = Capabilities(True, True, True, False, False, False)
+
+        async def transcribe_stream(self, audio_chunks, language_hint, keyterms):
+            self._start_run(keyterms)
+            total = 0
+            async for chunk in audio_chunks:
+                total += len(chunk)
+                received.append(len(chunk))
+            self.report.audio_seconds = total / 32000
+            yield Segment("final", 0, 400, "x", "probe", "0")
+
+    def wave(ms, tone):
+        n = 16 * ms
+        a = 0.3 * np.sin(2 * np.pi * 440 * np.arange(n) / 16000) if tone else np.zeros(n)
+        return (a * 32767).astype("<i2").tobytes()
+
+    audio = wave(2000, False) + wave(600, True) + wave(2000, False)
+    env = Env(tmp_path, vad_factory=EnergyBackend)
+    env.services.engines["mock"] = lambda: Probe([])
+    with env.connect() as ws:
+        start(ws)
+        for i in range(0, len(audio), 8000):
+            ws.send_bytes(audio[i : i + 8000])
+        ws.send_text('{"type":"stop"}')
+        messages = []
+        while (m := ws.receive_json())["type"] != "closed":
+            messages.append(m)
+    assert sum(received) < len(audio) * 0.5  # most of the silence never reached the engine
+    final = next(m["segment"] for m in messages if m["type"] == "final")
+    assert (
+        1800 <= final["startMs"] <= 2000
+    )  # trimmed time 0 maps to just before the tone in the recording
+    usage = env.usage.records()[0]
+    assert usage.audio_seconds == pytest.approx(sum(received) / 32000, abs=0.01)

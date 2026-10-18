@@ -61,6 +61,7 @@ function directPython() {
     'apps/asr-py/requirements.txt',
     'apps/asr-py/requirements-dev.txt',
     'apps/asr-py/requirements-vad.txt',
+    'apps/asr-py/requirements-models.txt',
   ]) {
     if (!existsSync(join(ROOT, file))) continue;
     for (const line of read(file).split(/\r?\n/)) {

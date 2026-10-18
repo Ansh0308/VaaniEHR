@@ -17,3 +17,11 @@ Pages: https://www.sarvam.ai/terms-of-service (v2.0, 29 Jul 2026; the text was c
 
 ## Not adopted
 - **Indic-Transcribe** (huggingface.co/bodhan-ai/indic-transcribe-core, 25 languages) is named on the IndicConformer model card as the recommended newer model. Not read, not adopted: a possible future baseline.
+
+## Engines and how to run them
+- **mock** (tests, demos; `ASR_ENABLE_MOCK=true`), **sarvam** (needs `SARVAM_API_KEY`; live audio is refused unless `SARVAM_ALLOW_THIRD_PARTY_AUDIO=true`; owner's own-voice files in `audio/own/` pass through the manifest check), **indicconformer** and **faster-whisper** (local, CPU, container only; no keyterms; finals only).
+- **Local models run in the container only.** IndicConformer executes code from its model repository (`trust_remote_code`), allowed only for the exact commit pinned in `app/asr/models.py` and refused outside the container (`ASR_IN_CONTAINER=1` or `/.dockerenv`). Build by hand, never in CI: `docker build -f apps/asr-py/Dockerfile.models -t vaaniehr/asr-models:local .` The model files are not in the image.
+- **Download on request:** `python -m app.models_cli list`; `python -m app.models_cli download indicconformer --dir D:\models\indicconformer` prints the file count and size and checks free disk first (1.5 x size + 1 GB); nothing is downloaded without `--yes`. Sizes at pin time: IndicConformer about 2.6 GB (gated: accept the terms with the account that owns `HF_TOKEN`), faster-whisper small about 0.5 GB, medium about 1.5 GB. IndicConformer's repository also holds ONNX files; the card does not say how they are used.
+- **Silence trimming (FR-F2-02):** for streaming engines (Sarvam, mock) `VadGate` drops silence before the engine, which also cuts billed seconds, and maps segment times back to the original recording. Local engines cut utterances with the same VAD themselves. If Silero is not installed (`requirements-vad.txt`) nothing is trimmed (more audio is sent, never less).
+- **Confidence:** Sarvam none (never faked); IndicConformer none; faster-whisper `exp(avg_logprob)`, a model score and not a calibrated probability.
+

@@ -22,7 +22,7 @@ import contextlib
 import json
 import uuid
 from collections.abc import AsyncIterator, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -34,6 +34,7 @@ from app.consent import ConsentGuard, TokenError
 from app.internal_api import InternalApiError, InternalApiPort
 from app.storage import AudioStore, AudioStoreError
 from app.usage import PAID_ENGINES, CapExceeded, SpendGuard, UsageLog
+from app.vad import VADBackend, VadGate
 
 MAX_KEYTERMS = 50
 MAX_KEYTERM_CHARS = 64
@@ -55,6 +56,8 @@ class Services:
     idle_timeout_seconds: float = 15.0
     max_message_bytes: int = 32_768
     consent_recheck_seconds: float = 10.0
+    #: makes a voice-activity backend per stream (None, or a factory that returns None, means no trimming)
+    vad_factory: Callable[[], VADBackend | None] | None = None
 
 
 def segment_json(s: Segment) -> dict[str, Any]:
@@ -171,13 +174,33 @@ def register(app: FastAPI, services: Services) -> None:
             }
         )
 
+        backend = services.vad_factory() if services.vad_factory else None
+        # engines that cut utterances themselves must not be trimmed twice
+        gate = (
+            VadGate(backend)
+            if backend is not None and not getattr(engine, "own_vad", False)
+            else None
+        )
+
         async def chunks() -> AsyncIterator[bytes]:
             while (item := await queue.get()) is not None:
+                if gate is not None:
+                    item = gate.push(
+                        item
+                    )  # silence is dropped before the engine (and its bill) sees it
+                    if not item:
+                        continue
                 yield item
 
         async def pump() -> None:
             try:
                 async for segment in engine.transcribe_stream(chunks(), language, keyterms):
+                    if gate is not None:
+                        segment = replace(
+                            segment,
+                            start_ms=gate.to_original_ms(segment.start_ms),
+                            end_ms=gate.to_original_ms(segment.end_ms, end=True),
+                        )
                     await ws.send_json({"type": segment.kind, "segment": segment_json(segment)})
             except WebSocketDisconnect:
                 raise
@@ -263,7 +286,8 @@ def register(app: FastAPI, services: Services) -> None:
                 session_id=claims.session_id,
                 engine=engine.name,
                 engine_version=engine.version,
-                audio_seconds=seconds,
+                # what the engine actually received (less than the recording when silence was trimmed)
+                audio_seconds=engine.report.audio_seconds or seconds,
                 billed_seconds=engine.report.billed_seconds,
                 keyterms_requested=engine.report.keyterms_requested,
                 keyterms_applied=engine.report.keyterms_applied,

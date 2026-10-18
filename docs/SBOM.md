@@ -62,13 +62,21 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | zod | 4.6.7 | runtime | apps/api-node/package.json | MIT | Runtime validation of environment variables and request bodies (Phase 1.1 API conventions, NFR-SEC-01). |
 | pip | cryptography | 50.0.2 | runtime | apps/asr-py/requirements.txt | Apache-2.0 OR BSD-3-Clause | AES-256-GCM encryption of stored audio (NFR-SEC-03). Apache-2.0 or BSD. Owner approved 2026-10-17. |
 | pip | fastapi | 0.143.0 | runtime | apps/asr-py/requirements.txt | MIT | Python service framework named in the PRD stack (§11: asr-py). |
+| pip | faster-whisper | 1.2.1 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | CPU Whisper baseline for experiment 1 (container only), MIT. Owner approved 2026-10-17. |
 | pip | httpx | 0.28.1 | dev | apps/asr-py/requirements-dev.txt | BSD-3-Clause | Required by FastAPI's TestClient for API tests (dev only). |
+| pip | huggingface_hub | 2.2.0 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | Downloads the pinned model files on request (`python -m app.models_cli`), Apache-2.0. Owner approved 2026-10-17. |
 | pip | numpy | 2.4.6 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Audio frames for the VAD and engines. BSD-3-Clause. Owner approved 2026-10-17. |
+| pip | onnx | 1.20.1 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | Pinned as on the IndicConformer model card (container only), Apache-2.0. Owner approved 2026-10-17. |
+| pip | onnxruntime | 1.20.1 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | Pinned as on the IndicConformer model card (container only), MIT. Owner approved 2026-10-17. |
 | pip | pydantic | 2.14.1 | runtime | apps/asr-py/requirements.txt | MIT | Validation of asr-py settings (and, later, extraction schemas, FR-F3-01); also a hard dependency of fastapi. |
 | pip | pytest | 9.1.1 | dev | apps/asr-py/requirements-dev.txt | MIT | Python test runner (NFR-MAINT-01). |
 | pip | ruff | 0.17.0 | dev | apps/asr-py/requirements-dev.txt | MIT | Python linter and formatter (one fast tool for lint + format). |
 | pip | silero-vad | 6.2.3 | runtime | apps/asr-py/requirements-vad.txt | MIT License | Voice-activity detection (FR-F2-02), MIT, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| pip | silero-vad | 6.2.3 | runtime | apps/asr-py/requirements-models.txt | MIT License | Voice-activity detection (FR-F2-02), MIT, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
 | pip | torch | 2.14.1 | runtime | apps/asr-py/requirements-vad.txt | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | Required by silero-vad (CPU build), BSD-3-Clause, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| pip | torch | 2.11.0 | runtime | apps/asr-py/requirements-models.txt | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | Required by silero-vad (CPU build), BSD-3-Clause, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| pip | torchaudio | 2.11.0 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | Audio loading for the local-model container (`requirements-models.txt`, container only), BSD-2-Clause. Owner approved 2026-10-17. |
+| pip | transformers | 5.20.1 | runtime | apps/asr-py/requirements-models.txt | UNVERIFIED | Loads IndicConformer at a pinned revision (container only), Apache-2.0. Owner approved 2026-10-17. |
 | pip | uvicorn | 0.54.0 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause | ASGI server that runs the FastAPI app. |
 | pip | websockets | 17.2 | runtime | apps/asr-py/requirements.txt | BSD-3-Clause | WebSocket support for uvicorn (the audio endpoint, ADR-D25) and the client to Sarvam's realtime API. BSD-3-Clause. Owner approved 2026-10-17. |
 

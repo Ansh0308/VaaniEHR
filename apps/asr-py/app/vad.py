@@ -175,3 +175,73 @@ class SpeechSegmenter:
             end_ms=(frames[-1][0] + 1) * FRAME_MS,
             pcm=b"".join(raw for _, raw in frames),
         )
+
+
+class VadGate:
+    """Streaming silence trimmer for engines that take a continuous stream (Sarvam, the mock).
+
+    `push` returns only the audio worth sending: speech, a little before it (pre-roll) and a hang time after it.
+    Silence is dropped, which also cuts the billed seconds. The engine therefore sees a SHORTER timeline;
+    `to_original_ms` turns an engine time back into time in the original recording.
+    """
+
+    def __init__(self, backend: VADBackend, config: VADConfig | None = None) -> None:
+        self._backend = backend
+        self._cfg = config or VADConfig()
+        self._pad_frames = -(-self._cfg.speech_pad_ms // FRAME_MS)
+        self._hang_frames = max(1, -(-self._cfg.min_silence_ms // FRAME_MS))
+        self._carry = b""
+        self._index = 0
+        self._pre: deque[tuple[int, bytes]] = deque(maxlen=self._pad_frames)
+        self._open = False
+        self._quiet = 0
+        self._sent_frames = 0
+        #: (start in the trimmed timeline, start in the original timeline) of every block that was sent
+        self._blocks: list[tuple[int, int]] = []
+        self._backend.reset()
+
+    @property
+    def sent_ms(self) -> int:
+        return self._sent_frames * FRAME_MS
+
+    def push(self, pcm: bytes) -> bytes:
+        data = self._carry + pcm
+        usable = len(data) - len(data) % FRAME_BYTES
+        self._carry = data[usable:]
+        out: list[bytes] = []
+        for offset in range(0, usable, FRAME_BYTES):
+            raw = data[offset : offset + FRAME_BYTES]
+            idx = self._index
+            self._index += 1
+            p = self._backend.probability(
+                np.frombuffer(raw, dtype="<i2").astype(np.float32) / 32768.0
+            )
+            if not self._open:
+                if p >= self._cfg.threshold:
+                    frames = [*self._pre, (idx, raw)]
+                    self._pre.clear()
+                    self._blocks.append((self._sent_frames * FRAME_MS, frames[0][0] * FRAME_MS))
+                    self._open, self._quiet = True, 0
+                    out.extend(r for _, r in frames)
+                    self._sent_frames += len(frames)
+                else:
+                    self._pre.append((idx, raw))
+                continue
+            out.append(raw)
+            self._sent_frames += 1
+            self._quiet = 0 if p >= self._cfg.low else self._quiet + 1
+            if self._quiet >= self._hang_frames:
+                self._open = False
+                self._backend.reset()
+        return b"".join(out)
+
+    def to_original_ms(self, trimmed_ms: int, end: bool = False) -> int:
+        """Time in the original recording for a time in the trimmed stream (`end=True` for the end of a segment)."""
+        if not self._blocks:
+            return trimmed_ms
+        probe = max(0, trimmed_ms - 1) if end else trimmed_ms
+        start_trim, start_orig = self._blocks[0]
+        for block in self._blocks:
+            if block[0] <= probe:
+                start_trim, start_orig = block
+        return start_orig + (probe - start_trim) + (1 if end and trimmed_ms > 0 else 0)

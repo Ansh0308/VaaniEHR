@@ -262,6 +262,12 @@ Version-choice notes (checked against npm/PyPI engines and peer ranges on 2026-1
 | numpy | Audio frames for the VAD and engines. BSD-3-Clause. Owner approved 2026-10-17. |
 | cryptography | AES-256-GCM encryption of stored audio (NFR-SEC-03). Apache-2.0 or BSD. Owner approved 2026-10-17. |
 | silero-vad | Voice-activity detection (FR-F2-02), MIT, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
+| torchaudio | Audio loading for the local-model container (`requirements-models.txt`, container only), BSD-2-Clause. Owner approved 2026-10-17. |
+| transformers | Loads IndicConformer at a pinned revision (container only), Apache-2.0. Owner approved 2026-10-17. |
+| huggingface_hub | Downloads the pinned model files on request (`python -m app.models_cli`), Apache-2.0. Owner approved 2026-10-17. |
+| onnxruntime | Pinned as on the IndicConformer model card (container only), MIT. Owner approved 2026-10-17. |
+| onnx | Pinned as on the IndicConformer model card (container only), Apache-2.0. Owner approved 2026-10-17. |
+| faster-whisper | CPU Whisper baseline for experiment 1 (container only), MIT. Owner approved 2026-10-17. |
 | torch | Required by silero-vad (CPU build), BSD-3-Clause, optional (`requirements-vad.txt`). Owner approved 2026-10-17. |
 | httpx | Required by FastAPI's TestClient for API tests (dev only). |
 | pytest | Python test runner (NFR-MAINT-01). |

@@ -1,0 +1,16 @@
+# Local-model image for the IndicConformer and faster-whisper engines (Phase 4A step 8). Build by hand, never in CI:
+#   docker build -f apps/asr-py/Dockerfile.models -t vaaniehr/asr-models:local .
+# IndicConformer runs code from its model repository (pinned commit, app/asr/models.py), so it runs ONLY here.
+# Mount the downloaded weights and keep secrets out of the image:
+#   docker run --rm -e ASR_IN_CONTAINER=1 --env-file apps/asr-py/.env -v <models>:/models vaaniehr/asr-models:local ...
+ARG PYTHON_IMAGE=python:3.11.17-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89
+FROM ${PYTHON_IMAGE}
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    ASR_IN_CONTAINER=1 HF_HOME=/models
+WORKDIR /app
+COPY apps/asr-py/requirements.txt apps/asr-py/requirements-models.txt ./
+RUN pip install -r requirements-models.txt
+COPY apps/asr-py/app ./app
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app
+USER app
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

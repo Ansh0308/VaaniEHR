@@ -1,0 +1,12 @@
+# Phase 4A step 8: local-model engines. CONTAINER ONLY (docker build -f apps/asr-py/Dockerfile.models). Not installed on the host,
+# not used by CI. Pins: onnx/onnxruntime as on the IndicConformer model card; the rest are the versions current on 2026-10-18.
+# Resolved for the first time when the image is built by hand; adjust the pins there if pip reports a conflict.
+-r requirements.txt
+torch==2.11.0
+torchaudio==2.11.0
+transformers==5.20.1
+huggingface_hub==2.2.0
+onnxruntime==1.20.1
+onnx==1.20.1
+faster-whisper==1.2.1
+silero-vad==6.2.3

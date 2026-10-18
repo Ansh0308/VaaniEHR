@@ -17,9 +17,18 @@ from app.internal_api import InternalApi
 from app.purge import run_purge
 from app.storage import AudioStore
 from app.usage import SpendGuard, UsageLog
+from app.vad import SileroBackend, VADBackend
 from app.ws import Services, register
 
 PURGE_EVERY_SECONDS = 3600
+
+
+def _silero() -> VADBackend | None:
+    """Silero when it is installed (requirements-vad.txt), else no trimming (more audio is sent, never less)."""
+    try:
+        return SileroBackend()
+    except RuntimeError:
+        return None
 
 
 def build_services(settings: Settings) -> Services:
@@ -54,6 +63,7 @@ def build_services(settings: Settings) -> Services:
         spend=SpendGuard(usage, settings.monthly_cap_minutes, settings.smoke_max_seconds),
         engines=engines,
         default_engine=settings.default_engine,
+        vad_factory=_silero,
     )
 
 
