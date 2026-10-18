@@ -64,6 +64,10 @@ def default_engine(
     _terms: list[str],
     mode: str = "codemix",
 ) -> ASREngine:
+    if name == "mock":
+        from app.asr.mock import DEMO_SCRIPT, MockEngine  # noqa: PLC0415
+
+        return MockEngine(DEMO_SCRIPT)
     if name == "sarvam":
         if settings.sarvam_api_key is None:
             raise SystemExit("SARVAM_API_KEY is not set in apps/asr-py/.env")
@@ -93,7 +97,7 @@ def default_engine(
         from app.asr.fasterwhisper import FasterWhisperEngine  # noqa: PLC0415
 
         return FasterWhisperEngine(vad_backend=backend)
-    raise SystemExit(f"unknown engine '{name}' (sarvam, indicconformer, faster-whisper)")
+    raise SystemExit(f"unknown engine '{name}' (mock, sarvam, indicconformer, faster-whisper)")
 
 
 async def _chunks(pcm: bytes) -> AsyncIterator[bytes]:

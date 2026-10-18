@@ -61,3 +61,11 @@ Sarvam does not output Hindi in Devanagari in any mode tried (codemix, transcrib
 ## Browser screen (Phase 4B Run 1)
 `/consult/:sessionId` (doctor). Needs `VITE_ASR_WS_URL` at build time (default `ws://localhost:8000`) and asr-py with `ALLOWED_ORIGINS` including the web origin. Keyterms are not sent (off until OCI-015 is reviewed). `ASR_VAD=none` turns off silence trimming (used by the e2e run).
 
+## Manual test of the consult screen (no paid call is made by the repository)
+1. Once: `npm run setup:env`, `npm run db:up`, `npm run db:migrate`, `npm run seed:dev`, `npm run py:setup`.
+2. **Mock engine (free, made-up text; the default engine):** add `ASR_ENABLE_MOCK=true` to `apps/asr-py/.env`, then run in three terminals `npm run dev:api`, `npm run dev:asr`, `npm run dev:web`. The engine is the setting `ASR_DEFAULT_ENGINE` (default `mock`); `npm run dev:asr` reads `apps/asr-py/.env`, lint and tests never do.
+3. Sign in at http://localhost:5173 as `doctor1@example.invalid` (password in `data/dev-credentials.json`). Staff register a fake patient, the doctor starts a session, staff record audio + AI-processing consent, then the doctor opens "Open the consultation screen" and presses Start recording. "Namaste, tav kyarthi che" (made up) appears after about 2 s. Set the speaker, edit, watch "All changes saved", then Confirm transcript.
+4. **Sarvam, your own voice only:** in `apps/asr-py/.env` set `ASR_DEFAULT_ENGINE=sarvam` and, because live audio cannot be checked as yours, `SARVAM_ALLOW_THIRD_PARTY_AUDIO=true` ONLY while you alone speak; restart `npm run dev:asr`; use the same steps. Set the switch back to `false` afterwards.
+5. **Cost:** Sarvam bills INR 30 per hour of audio, per second: about **INR 0.50 per minute** (measured INR 0.52 for 62.6 s). Silence is trimmed before sending when `requirements-vad.txt` is installed. Monthly cap 300 minutes (`ASR_MONTHLY_CAP_MINUTES`); `npm run usage:asr` shows minutes and INR used.
+6. If the screen says the microphone is blocked, allow it in the browser address bar. If it says the speech service is not set up, check `ASR_ENABLE_MOCK` or `SARVAM_API_KEY` and that `ALLOWED_ORIGINS` contains http://localhost:5173.
+

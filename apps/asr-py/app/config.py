@@ -29,8 +29,9 @@ class Settings(BaseModel):
     #: browser origins allowed to open the audio WebSocket
     allowed_origins: tuple[str, ...] = ("http://localhost:5173",)
     api_node_url: str = "http://localhost:4000"
-    #: engine used when the client does not name one; `mock` is only registered when enable_mock is true
-    default_engine: str = "sarvam"
+    #: engine used when the client does not name one. The safe default is `mock` (made-up text, free); it exists only
+    #: when ASR_ENABLE_MOCK=true. A paid engine must be chosen on purpose (ASR_DEFAULT_ENGINE=sarvam).
+    default_engine: str = "mock"
     enable_mock: bool = False
     #: false until the owner has settled Sarvam's terms: only verified own-voice files may be sent (app/own_voice.py)
     allow_third_party_audio: bool = False

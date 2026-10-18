@@ -25,6 +25,8 @@
     "coverage:api": "npm run coverage -w apps/api-node",
     "build": "npm run build --workspaces --if-present",
     "py:setup": "node scripts/py.mjs setup",
+    "eval:asr": "node scripts/py.mjs exec -m app.eval",
+    "usage:asr": "node scripts/py.mjs exec -m app.usage_report",
     "lint:py": "node scripts/py.mjs ruff",
     "test:py": "node scripts/py.mjs pytest",
     "setup:env": "node scripts/setup-env.mjs",

@@ -65,6 +65,11 @@ if (cmd === 'setup') {
 }
 
 const [py, pyArgs] = pythonForTasks();
+// The service and its commands (dev, exec) read apps/asr-py/.env; lint and tests never do, so they cannot see any key.
+if (cmd === 'dev' || cmd === 'exec') {
+  const envFile = join(dir, '.env');
+  if (existsSync(envFile)) process.loadEnvFile(envFile); // never overrides values already in the environment
+}
 let status;
 if (cmd === 'ruff') {
   status = run(py, [...pyArgs, '-m', 'ruff', 'check', '.'], { cwd: dir }).status;
