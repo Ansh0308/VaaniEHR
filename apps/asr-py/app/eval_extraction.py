@@ -10,7 +10,8 @@ overlap (one contains the other, or similarity >= 0.6) on the same line; matchin
 recall and F1 per fact type and overall (micro), NEGATION F1 separately (positive class = negated), and the number of
 facts dropped as ungrounded (the hallucination count). Every run records the model id, the run date and the prompt
 version/hash. Results go to data/asr/eval-extraction/ (git-ignored); only AGGREGATE numbers may be copied into docs.
-The provider is the mock unless LLM_PROVIDER says otherwise; the real provider is not connected in Phase 5A Run 1.
+The provider is the mock unless LLM_PROVIDER says otherwise. With a real provider only text declared simulated is
+sent (app/simulated_text.py) and only with --yes-run; without it the command prints the plan and stops.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from app.config import REPO_ROOT, load_settings
-from app.extraction.llm_usage import LlmUsageLog
+from app.extraction.llm_usage import LlmSpendGuard, LlmUsageLog
 from app.extraction.models import FACT_TYPES
 from app.extraction.pipelines import (
     PROMPT_VERSION,
@@ -38,9 +39,11 @@ from app.extraction.pipelines import (
     prompt_hash,
     run_pipeline,
 )
-from app.extraction.provider import LlmProvider, MockProvider, build_provider
+from app.extraction.provider import LlmProvider, MockProvider, ProviderError, build_provider
 from app.extraction.run import log_run
 from app.extraction.text import normalise
+from app.simulated_text import NotSimulatedRefused, verify_simulated_text
+from app.usage import CapExceeded
 
 OVERLAP = 0.6
 
@@ -245,6 +248,7 @@ async def evaluate(
             SegmentIn(f"{case.id}-{i}", i, "unknown", line) for i, line in enumerate(case.lines)
         ]
         provider: LlmProvider = provider_for(case)
+        before = getattr(provider, "requests_made", 0)
         result = await run_pipeline(pipeline, provider, segments)  # type: ignore[arg-type]
         score(case, result, per_type, negation)
         totals["ungrounded"] += result.dropped_ungrounded
@@ -253,7 +257,8 @@ async def evaluate(
         totals["predicted"] += len(result.predicted)
         totals["gold"] += len(case.gold)
         if usage:
-            log_run(usage, provider, result, f"eval-{case.id}", "eval", None)
+            sent = getattr(provider, "requests_made", 0) - before
+            log_run(usage, provider, result, f"eval-{case.id}", "eval", None, sent)
     return per_type, negation, totals
 
 
@@ -312,6 +317,11 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         "--pipeline", default="grounded", choices=["plain", "constrained", "grounded", "all"]
     )
     parser.add_argument("--out-dir")
+    parser.add_argument(
+        "--yes-run",
+        action="store_true",
+        help="call a real model (otherwise only the plan is shown)",
+    )
     args = parser.parse_args(argv)
     settings = load_settings()
     cases = load_cases(Path(args.texts) if args.texts else None, Path(args.gold_md), Path(args.gold_dir) if args.gold_dir else None,
@@ -324,7 +334,44 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         out("gold problems:\n  " + "\n  ".join(problems))
         return 2
     env = {**os.environ}
-    base = build_provider(env)
+    try:
+        base = build_provider(env, settings.llm_cache_dir)
+    except ProviderError as exc:
+        out(f"language model not available: {exc}")
+        return 2
+    if base.name != "mock":
+        # a hosted model may log prompts: only declared-simulated text, and only on an explicit --yes-run
+        try:
+            for case in cases:
+                if not case.synthetic:
+                    verify_simulated_text(Path(args.texts) / f"{case.id}.txt", Path(args.texts))
+        except NotSimulatedRefused as exc:
+            out(f"refused: {exc}")
+            return 2
+        names = ["plain", "constrained", "grounded"] if args.pipeline == "all" else [args.pipeline]
+        planned = len(cases) * len(names)
+        out(
+            f"plan: model {base.model}, {len(cases)} cases x {len(names)} pipeline(s) = "
+            f"up to {planned} requests (run cap {settings.llm_request_cap})"
+        )
+        if not args.yes_run:
+            out("nothing was sent; add --yes-run to run it")
+            return 0
+        if planned > settings.llm_request_cap:
+            out(
+                "the plan is above the per-run request cap; raise LLM_REQUEST_CAP or run fewer pipelines"
+            )
+            return 2
+        try:
+            LlmSpendGuard(
+                LlmUsageLog(settings.llm_usage_log_path),
+                settings.llm_monthly_cap_inr,
+                settings.llm_monthly_cap_tokens,
+                settings.llm_monthly_cap_requests,
+            ).check(base.paid, 0, planned)
+        except CapExceeded as exc:
+            out(f"refused: {exc}")
+            return 2
 
     def provider_for(case: Case) -> LlmProvider:
         # a fixture carries the canned reply a model would give; real clips use whatever provider is configured
@@ -334,7 +381,11 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
             else base
         )
 
-    usage = LlmUsageLog(settings.llm_usage_log_path)
+    usage = LlmUsageLog(
+        settings.llm_usage_log_path,
+        input_inr_per_million=settings.llm_input_inr_per_million,
+        output_inr_per_million=settings.llm_output_inr_per_million,
+    )
     pipelines = ["plain", "constrained", "grounded"] if args.pipeline == "all" else [args.pipeline]
     for pipeline in pipelines:
         per_type, negation, totals = asyncio.run(evaluate(cases, pipeline, provider_for, usage))

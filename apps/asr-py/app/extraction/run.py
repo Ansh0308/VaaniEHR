@@ -34,6 +34,7 @@ def log_run(
     run_id: str,
     purpose: str,
     session_id: str | None,
+    requests: int = 0,
 ) -> None:
     response = result.response
     tokens_in = response.input_tokens if response else 0
@@ -55,6 +56,7 @@ def log_run(
         dropped_invalid=result.dropped_invalid,
         schema_failures=result.schema_failures,
         session_id=session_id,
+        requests=requests,
     )
 
 
@@ -74,9 +76,18 @@ async def extract_session(
     if not segments:
         return {"segments": 0, "inserted": 0}
     guard.check(provider.paid, approx_tokens(system_prompt() + build_user_prompt(segments)))
+    before = getattr(provider, "requests_made", 0)
     result = await run_pipeline(pipeline, provider, segments)
     run_id = str(uuid.uuid4())
-    log_run(usage, provider, result, run_id, "extract", session_id)
+    log_run(
+        usage,
+        provider,
+        result,
+        run_id,
+        "extract",
+        session_id,
+        getattr(provider, "requests_made", 0) - before,
+    )
     summary: dict[str, Any] = {
         "segments": len(segments),
         "kept": len(result.facts),
@@ -130,13 +141,18 @@ def main(argv: list[str]) -> int:
     if settings.internal_service_secret is None:
         print("INTERNAL_SERVICE_SECRET must be set (npm run setup:env)")
         return 2
-    provider = build_provider({**os.environ})
+    provider = build_provider({**os.environ}, settings.llm_cache_dir)
     usage = LlmUsageLog(
         settings.llm_usage_log_path,
         input_inr_per_million=settings.llm_input_inr_per_million,
         output_inr_per_million=settings.llm_output_inr_per_million,
     )
-    guard = LlmSpendGuard(usage, settings.llm_monthly_cap_inr, settings.llm_monthly_cap_tokens)
+    guard = LlmSpendGuard(
+        usage,
+        settings.llm_monthly_cap_inr,
+        settings.llm_monthly_cap_tokens,
+        settings.llm_monthly_cap_requests,
+    )
     api = InternalApi(settings.api_node_url, settings.internal_service_secret.get_secret_value())
     try:
         summary = asyncio.run(

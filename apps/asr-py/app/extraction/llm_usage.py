@@ -40,6 +40,7 @@ class LlmUsageRecord:
     dropped_invalid: int
     schema_failures: int
     session_id: str | None = None
+    requests: int = 0
 
 
 class LlmUsageLog:
@@ -79,6 +80,10 @@ class LlmUsageLog:
             if line.strip()
         ]
 
+    def month_requests(self) -> int:
+        month = self._clock().strftime("%Y-%m")
+        return sum(r.requests for r in self.records() if r.paid and r.ts.startswith(month))
+
     def month_totals(self) -> tuple[int, float]:
         """(tokens, INR) used by PAID providers this UTC month."""
         month = self._clock().strftime("%Y-%m")
@@ -89,12 +94,23 @@ class LlmUsageLog:
 
 
 class LlmSpendGuard:
-    def __init__(self, log: LlmUsageLog, monthly_cap_inr: float, monthly_cap_tokens: int) -> None:
+    def __init__(
+        self,
+        log: LlmUsageLog,
+        monthly_cap_inr: float,
+        monthly_cap_tokens: int,
+        monthly_cap_requests: int = 1000,
+    ) -> None:
         self._log, self._inr, self._tokens = log, monthly_cap_inr, monthly_cap_tokens
+        self._requests = monthly_cap_requests
 
-    def check(self, paid: bool, estimated_input_tokens: int) -> None:
+    def check(self, paid: bool, estimated_input_tokens: int, requests: int = 1) -> None:
         if not paid:
             return
+        if self._log.month_requests() + requests > self._requests:
+            raise CapExceeded(
+                f"the monthly language-model request cap of {self._requests} would be passed"
+            )
         tokens, inr = self._log.month_totals()
         if tokens + estimated_input_tokens > self._tokens:
             raise CapExceeded(

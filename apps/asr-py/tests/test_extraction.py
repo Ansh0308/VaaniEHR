@@ -23,8 +23,6 @@ from app.extraction.pipelines import (
 )
 from app.extraction.provider import (
     MockProvider,
-    NotWired,
-    OpenAICompatibleProvider,
     ProviderError,
     RealDataRefused,
     build_provider,
@@ -306,26 +304,6 @@ def test_the_monthly_caps_stop_paid_calls_but_never_the_mock(tmp_path):
 
 
 # ---------------------------------------------------------------- providers
-def test_the_real_provider_refuses_without_the_real_data_switch_and_is_not_wired_anyway():
-    with pytest.raises(RealDataRefused, match="LLM_ALLOW_REAL_DATA"):
-        OpenAICompatibleProvider("https://x.invalid/v1", "m", "KEY-123", allow_real_data=False)
-    with pytest.raises(ProviderError) as info:
-        OpenAICompatibleProvider("", "m", "KEY-123", allow_real_data=True)
-    assert "KEY-123" not in str(info.value)
-    provider = OpenAICompatibleProvider(
-        "https://x.invalid/v1", "m", "KEY-123", allow_real_data=True
-    )
-    assert provider.paid is True
-
-
-async def test_the_real_provider_never_makes_a_request_in_this_phase():
-    provider = OpenAICompatibleProvider(
-        "https://x.invalid/v1", "m", "KEY-123", allow_real_data=True
-    )
-    with pytest.raises(NotWired):
-        await provider.complete("s", "u")
-
-
 def test_the_provider_is_chosen_by_environment_and_defaults_to_the_mock():
     assert build_provider({}).name == "mock"
     with pytest.raises(RealDataRefused):

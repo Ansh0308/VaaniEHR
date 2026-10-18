@@ -47,6 +47,8 @@ class Settings(BaseModel):
     llm_allow_real_data: bool = False
     llm_monthly_cap_inr: float = Field(default=50.0, ge=0)
     llm_monthly_cap_tokens: int = Field(default=200_000, ge=0)
+    llm_monthly_cap_requests: int = Field(default=1000, ge=0)
+    llm_request_cap: int = Field(default=60, ge=1)
     llm_input_inr_per_million: float = Field(default=0.0, ge=0)
     llm_output_inr_per_million: float = Field(default=0.0, ge=0)
     #: shared with api-node; signs the short-lived consent tokens (>= 32 characters)
@@ -87,6 +89,10 @@ class Settings(BaseModel):
         return self.data_dir / "usage.jsonl"
 
     @property
+    def llm_cache_dir(self) -> Path:
+        return self.data_dir / "llm-cache"
+
+    @property
     def llm_usage_log_path(self) -> Path:
         return self.data_dir / "llm-usage.jsonl"
 
@@ -113,6 +119,8 @@ _PLAIN = {
     "LLM_API_KEY": "llm_api_key",
     "LLM_MONTHLY_CAP_INR": "llm_monthly_cap_inr",
     "LLM_MONTHLY_CAP_TOKENS": "llm_monthly_cap_tokens",
+    "LLM_MONTHLY_CAP_REQUESTS": "llm_monthly_cap_requests",
+    "LLM_REQUEST_CAP": "llm_request_cap",
     "LLM_INPUT_INR_PER_MILLION": "llm_input_inr_per_million",
     "LLM_OUTPUT_INR_PER_MILLION": "llm_output_inr_per_million",
 }
