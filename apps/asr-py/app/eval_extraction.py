@@ -398,7 +398,7 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
             if args.out_dir
             else settings.data_dir
             / "eval-extraction"
-            / f"{stamp}-{pipeline}-{base.model.replace('/', '_')}"
+            / f"{stamp}-{pipeline}-{re.sub(r'[^A-Za-z0-9._-]', '_', base.model)}"
         )
         out(write_results(folder, pipeline, base.model, per_type, negation, totals, cases).rstrip())
         out(f"details (private): {folder}")

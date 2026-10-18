@@ -132,6 +132,10 @@ class OpenAICompatibleProvider:
                 self.requests_made += 1
                 status, headers, raw = await asyncio.to_thread(self._post, payload)
                 if status == 200:
+                    status = (
+                        self._embedded_error(raw) or 200
+                    )  # OpenRouter may send an error inside a 200
+                if status == 200:
                     return self._parse(raw, system, user)
                 retryable = status in RETRY_STATUS or status == -1
                 if not retryable or attempt == self._retries:
@@ -147,6 +151,17 @@ class OpenAICompatibleProvider:
                     delay = min(float(retry_after), MAX_RETRY_AFTER_SECONDS)
                 await self._sleep(delay)
         raise ProviderError("unreachable")  # pragma: no cover
+
+    @staticmethod
+    def _embedded_error(raw: bytes) -> int | None:
+        try:
+            error = json.loads(raw).get("error")
+        except (ValueError, AttributeError):
+            return None
+        if not isinstance(error, dict):
+            return None
+        code = error.get("code")
+        return code if isinstance(code, int) and code >= 400 else 502
 
     def _parse(self, raw: bytes, system: str, user: str) -> LlmResponse:
         try:

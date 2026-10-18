@@ -171,3 +171,14 @@ def test_construction_rules():
     assert KEY not in str(info.value)
     with pytest.raises(ProviderError):
         OpenAICompatibleProvider("ftp://x", "m", KEY, True)
+
+
+async def test_an_error_inside_a_200_reply_is_retried_like_its_status():
+    fake = Fake([], {"error": {"code": 429, "message": "slow down"}})
+    provider = make(fake.url, max_retries=1)
+    try:
+        with pytest.raises(ProviderError, match="429"):
+            await provider.complete("s", "u")
+    finally:
+        fake.close()
+    assert len(fake.requests) == 2
