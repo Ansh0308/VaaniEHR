@@ -153,6 +153,28 @@ const fixture = (route: RouteDef): Call => {
     'GET /internal/sessions/:id/consent-status': {
       path: `/internal/sessions/${sessionId}/consent-status`,
     },
+    'GET /sessions/:id/transcript': { path: `/sessions/${consentedSessionId}/transcript` },
+    'PUT /sessions/:id/transcript/segments': {
+      path: `/sessions/${consentedSessionId}/transcript/segments`,
+      body: {
+        segments: [
+          {
+            seq: 0,
+            speaker: 'unknown',
+            originalText: 'rbac fixture words',
+            editedText: null,
+            language: 'en-IN',
+            startMs: 0,
+            endMs: 900,
+            engine: 'mock',
+            engineVersion: '1.0',
+          },
+        ],
+      },
+    },
+    'POST /sessions/:id/transcript/confirm': {
+      path: `/sessions/${consentedSessionId}/transcript/confirm`,
+    },
     'POST /sessions/:id/asr-token': { path: `/sessions/${consentedSessionId}/asr-token` },
     'POST /sessions/:id/consent': { path: `/sessions/${sessionId}/consent`, body: consentGrant },
     'POST /sessions/:id/consent/withdraw': {

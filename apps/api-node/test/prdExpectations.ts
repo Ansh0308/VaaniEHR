@@ -24,6 +24,10 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/consent': ['doctor', 'staff', 'admin'],
   // only the session's own doctor starts recording (PRD 2.2); consent is checked again inside the route
   'POST /sessions/:id/asr-token': ['doctor'],
+  // saved transcripts: the session's own doctor only (ADR-D28); saving also needs consent at that moment
+  'GET /sessions/:id/transcript': ['doctor'],
+  'PUT /sessions/:id/transcript/segments': ['doctor'],
+  'POST /sessions/:id/transcript/confirm': ['doctor'],
   // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)
   'POST /internal/audio-assets': 'service',
   'POST /internal/audio-assets/:id/deleted': 'service',

@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 4A complete. Phase 4B Run 1 complete and pushed (capture worklet, AsrClient, consult screen with RecordBar/TranscriptPane, e2e with fake mic + mock engine, ADR-D27). Run 2 (saving transcript edits, fact extraction hooks) not started. Waiting on the owner: Sarvam terms confirmation, OCI-015 keyterm review. Details: docs/ASR.md.
+> **Resume status (one line, updated after every step):** Phase 4B Run 2 in progress: saved transcripts API done (migration 0010, ADR-D28 pending); next consult-screen autosave, eval command, guides. Details: docs/ASR.md.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 

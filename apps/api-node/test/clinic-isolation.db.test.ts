@@ -74,6 +74,10 @@ async function populate(
         items: [{ medicineId: templateMedicineId, frequency: 'BD', dose: '1 tablet (demo)' }],
       })
     ).body.data.id as string;
+  await h.db.owner.query(
+    `INSERT INTO transcript_segment (session_id, clinic_id, seq, original_text, engine) VALUES ($1, $2, 0, 'fixture words', 'mock')`,
+    [sessionId, world.clinicId],
+  );
   return {
     ...world,
     patientId,
@@ -156,6 +160,12 @@ afterAll(async () => {
 /** Everything about a world that an attacker must not be able to change. */
 async function snapshot(w: World) {
   return {
+    transcript: (
+      await h.db.owner.query(
+        'SELECT seq, speaker, edited_text, status, updated_at FROM transcript_segment WHERE session_id = $1 ORDER BY seq',
+        [w.sessionId],
+      )
+    ).rows,
     allergies: (
       await one('SELECT allergies FROM patient_clinical_profile WHERE clinicos_patient_id = $1', [
         w.patientId,
@@ -241,6 +251,41 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         404,
       );
     }
+  },
+  // ---- saved transcripts are clinic data (and a doctor's own): another clinic's session is "not found"
+  'GET /sessions/:id/transcript': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/transcript`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'PUT /sessions/:id/transcript/segments': async (x, y) => {
+    const body = {
+      segments: [
+        {
+          seq: 0,
+          speaker: 'unknown',
+          originalText: 'x words',
+          editedText: null,
+          language: null,
+          startMs: null,
+          endMs: null,
+          engine: 'mock',
+          engineVersion: null,
+        },
+      ],
+    };
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('put', `/sessions/${y.sessionId}/transcript/segments`, x.tokens[role], body))
+          .status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/transcript/confirm': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('post', `/sessions/${y.sessionId}/transcript/confirm`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
   },
   'POST /sessions/:id/asr-token': async (x, y) => {
     // another clinic's session is "not found" for the doctor; other roles are refused by role first

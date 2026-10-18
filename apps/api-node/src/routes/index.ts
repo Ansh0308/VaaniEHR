@@ -11,6 +11,7 @@ import { medicineRoutes } from '../medicines/routes.js';
 import { patientRoutes } from '../patients/routes.js';
 import { sessionRoutes } from '../sessions/routes.js';
 import { templateRoutes } from '../templates/routes.js';
+import { transcriptRoutes } from '../transcripts/routes.js';
 
 export const API_PREFIX = '/api/v1';
 
@@ -25,5 +26,6 @@ export function allRoutes(config: Config): RouteDef[] {
     ...auditRoutes(),
     ...medicineRoutes(),
     ...templateRoutes(),
+    ...transcriptRoutes(),
   ];
 }

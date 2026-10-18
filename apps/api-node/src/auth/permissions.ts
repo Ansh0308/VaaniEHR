@@ -18,6 +18,10 @@ export const PERMISSIONS = {
   // speech service access (Phase 4A): only the session's own doctor starts recording (PRD 2.2)
   'asr.token': ['doctor'],
 
+  // saved transcripts (Phase 4B Run 2): the session's own doctor only
+  'transcript.read': ['doctor'],
+  'transcript.write': ['doctor'],
+
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],

@@ -2324,7 +2324,8 @@
           "admin"
         ],
         "x-audit-actions": [
-          "CONSENT_WITHDRAWN"
+          "CONSENT_WITHDRAWN",
+          "TRANSCRIPT_DRAFT_DELETED"
         ]
       }
     },
@@ -2861,6 +2862,9 @@
                 "ASR_TOKEN_ISSUED",
                 "AUDIO_STORED",
                 "AUDIO_PURGED",
+                "TRANSCRIPT_SAVED",
+                "TRANSCRIPT_CONFIRMED",
+                "TRANSCRIPT_DRAFT_DELETED",
                 "MEDICINE_IMPORTED",
                 "MEDICINE_CODES_LOADED",
                 "MEDICINE_TRANSLIT_LOADED",
@@ -3060,6 +3064,9 @@
                       "ASR_TOKEN_ISSUED",
                       "AUDIO_STORED",
                       "AUDIO_PURGED",
+                      "TRANSCRIPT_SAVED",
+                      "TRANSCRIPT_CONFIRMED",
+                      "TRANSCRIPT_DRAFT_DELETED",
                       "MEDICINE_IMPORTED",
                       "MEDICINE_CODES_LOADED",
                       "MEDICINE_TRANSLIT_LOADED",
@@ -7496,6 +7503,656 @@
         ],
         "x-audit-actions": [
           "TEMPLATE_RESTORED"
+        ]
+      }
+    },
+    "/sessions/{id}/transcript": {
+      "get": {
+        "tags": [
+          "Transcript"
+        ],
+        "summary": "Doctor: read the saved transcript of one of the doctor's own sessions (a draft until confirmed)",
+        "operationId": "getSessionsIdTranscript",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "segments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "seq": {
+                                "type": "number"
+                              },
+                              "speaker": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "doctor",
+                                  "patient"
+                                ]
+                              },
+                              "originalText": {
+                                "type": "string"
+                              },
+                              "editedText": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "language": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "startMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "endMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "engine": {
+                                "type": "string"
+                              },
+                              "engineVersion": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "draft",
+                                  "confirmed"
+                                ]
+                              },
+                              "confirmedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "seq",
+                              "speaker",
+                              "originalText",
+                              "editedText",
+                              "text",
+                              "language",
+                              "startMs",
+                              "endMs",
+                              "engine",
+                              "engineVersion",
+                              "status",
+                              "confirmedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "draftCount": {
+                          "type": "number"
+                        },
+                        "confirmedCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "segments",
+                        "draftCount",
+                        "confirmedCount"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "transcript.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/transcript/segments": {
+      "put": {
+        "tags": [
+          "Transcript"
+        ],
+        "summary": "Doctor: autosave transcript segments (create or update drafts by sequence number); needs audio and AI-processing consent now; a confirmed segment cannot be changed",
+        "operationId": "putSessionsIdTranscriptSegments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "segments": {
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "seq": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9999
+                        },
+                        "speaker": {
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "originalText": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4000
+                        },
+                        "editedText": {
+                          "nullable": true,
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4000
+                        },
+                        "language": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 12
+                        },
+                        "startMs": {
+                          "nullable": true,
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 86400000
+                        },
+                        "endMs": {
+                          "nullable": true,
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 86400000
+                        },
+                        "engine": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "engineVersion": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 60
+                        }
+                      },
+                      "required": [
+                        "seq",
+                        "speaker",
+                        "originalText",
+                        "editedText",
+                        "language",
+                        "startMs",
+                        "endMs",
+                        "engine",
+                        "engineVersion"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "segments"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "segments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "seq": {
+                                "type": "number"
+                              },
+                              "speaker": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "doctor",
+                                  "patient"
+                                ]
+                              },
+                              "originalText": {
+                                "type": "string"
+                              },
+                              "editedText": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "language": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "startMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "endMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "engine": {
+                                "type": "string"
+                              },
+                              "engineVersion": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "draft",
+                                  "confirmed"
+                                ]
+                              },
+                              "confirmedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "seq",
+                              "speaker",
+                              "originalText",
+                              "editedText",
+                              "text",
+                              "language",
+                              "startMs",
+                              "endMs",
+                              "engine",
+                              "engineVersion",
+                              "status",
+                              "confirmedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "draftCount": {
+                          "type": "number"
+                        },
+                        "confirmedCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "segments",
+                        "draftCount",
+                        "confirmedCount"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "transcript.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "TRANSCRIPT_SAVED"
+        ]
+      }
+    },
+    "/sessions/{id}/transcript/confirm": {
+      "post": {
+        "tags": [
+          "Transcript"
+        ],
+        "summary": "Doctor: confirm the transcript. Draft segments become confirmed text that is part of the record and can no longer be changed or deleted",
+        "operationId": "postSessionsIdTranscriptConfirm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "segments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "seq": {
+                                "type": "number"
+                              },
+                              "speaker": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "doctor",
+                                  "patient"
+                                ]
+                              },
+                              "originalText": {
+                                "type": "string"
+                              },
+                              "editedText": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "language": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "startMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "endMs": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "engine": {
+                                "type": "string"
+                              },
+                              "engineVersion": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "draft",
+                                  "confirmed"
+                                ]
+                              },
+                              "confirmedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "seq",
+                              "speaker",
+                              "originalText",
+                              "editedText",
+                              "text",
+                              "language",
+                              "startMs",
+                              "endMs",
+                              "engine",
+                              "engineVersion",
+                              "status",
+                              "confirmedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "draftCount": {
+                          "type": "number"
+                        },
+                        "confirmedCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "segments",
+                        "draftCount",
+                        "confirmedCount"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "transcript.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "TRANSCRIPT_CONFIRMED"
         ]
       }
     }

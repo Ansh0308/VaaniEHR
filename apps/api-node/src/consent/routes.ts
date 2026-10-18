@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { errors } from '../http/errors.js';
 import { authedRoute, permRoute, type RouteDef } from '../http/routeRegistry.js';
 import { loadSession } from '../sessions/service.js';
+import { deleteDraftSegments } from '../transcripts/routes.js';
 import { CONSENT_SCOPES, NOTICE_LANGUAGES, type ConsentScope } from './notices.js';
 import { getEffectiveConsent, listConsentEvents } from './service.js';
 
@@ -133,7 +134,7 @@ export function consentRoutes(): RouteDef[] {
       tag: 'Consent',
       summary:
         'Withdraw consent (all granted scopes, or the listed ones). Always allowed while the session exists.',
-      audit: ['CONSENT_WITHDRAWN'],
+      audit: ['CONSENT_WITHDRAWN', 'TRANSCRIPT_DRAFT_DELETED'],
       params: idParams,
       body: withdrawBody,
       response: consentView.extend({ stopRecording: z.boolean() }),
@@ -166,6 +167,20 @@ export function consentRoutes(): RouteDef[] {
         const after = await getEffectiveConsent(ctx.db, session.id);
         // FR-F1-04: recording must stop as soon as audio or AI consent is gone. Phase 4 acts on this flag.
         const stopRecording = current.recordingAllowed && !after.recordingAllowed;
+        // ADR-D28: when audio or AI-processing consent is gone, UNCONFIRMED draft transcript text is deleted too
+        // (the audio is deleted by the speech service). Doctor-confirmed text stays: it is part of the record.
+        if (stopRecording) {
+          const deleted = await deleteDraftSegments(ctx.db, session.id);
+          if (deleted > 0) {
+            await ctx.audit({
+              action: 'TRANSCRIPT_DRAFT_DELETED',
+              resourceType: 'transcript',
+              resourceId: session.id,
+              sessionId: session.id,
+              meta: { segmentCount: deleted },
+            });
+          }
+        }
         return { data: { ...after, stopRecording } };
       },
     }),
