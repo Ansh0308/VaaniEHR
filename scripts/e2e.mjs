@@ -16,7 +16,7 @@
 // pages are scanned again in Gujarati. Sign-in is done with the keyboard only.
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,8 @@ const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const WEB = 'http://127.0.0.1:4173';
 const API_PORT = 4100;
 const API = `http://127.0.0.1:${API_PORT}`;
+const ASR_PORT = 8100;
+const ASR = `ws://127.0.0.1:${ASR_PORT}`;
 const failures = [];
 const steps = [];
 
@@ -149,6 +151,29 @@ async function signOut(page) {
   await page.waitForURL(/\/login/);
 }
 
+/** A mono 16 kHz 16-bit WAV of `seconds` seconds: a quiet 220 Hz tone. The mock engine ignores the content. */
+function makeWav(seconds) {
+  const rate = 16000;
+  const samples = rate * seconds;
+  const buffer = Buffer.alloc(44 + samples * 2);
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + samples * 2, 4);
+  buffer.write('WAVEfmt ', 8);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(rate, 24);
+  buffer.writeUInt32LE(rate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(samples * 2, 40);
+  for (let i = 0; i < samples; i += 1) {
+    buffer.writeInt16LE(Math.round(6000 * Math.sin((2 * Math.PI * 220 * i) / rate)), 44 + i * 2);
+  }
+  return buffer;
+}
+
 /** Moves inside the app the way an in-app link would (a full page load would drop the in-memory token). */
 async function goInApp(page, path) {
   await page.evaluate((to) => window.history.pushState({}, '', to), path);
@@ -204,6 +229,7 @@ async function adminQuery(sql) {
 
 // ---------------------------------------------------------------- main
 let browser;
+let asrDataDir = '';
 try {
   // ------------------------------------------------ throwaway database: created, migrated, seeded, dropped in `finally`
   note(`creating the throwaway database ${dbName}`);
@@ -222,11 +248,48 @@ try {
     if (!credentials[email]) throw new Error(`the seed made no login for ${email}`);
   }
 
-  note('building the web app and starting the API and the preview server');
+  note(
+    'building the web app and starting the API, the speech service (mock engine) and the preview server',
+  );
   await runToEnd(['run', 'build', '--workspace', 'apps/web'], {
     ...process.env,
     VITE_API_BASE_URL: API,
+    VITE_ASR_WS_URL: ASR,
   });
+  // the speech service runs with the MOCK engine only: no key, no vendor call, no network beyond this machine
+  const internalSecret = randomBytes(32).toString('hex');
+  const asrData = mkdtempSync(join(tmpdir(), 'vaani-asr-'));
+  asrDataDir = asrData;
+  const asrEnv = { ...process.env };
+  for (const secret of ['SARVAM_API_KEY', 'HF_TOKEN']) delete asrEnv[secret];
+  const venvPython = join(
+    root,
+    'apps',
+    'asr-py',
+    '.venv',
+    process.platform === 'win32' ? 'Scripts' : 'bin',
+    process.platform === 'win32' ? 'python.exe' : 'python',
+  );
+  start(
+    existsSync(venvPython) ? venvPython : 'python',
+    ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', String(ASR_PORT)],
+    {
+      cwd: join(root, 'apps', 'asr-py'),
+      env: {
+        ...asrEnv,
+        SIMULATED_DATA_ONLY: 'true',
+        ASR_PY_PORT: String(ASR_PORT),
+        ASR_ENABLE_MOCK: 'true',
+        ASR_DEFAULT_ENGINE: 'mock',
+        ASR_VAD: 'none',
+        ALLOWED_ORIGINS: WEB,
+        API_NODE_URL: API,
+        INTERNAL_SERVICE_SECRET: internalSecret,
+        AUDIO_MASTER_KEY: randomBytes(32).toString('hex'),
+        ASR_DATA_DIR: asrData,
+      },
+    },
+  );
   start(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
     cwd: join(root, 'apps', 'api-node'),
     env: {
@@ -236,6 +299,7 @@ try {
       DATABASE_URL: appUrl.toString(),
       AUTH_PROVIDER: 'dev',
       DEV_AUTH_SECRET: randomBytes(32).toString('hex'),
+      INTERNAL_SERVICE_SECRET: internalSecret,
       CORS_ORIGIN: WEB,
       SIMULATED_DATA_ONLY: 'true',
       LOGIN_RATE_LIMIT_MAX: '1000', // this run signs in many times from one address
@@ -258,8 +322,20 @@ try {
     { cwd: root, shell: process.platform === 'win32' },
   );
   await waitFor(`${API}/health`, 'the API');
+  await waitFor(`http://127.0.0.1:${ASR_PORT}/health`, 'the speech service');
   await waitFor(WEB, 'the web app');
-  browser = await chromium.launch({ executablePath: chromePath, args: ['--no-sandbox'] });
+  // Chromium plays a generated WAV as the microphone (no real device, no prompt)
+  const wavFile = join(asrData, 'fake-mic.wav');
+  writeFileSync(wavFile, makeWav(12));
+  browser = await chromium.launch({
+    executablePath: chromePath,
+    args: [
+      '--no-sandbox',
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      `--use-file-for-fake-audio-capture=${wavFile}`,
+    ],
+  });
 
   const phoneTail = Math.max(100, Math.floor(Math.random() * 999999));
   const phone = `0000${String(phoneTail).padStart(6, '0')}`;
@@ -394,6 +470,52 @@ try {
       'doctor sees consent on record',
     );
     await scan(page, 'en doctor dashboard (with session)');
+    await context.close();
+  }
+
+  // ------------------------------------------------ doctor records: consent gate, token in the first message, draft transcript
+  {
+    const { context, page } = await newPage(browser);
+    await context.grantPermissions(['microphone']);
+    const sockets = [];
+    page.on('websocket', (socket) => sockets.push(socket.url()));
+    await signIn(page, 'doctor');
+    await goInApp(page, `/consult/${sessionId}`);
+    await page.getByRole('heading', { name: 'Consultation', level: 1 }).waitFor();
+    await page.getByText('Consent on record: audio recording and AI processing.').waitFor();
+    await scan(page, 'en consultation (ready)');
+    await page.getByRole('button', { name: 'Start recording' }).click();
+    await page.getByText('Namaste, tav kyarthi che').waitFor({ timeout: 30_000 });
+    check(
+      await page.getByText('Draft — doctor must review').first().isVisible(),
+      'the transcript carries the draft label',
+    );
+    const item = page.getByRole('listitem').filter({ hasText: 'Namaste, tav kyarthi che' });
+    check(
+      await item.getByRole('radio', { name: 'Unknown' }).isChecked(),
+      'a new segment starts with an unknown speaker',
+    );
+    await item.getByRole('radio', { name: 'Doctor' }).check();
+    check(
+      await item.getByRole('radio', { name: 'Doctor' }).isChecked(),
+      'the doctor sets the speaker',
+    );
+    check(!(await page.locator('body').innerText()).match(/confidence/i), 'no confidence is shown');
+    await scan(page, 'en consultation (recording, draft transcript)');
+    await page.getByRole('button', { name: 'Stop' }).click();
+    await page.getByText('Ready', { exact: true }).waitFor({ timeout: 30_000 });
+    check(
+      sockets.length === 1 && sockets[0] === `${ASR}/ws/sessions/${sessionId}/audio`,
+      'one WebSocket to the speech service, and the token is not in its URL',
+    );
+    const stored = await page.evaluate(() => [
+      ...Object.keys(window.localStorage),
+      ...Object.keys(window.sessionStorage),
+    ]);
+    check(
+      stored.every((key) => key === 'vaaniehr.language'),
+      'nothing but the language choice is in browser storage',
+    );
     await context.close();
   }
 
@@ -605,6 +727,7 @@ try {
   for (const child of spawned) killTree(child);
   // always remove what this run made: the throwaway database and its login file
   rmSync(credentialsFile, { force: true });
+  rmSync(asrDataDir, { recursive: true, force: true });
   if (databaseCreated) {
     await new Promise((r) => setTimeout(r, 1500)); // let the API's connections close first
     try {

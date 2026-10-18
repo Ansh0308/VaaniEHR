@@ -139,6 +139,11 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
+      # the speech service (mock engine) runs in this job too
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r apps/asr-py/requirements.txt
       # the run creates, migrates and seeds its own throwaway database (random fake logins in a temp file) and drops it
       # uses the Chrome that is preinstalled on the runner; no browser download
       - run: npm run e2e

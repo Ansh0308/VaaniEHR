@@ -63,7 +63,7 @@ def build_services(settings: Settings) -> Services:
         spend=SpendGuard(usage, settings.monthly_cap_minutes, settings.smoke_max_seconds),
         engines=engines,
         default_engine=settings.default_engine,
-        vad_factory=_silero,
+        vad_factory=_silero if settings.vad == "silero" else None,
     )
 
 
