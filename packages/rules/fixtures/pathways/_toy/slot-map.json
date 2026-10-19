@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "mappings": [
+    {
+      "concept_id": "toy_c_toy_symptom_1",
+      "slot": "toy_symptom_1",
+      "type": "boolean"
+    },
+    {
+      "concept_id": "toy_c_toy_symptom_2",
+      "slot": "toy_symptom_2",
+      "type": "boolean"
+    },
+    {
+      "concept_id": "toy_c_toy_symptom_5",
+      "slot": "toy_symptom_5",
+      "type": "boolean"
+    },
+    {
+      "concept_id": "toy_c_toy_symptom_6",
+      "slot": "toy_symptom_6",
+      "type": "boolean"
+    },
+    {
+      "concept_id": "toy_c_toy_redflag_1",
+      "slot": "toy_redflag_1",
+      "type": "boolean"
+    }
+  ]
+}

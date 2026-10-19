@@ -27,6 +27,20 @@ const steps = [
     'guard: dependency reasons (docs/DECISIONS.md)',
     () => run(node, ['scripts/sbom.mjs', '--reasons-only']),
   ],
+  [
+    'guard: pathways validate + regression cases (toy fixtures)',
+    () => {
+      const cli = ['--import', 'tsx', 'packages/rules/src/cli.ts'];
+      const v = run(node, [...cli, 'validate', 'packages/rules/fixtures/pathways', '--allow-test']);
+      if (v.status !== 0) return v;
+      return run(node, [
+        ...cli,
+        'cases',
+        'packages/rules/fixtures/pathways',
+        'packages/rules/fixtures/cases',
+      ]);
+    },
+  ],
   ['python lint (ruff)', () => run(node, ['scripts/py.mjs', 'ruff'])],
   ['python tests (pytest)', () => run(node, ['scripts/py.mjs', 'pytest'])],
 ];

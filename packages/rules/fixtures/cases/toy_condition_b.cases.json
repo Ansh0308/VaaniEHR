@@ -1,0 +1,75 @@
+{
+  "description": "Toy pathway B: a choice slot and a red flag.",
+  "cases": [
+    {
+      "name": "B: choice question after symptom 1 when A is exhausted",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_symptom_2": false
+      },
+      "asked": ["toy_condition_a/q1", "toy_condition_b/q1"],
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_b/q2"
+      }
+    },
+    {
+      "name": "B: choice x opens the warning-sign question, asked first",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_choice_1": "x"
+      },
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_b/q3"
+      }
+    },
+    {
+      "name": "B: warning sign present is a red flag",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_choice_1": "y",
+        "toy_redflag_1": true
+      },
+      "expect": {
+        "outcome": "RED_FLAG",
+        "node": "toy_condition_b/q3"
+      }
+    },
+    {
+      "name": "B: a red flag wins even when the question cap is reached",
+      "slots": {
+        "toy_redflag_1": true
+      },
+      "asked": ["a/1", "a/2", "a/3", "a/4", "a/5", "a/6", "a/7", "a/8"],
+      "expect": {
+        "outcome": "RED_FLAG"
+      }
+    },
+    {
+      "name": "B: choice z closes the branch",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_choice_1": "z",
+        "toy_symptom_2": false
+      },
+      "asked": ["toy_condition_a/q1", "toy_condition_b/q1"],
+      "expect": {
+        "outcome": "ABSTAIN"
+      }
+    },
+    {
+      "name": "B: no warning sign, no red flag",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_choice_1": "x",
+        "toy_redflag_1": false,
+        "toy_symptom_2": false
+      },
+      "expect": {
+        "outcome": "COMPLETE",
+        "top": "toy_condition_b"
+      }
+    }
+  ]
+}

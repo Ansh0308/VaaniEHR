@@ -1,0 +1,149 @@
+{
+  "id": "toy_condition_a",
+  "version": 1,
+  "status": "test",
+  "title": {
+    "en": "Toy condition A",
+    "gu": "[TOY-GU] Toy condition A",
+    "hi": "[TOY-HI] Toy condition A"
+  },
+  "source": {
+    "doc": "TOY - not a real source",
+    "page": 0,
+    "reviewed_by": "",
+    "reviewed_on": ""
+  },
+  "start": "q1",
+  "nodes": [
+    {
+      "id": "q1",
+      "type": "question",
+      "slot": "toy_symptom_1",
+      "answer": "boolean",
+      "ask": {
+        "en": "Toy question: is toy symptom 1 present?",
+        "gu": "[TOY-GU] Toy question: is toy symptom 1 present?",
+        "hi": "[TOY-HI] Toy question: is toy symptom 1 present?"
+      },
+      "reason": {
+        "en": "Toy reason: toy symptom 1 helps separate toy condition A from the others.",
+        "gu": "[TOY-GU] Toy reason: toy symptom 1 helps separate toy condition A from the others.",
+        "hi": "[TOY-HI] Toy reason: toy symptom 1 helps separate toy condition A from the others."
+      },
+      "info_weight": 5,
+      "edges": [
+        {
+          "if": {
+            "op": "eq",
+            "value": true
+          },
+          "to": "q2"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "value": false
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "question",
+      "slot": "toy_symptom_2",
+      "answer": "boolean",
+      "ask": {
+        "en": "Toy question: is toy symptom 2 present?",
+        "gu": "[TOY-GU] Toy question: is toy symptom 2 present?",
+        "hi": "[TOY-HI] Toy question: is toy symptom 2 present?"
+      },
+      "reason": {
+        "en": "Toy reason: toy symptom 2 adds weight to toy condition A.",
+        "gu": "[TOY-GU] Toy reason: toy symptom 2 adds weight to toy condition A.",
+        "hi": "[TOY-HI] Toy reason: toy symptom 2 adds weight to toy condition A."
+      },
+      "info_weight": 3,
+      "edges": [
+        {
+          "if": {
+            "op": "eq",
+            "value": true
+          },
+          "to": "q3"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "value": false
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "question",
+      "slot": "toy_measure_1",
+      "answer": "number",
+      "ask": {
+        "en": "Toy question: what is toy measure 1?",
+        "gu": "[TOY-GU] Toy question: what is toy measure 1?",
+        "hi": "[TOY-HI] Toy question: what is toy measure 1?"
+      },
+      "reason": {
+        "en": "Toy reason: a high toy measure 1 supports toy condition A.",
+        "gu": "[TOY-GU] Toy reason: a high toy measure 1 supports toy condition A.",
+        "hi": "[TOY-HI] Toy reason: a high toy measure 1 supports toy condition A."
+      },
+      "info_weight": 2,
+      "edges": [
+        {
+          "if": {
+            "op": "gte",
+            "value": 0
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "terminal",
+      "label": {
+        "en": "Toy end of pathway A",
+        "gu": "[TOY-GU] Toy end of pathway A",
+        "hi": "[TOY-HI] Toy end of pathway A"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "r1",
+      "slot": "toy_symptom_1",
+      "if": {
+        "op": "eq",
+        "value": true
+      },
+      "weight": 3
+    },
+    {
+      "id": "r2",
+      "slot": "toy_symptom_2",
+      "if": {
+        "op": "eq",
+        "value": true
+      },
+      "weight": 2
+    },
+    {
+      "id": "r3",
+      "slot": "toy_measure_1",
+      "if": {
+        "op": "gte",
+        "value": 5
+      },
+      "weight": 1
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "id": "toy_condition_b",
+  "version": 1,
+  "status": "test",
+  "title": {
+    "en": "Toy condition B",
+    "gu": "[TOY-GU] Toy condition B",
+    "hi": "[TOY-HI] Toy condition B"
+  },
+  "source": {
+    "doc": "TOY - not a real source",
+    "page": 0,
+    "reviewed_by": "",
+    "reviewed_on": ""
+  },
+  "start": "q1",
+  "nodes": [
+    {
+      "id": "q1",
+      "type": "question",
+      "slot": "toy_symptom_1",
+      "answer": "boolean",
+      "ask": {
+        "en": "Toy question: is toy symptom 1 present?",
+        "gu": "[TOY-GU] Toy question: is toy symptom 1 present?",
+        "hi": "[TOY-HI] Toy question: is toy symptom 1 present?"
+      },
+      "reason": {
+        "en": "Toy reason: toy symptom 1 is shared by toy conditions A and B.",
+        "gu": "[TOY-GU] Toy reason: toy symptom 1 is shared by toy conditions A and B.",
+        "hi": "[TOY-HI] Toy reason: toy symptom 1 is shared by toy conditions A and B."
+      },
+      "info_weight": 4,
+      "edges": [
+        {
+          "if": {
+            "op": "eq",
+            "value": true
+          },
+          "to": "q2"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "value": false
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "question",
+      "slot": "toy_choice_1",
+      "answer": "choice",
+      "choices": ["x", "y", "z"],
+      "ask": {
+        "en": "Toy question: which toy choice fits, x, y or z?",
+        "gu": "[TOY-GU] Toy question: which toy choice fits, x, y or z?",
+        "hi": "[TOY-HI] Toy question: which toy choice fits, x, y or z?"
+      },
+      "reason": {
+        "en": "Toy reason: toy choices x and y point to toy condition B.",
+        "gu": "[TOY-GU] Toy reason: toy choices x and y point to toy condition B.",
+        "hi": "[TOY-HI] Toy reason: toy choices x and y point to toy condition B."
+      },
+      "info_weight": 3,
+      "edges": [
+        {
+          "if": {
+            "op": "in",
+            "value": ["x", "y"]
+          },
+          "to": "q3"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "value": "z"
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "question",
+      "slot": "toy_redflag_1",
+      "answer": "boolean",
+      "ask": {
+        "en": "Toy question: is the toy warning sign present?",
+        "gu": "[TOY-GU] Toy question: is the toy warning sign present?",
+        "hi": "[TOY-HI] Toy question: is the toy warning sign present?"
+      },
+      "reason": {
+        "en": "Toy reason: the toy warning sign needs the doctor's attention first.",
+        "gu": "[TOY-GU] Toy reason: the toy warning sign needs the doctor's attention first.",
+        "hi": "[TOY-HI] Toy reason: the toy warning sign needs the doctor's attention first."
+      },
+      "info_weight": 9,
+      "red_flag_if": {
+        "op": "eq",
+        "value": true
+      },
+      "edges": [
+        {
+          "if": {
+            "op": "eq",
+            "value": true
+          },
+          "to": "t1"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "value": false
+          },
+          "to": "t1"
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "terminal",
+      "label": {
+        "en": "Toy end of pathway B",
+        "gu": "[TOY-GU] Toy end of pathway B",
+        "hi": "[TOY-HI] Toy end of pathway B"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "r1",
+      "slot": "toy_symptom_1",
+      "if": {
+        "op": "eq",
+        "value": true
+      },
+      "weight": 2
+    },
+    {
+      "id": "r2",
+      "slot": "toy_choice_1",
+      "if": {
+        "op": "in",
+        "value": ["x", "y"]
+      },
+      "weight": 3
+    }
+  ],
+  "red_flag_compatible_slots": ["toy_symptom_1"]
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vaaniehr.invalid/schema/pathway.schema.json",
+  "title": "VaaniEHR pathway (Phase 6A)",
+  "description": "Reference schema. The validator in src/validate.ts is the authority: it also checks node references, reachability, localized text, forbidden wording and the active-pathway reviewer rule, which JSON Schema cannot express. A test keeps the required keys of both in step.",
+  "type": "object",
+  "required": ["id", "version", "status", "title", "source", "start", "nodes", "rules"],
+  "additionalProperties": true,
+  "$defs": {
+    "localized": {
+      "type": "object",
+      "required": ["en", "gu", "hi"],
+      "properties": {
+        "en": { "type": "string", "minLength": 1 },
+        "gu": { "type": "string", "minLength": 1 },
+        "hi": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "condition": {
+      "type": "object",
+      "required": ["op", "value"],
+      "properties": {
+        "op": { "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in"] },
+        "value": {}
+      }
+    }
+  },
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["test", "draft", "active"] },
+    "title": { "$ref": "#/$defs/localized" },
+    "source": {
+      "type": "object",
+      "required": ["doc", "page", "reviewed_by", "reviewed_on"],
+      "properties": {
+        "doc": { "type": "string", "minLength": 1 },
+        "page": { "type": ["string", "integer"] },
+        "reviewed_by": {
+          "type": "string",
+          "description": "must be non-empty when status is active"
+        },
+        "reviewed_on": {
+          "type": "string",
+          "description": "YYYY-MM-DD; required when status is active"
+        }
+      }
+    },
+    "start": { "type": "string" },
+    "red_flag_compatible_slots": { "type": "array", "items": { "type": "string" } },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["id", "type", "slot", "answer", "ask", "reason", "info_weight"],
+            "properties": {
+              "type": { "const": "question" },
+              "answer": { "enum": ["boolean", "number", "choice"] },
+              "choices": { "type": "array", "items": { "type": "string" } },
+              "ask": { "$ref": "#/$defs/localized" },
+              "reason": { "$ref": "#/$defs/localized" },
+              "info_weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+              "red_flag_if": { "$ref": "#/$defs/condition" },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["if", "to"],
+                  "properties": {
+                    "if": { "$ref": "#/$defs/condition" },
+                    "to": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["id", "type", "label"],
+            "properties": {
+              "type": { "const": "terminal" },
+              "label": { "$ref": "#/$defs/localized" }
+            }
+          }
+        ]
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "slot", "if", "weight"],
+        "properties": {
+          "slot": { "type": "string" },
+          "if": { "$ref": "#/$defs/condition" },
+          "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 }
+        }
+      }
+    }
+  }
+}

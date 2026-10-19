@@ -1,0 +1,89 @@
+{
+  "description": "Toy pathway A: fake slots only. Case format: docs/PATHWAYS.md.",
+  "cases": [
+    {
+      "name": "A: nothing known, the heaviest shared question first",
+      "slots": {},
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_a/q1"
+      }
+    },
+    {
+      "name": "A: symptom 1 present, symptom 2 next",
+      "slots": {
+        "toy_symptom_1": true
+      },
+      "asked": ["toy_condition_a/q1", "toy_condition_b/q1"],
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_a/q2"
+      }
+    },
+    {
+      "name": "A: symptom 2 present opens the measure question",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_symptom_2": true,
+        "toy_symptom_5": false,
+        "toy_choice_1": "z"
+      },
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_a/q3"
+      }
+    },
+    {
+      "name": "A: all rules met gives a full score and the shortlist stands",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_symptom_2": true,
+        "toy_measure_1": 7,
+        "toy_symptom_5": false,
+        "toy_choice_1": "z"
+      },
+      "expect": {
+        "outcome": "COMPLETE",
+        "top": "toy_condition_a",
+        "min_score": 1.0
+      }
+    },
+    {
+      "name": "A: measure below the limit scores lower",
+      "slots": {
+        "toy_symptom_1": true,
+        "toy_symptom_2": true,
+        "toy_measure_1": 2,
+        "toy_symptom_5": false,
+        "toy_choice_1": "z"
+      },
+      "expect": {
+        "outcome": "COMPLETE",
+        "top": "toy_condition_a",
+        "max_score": 0.9
+      }
+    },
+    {
+      "name": "A: everything absent, abstain",
+      "slots": {
+        "toy_symptom_1": false,
+        "toy_symptom_2": false
+      },
+      "expect": {
+        "outcome": "ABSTAIN"
+      }
+    },
+    {
+      "name": "A: a dismissed question is not asked again",
+      "slots": {
+        "toy_symptom_1": true
+      },
+      "dismissed": ["toy_condition_a/q2"],
+      "asked": ["toy_condition_a/q1", "toy_condition_b/q1"],
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "toy_condition_b/q2"
+      }
+    }
+  ]
+}
