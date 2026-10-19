@@ -32,7 +32,9 @@ export const up = (pgm) => {
     ),
     CONSTRAINT question_event_acted_has_time CHECK ((status = 'suggested') = (acted_at IS NULL))
   )`);
-  pgm.sql('CREATE INDEX ix_question_event_session ON question_event (clinic_id, session_id, status)');
+  pgm.sql(
+    'CREATE INDEX ix_question_event_session ON question_event (clinic_id, session_id, status)',
+  );
   // at most one open suggestion per node per session
   pgm.sql(`CREATE UNIQUE INDEX ux_question_event_open ON question_event (session_id, pathway_id, node_id)
     WHERE status = 'suggested'`);
