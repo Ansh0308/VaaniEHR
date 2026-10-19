@@ -4,6 +4,7 @@ import os
 import time
 from datetime import UTC, datetime
 
+import pytest
 from starlette.testclient import TestClient
 
 from app.config import Settings
@@ -126,3 +127,30 @@ def test_the_monthly_request_cap_is_reported_as_a_limit(tmp_path, monkeypatch):
     )
     answer = post(client)
     assert answer.status_code == 429 and answer.json()["error"]["code"] == "cap_reached"
+
+
+def test_cors_is_an_allowlist_without_credentials(tmp_path, monkeypatch):
+    client, _ = make(tmp_path, monkeypatch)
+    ask = {
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization",
+    }
+    good = client.options(f"/sessions/{SID}/extract", headers={"Origin": ORIGIN, **ask})
+    assert good.headers["access-control-allow-origin"] == ORIGIN
+    assert "access-control-allow-credentials" not in good.headers
+    for other in ("http://evil.example", "http://localhost:5173.evil.example"):
+        bad = client.options(f"/sessions/{SID}/extract", headers={"Origin": other, **ask})
+        assert "access-control-allow-origin" not in bad.headers
+    simple = client.get("/extraction/mode", headers={"Origin": "http://evil.example"})
+    assert "access-control-allow-origin" not in simple.headers
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["*", "http://*.example.com", "localhost:5173", "http://a.example/path", "ftp://a.example"],
+)
+def test_a_wildcard_or_malformed_origin_is_refused_by_the_configuration(bad):
+    from app.config import ConfigError, load_settings
+
+    with pytest.raises(ConfigError, match="ALLOWED_ORIGINS"):
+        load_settings({"ALLOWED_ORIGINS": f"http://localhost:5173,{bad}"})

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
@@ -55,6 +56,17 @@ class Settings(BaseModel):
     internal_service_secret: SecretStr | None = None
     #: 64 hex characters (32 bytes); encrypts stored audio. Losing it makes stored audio unrecoverable.
     audio_master_key: SecretStr | None = None
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def _origins_are_an_allowlist(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        # used for the WebSocket Origin check AND for CORS: never a wildcard, never a path
+        for origin in value:
+            if not re.fullmatch(r"https?://[A-Za-z0-9.\-]+(:[0-9]{1,5})?", origin):
+                raise ValueError(
+                    "ALLOWED_ORIGINS: each entry must be one exact origin like http://localhost:5173 (no *)"
+                )
+        return value
 
     @field_validator("simulated_data_only")
     @classmethod
