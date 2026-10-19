@@ -16,6 +16,8 @@ Either keep the tables in `audio/own/READ_ALOUD_AND_GOLD.md` (a `## clipNN` head
   {"type": "symptom", "value": "stomach pain", "negated": false, "uncertain": false, "evidence_quote": "પેટમાં દુખાવો"}
 ]}
 ```
+**Qualifier convention (owner decision 2026-10-19).** A qualifier such as થોડી / થોડું / थोड़ा ("a little", mild) or an explicit grade ("6 out of 10") is its OWN `severity` fact with its own evidence quote; it is not folded into the symptom value. The first draft folded three of them in (clip02 weakness, clip05 itching, clip10 sore throat).
+
 Types: `symptom`, `duration`, `severity`, `vital`, `allergy`, `past_condition`, `current_medicine`. Leave `red_flag_mention` unused until a clinician supplies the list (OCI-018).
 
 ## 4. Span rules
@@ -59,6 +61,23 @@ The three pipelines share ONE model reply per case (same prompt, so the cache an
 
 Ungrounded facts dropped: plain 0, constrained 0, grounded 2 (of 59 predicted). The model predicted 5 severity facts against 1 gold severity fact, so severity precision is low (the gold labels may under-label severity; not checked).
 **Reading.** (1) This is one free model, one prompt version and 13 small, acted or synthetic cases with first-draft gold labels: it says nothing general about the model, the method or real consultations. (2) On these cases symptoms and negation were extracted well, grounding removed 2 unsupported facts and raised precision a little, and severity was over-produced. (3) Numbers from 53 gold facts move a lot with one fact; do not compare them with other work.
+
+### 8.1b Same replies, re-scored with the qualifier convention (2026-10-19)
+This is a **labelling-convention change, not prompt tuning**: the prompt, the model and the 13 cached replies are unchanged and **no new API calls** were made (0 requests). Three gold facts were added (a separate `severity: mild` for clip02, clip05 and clip10); gold is now 56 facts (was 53). The OLD numbers above are kept for comparison.
+
+| type | plain P / R / F1 | constrained P / R / F1 | grounded P / R / F1 |
+| --- | --- | --- | --- |
+| symptom | 0.97 / 0.97 / 0.97 | 0.97 / 0.97 / 0.97 | 0.97 / 0.97 / 0.97 |
+| duration | 0.82 / 1.00 / 0.90 | 0.82 / 1.00 / 0.90 | 0.90 / 1.00 / 0.95 |
+| severity | 0.80 / 1.00 / 0.89 (was 0.20 / 1.00 / 0.33) | same | same |
+| vital | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| allergy | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| past_condition | 0.50 / 0.50 / 0.50 | 0.50 / 0.50 / 0.50 | 1.00 / 0.50 / 0.67 |
+| current_medicine | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| OVERALL (micro) | 0.92 / 0.96 / 0.94 (was 0.86 / 0.96 / 0.91) | same | 0.95 / 0.96 / 0.96 (was 0.89 / 0.96 / 0.93) |
+| NEGATION | 1.00 / 1.00 / 1.00 | same | same |
+
+The earlier "severity was over-produced" reading was mostly the labelling convention: with the qualifiers labelled, severity precision rises from 0.20 to 0.80 (4 of 5 predicted severity facts match). The gain is a property of the gold labels, not of the model.
 
 ### 8.2 `xingchen-agi/xing4.0-29b-a4b:free`: no result
 2026-10-18: the endpoint answered HTTP 429 ("temporarily rate-limited upstream") on every attempt in two tries (3 and then 5 retries with backoff, concurrency 1), so no evaluation was possible. Retry later, or add the owner's own provider key to OpenRouter for separate limits. No table.
