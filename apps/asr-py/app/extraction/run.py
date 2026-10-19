@@ -14,12 +14,12 @@ from typing import Any
 from app.config import load_settings
 from app.extraction.llm_usage import LlmSpendGuard, LlmUsageLog
 from app.extraction.pipelines import (
-    PROMPT_VERSION,
     Pipeline,
     PipelineResult,
     SegmentIn,
     build_user_prompt,
-    prompt_hash,
+    prompt_hash_of,
+    prompt_version_of,
     run_pipeline,
     system_prompt,
 )
@@ -45,8 +45,8 @@ def log_run(
         pipeline=result.pipeline,
         provider=provider.name,
         model=response.model if response else provider.model,
-        prompt_version=PROMPT_VERSION,
-        prompt_hash=prompt_hash(),
+        prompt_version=prompt_version_of(result.pipeline),
+        prompt_hash=prompt_hash_of(result.pipeline),
         input_tokens=tokens_in,
         output_tokens=tokens_out,
         estimated_cost_inr=usage.cost_inr(tokens_in, tokens_out) if provider.paid else 0.0,

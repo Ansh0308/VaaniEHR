@@ -24,7 +24,7 @@ class SampleProvider:
     model = "sample-extraction"
     paid = False
 
-    async def complete(self, system: str, user: str) -> LlmResponse:
+    async def complete(self, system: str, user: str, *, structured: bool = True) -> LlmResponse:
         facts = []
         for label, raw in _SEGMENT.findall(user)[:MAX_SAMPLE_FACTS]:
             words = html.unescape(raw).split()[:WORDS]

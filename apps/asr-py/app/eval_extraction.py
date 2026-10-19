@@ -33,10 +33,10 @@ from app.config import REPO_ROOT, load_settings
 from app.extraction.llm_usage import LlmSpendGuard, LlmUsageLog
 from app.extraction.models import FACT_TYPES
 from app.extraction.pipelines import (
-    PROMPT_VERSION,
     PipelineResult,
     SegmentIn,
-    prompt_hash,
+    prompt_hash_of,
+    prompt_version_of,
     run_pipeline,
 )
 from app.extraction.provider import LlmProvider, MockProvider, ProviderError, build_provider
@@ -242,7 +242,14 @@ async def evaluate(
 ) -> tuple[dict[str, Counts], Counts, dict[str, int]]:
     per_type: dict[str, Counts] = defaultdict(Counts)
     negation = Counts()
-    totals = {"ungrounded": 0, "invalid": 0, "schema_failures": 0, "predicted": 0, "gold": 0}
+    totals = {
+        "ungrounded": 0,
+        "invalid": 0,
+        "schema_failures": 0,
+        "invalid_json": 0,
+        "predicted": 0,
+        "gold": 0,
+    }
     for case in cases:
         segments = [
             SegmentIn(f"{case.id}-{i}", i, "unknown", line) for i, line in enumerate(case.lines)
@@ -254,6 +261,7 @@ async def evaluate(
         totals["ungrounded"] += result.dropped_ungrounded
         totals["invalid"] += result.dropped_invalid
         totals["schema_failures"] += result.schema_failures
+        totals["invalid_json"] += result.invalid_json
         totals["predicted"] += len(result.predicted)
         totals["gold"] += len(case.gold)
         if usage:
@@ -289,10 +297,10 @@ def write_results(
                 [name, c.tp, c.fp, c.fn, round(c.precision, 3), round(c.recall, 3), round(c.f1, 3)]
             )
     now = datetime.now(UTC)
-    meta = {"pipeline": pipeline, "model": model, "run_date": now.date().isoformat(), "prompt_version": PROMPT_VERSION,
-            "prompt_hash": prompt_hash(), "cases": len(cases), "synthetic_cases": sum(c.synthetic for c in cases), **totals}  # fmt: skip
+    meta = {"pipeline": pipeline, "model": model, "run_date": now.date().isoformat(), "prompt_version": prompt_version_of(pipeline),
+            "prompt_hash": prompt_hash_of(pipeline), "cases": len(cases), "synthetic_cases": sum(c.synthetic for c in cases), **totals}  # fmt: skip
     (folder / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    md = [f"Extraction evaluation: pipeline `{pipeline}`, model `{model}`, run {meta['run_date']}, prompt `{PROMPT_VERSION}`, {len(cases)} cases "
+    md = [f"Extraction evaluation: pipeline `{pipeline}`, model `{model}`, run {meta['run_date']}, prompt `{prompt_version_of(pipeline)}`, {len(cases)} cases "
           f"({meta['synthetic_cases']} synthetic), {totals['gold']} gold facts, {totals['predicted']} predicted, "
           f"{totals['ungrounded']} dropped as ungrounded.", "",
           "| type | TP | FP | FN | precision | recall | F1 |", "| --- | --- | --- | --- | --- | --- | --- |"]  # fmt: skip

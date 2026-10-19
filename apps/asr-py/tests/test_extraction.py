@@ -298,7 +298,7 @@ def test_the_monthly_caps_stop_paid_calls_but_never_the_mock(tmp_path):
         guard.check(paid=True, estimated_input_tokens=1001)
     log.add(run_id="r", purpose="extract", pipeline="grounded", provider="x", model="m", prompt_version="v", prompt_hash="h",
             input_tokens=800, output_tokens=100, estimated_cost_inr=0.0, paid=True, facts_kept=0, dropped_ungrounded=0,
-            dropped_invalid=0, schema_failures=0)  # fmt: skip
+            dropped_invalid=0, schema_failures=0, requests=1)  # fmt: skip
     with pytest.raises(CapExceeded):
         guard.check(paid=True, estimated_input_tokens=200)
 
@@ -392,3 +392,12 @@ async def test_nothing_is_submitted_for_the_ablation_pipelines_or_an_empty_resul
     assert api.submitted == [] and len(log.records()) == 2
     empty = await extract_session(FakeApi([]), "s", "grounded", MockProvider(), log, guard)
     assert empty == {"segments": 0, "inserted": 0}
+
+
+def test_cached_answers_do_not_count_towards_the_monthly_token_cap(tmp_path):
+    log = LlmUsageLog(tmp_path / "u.jsonl")
+    common = dict(run_id="r", purpose="eval", pipeline="grounded", provider="x", model="m", prompt_version="v", prompt_hash="h",
+                  estimated_cost_inr=0.0, paid=True, facts_kept=0, dropped_ungrounded=0, dropped_invalid=0, schema_failures=0)  # fmt: skip
+    log.add(input_tokens=900, output_tokens=0, requests=1, **common)
+    log.add(input_tokens=5000, output_tokens=5000, requests=0, **common)  # a cache hit
+    assert log.month_totals()[0] == 900

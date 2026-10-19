@@ -87,7 +87,8 @@ class LlmUsageLog:
     def month_totals(self) -> tuple[int, float]:
         """(tokens, INR) used by PAID providers this UTC month."""
         month = self._clock().strftime("%Y-%m")
-        rows = [r for r in self.records() if r.paid and r.ts.startswith(month)]
+        # a row with no request was answered from the local cache: it spent no tokens and no money
+        rows = [r for r in self.records() if r.paid and r.requests > 0 and r.ts.startswith(month)]
         return sum(r.input_tokens + r.output_tokens for r in rows), sum(
             r.estimated_cost_inr for r in rows
         )

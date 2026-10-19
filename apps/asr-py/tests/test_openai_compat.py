@@ -182,3 +182,44 @@ async def test_an_error_inside_a_200_reply_is_retried_like_its_status():
     finally:
         fake.close()
     assert len(fake.requests) == 2
+
+
+async def test_plain_pipeline_has_its_own_prompt_and_no_response_format_while_constrained_has_one(
+    tmp_path,
+):
+    from app.extraction.pipelines import (
+        PLAIN_PROMPT_VERSION,
+        SegmentIn,
+        plain_system_prompt,
+        run_pipeline,
+        system_prompt,
+    )
+
+    reply = {"model": "m", "choices": [{"message": {"content": "no json here"}}], "usage": {}}
+    fake = Fake([], reply)
+    provider = make(fake.url)
+    segments = [SegmentIn("a", 0, "unknown", "fever")]
+    try:
+        plain = await run_pipeline("plain", provider, segments)
+        constrained = await run_pipeline("constrained", provider, segments)
+    finally:
+        fake.close()
+    first, second = fake.requests
+    assert (
+        "response_format" not in first and first["messages"][0]["content"] == plain_system_prompt()
+    )
+    assert second["response_format"] == {"type": "json_object"}
+    assert second["messages"][0]["content"] == system_prompt()
+    assert plain_system_prompt().startswith(f"# {PLAIN_PROMPT_VERSION}")
+    assert plain.invalid_json == 1 and constrained.schema_failures == 1
+
+
+async def test_plain_pipeline_reads_fenced_or_list_replies_leniently():
+    from app.extraction.pipelines import SegmentIn, run_pipeline
+    from app.extraction.provider import MockProvider
+
+    fact = '{"type":"symptom","value":"fever","negated":false,"uncertain":false,"segment_id":"s1","evidence_quote":"fever"}'
+    segments = [SegmentIn("a", 0, "unknown", "fever")]
+    for text in (f'```json\n{{"facts":[{fact}]}}\n```', f"Here you go: [{fact}]"):
+        result = await run_pipeline("plain", MockProvider(text), segments)
+        assert len(result.predicted) == 1 and result.invalid_json == 0

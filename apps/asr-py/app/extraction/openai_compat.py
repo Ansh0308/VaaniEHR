@@ -96,14 +96,14 @@ class OpenAICompatibleProvider:
         self._openrouter = (urlparse(base_url).hostname or "").endswith("openrouter.ai")
         self.requests_made = 0
 
-    def _body(self, system: str, user: str) -> bytes:
+    def _body(self, system: str, user: str, structured: bool = True) -> bytes:
         body: dict[str, object] = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": 0,
             "max_tokens": self._max_tokens,
         }
-        if self._format == "json_object":
+        if self._format == "json_object" and structured:  # plain baseline: no response_format
             body["response_format"] = {"type": "json_object"}
         if self._openrouter:
             body["reasoning"] = {"exclude": True}  # reasoning text is not wanted in the reply
@@ -124,8 +124,8 @@ class OpenAICompatibleProvider:
         except (urllib.error.URLError, TimeoutError, OSError):
             return -1, {}, b""
 
-    async def complete(self, system: str, user: str) -> LlmResponse:
-        payload = self._body(system, user)
+    async def complete(self, system: str, user: str, *, structured: bool = True) -> LlmResponse:
+        payload = self._body(system, user, structured)
         async with self._sem:
             for attempt in range(self._retries + 1):
                 self.budget.take()  # every attempt is a request and counts against the cap
@@ -191,8 +191,11 @@ class ResponseCache:
         self.directory = directory
 
     @staticmethod
-    def key(model: str, prompt_version: str, system: str, user: str) -> str:
-        inputs = hashlib.sha256((system + "\0" + user).encode("utf-8")).hexdigest()
+    def key(
+        model: str, prompt_version: str, system: str, user: str, structured: bool = True
+    ) -> str:
+        text = system + "\0" + user + ("" if structured else "\0plain")
+        inputs = hashlib.sha256(text.encode("utf-8")).hexdigest()
         return hashlib.sha256(f"{model}\0{prompt_version}\0{inputs}".encode()).hexdigest()
 
     def get(self, key: str) -> LlmResponse | None:
@@ -235,13 +238,13 @@ class CachedProvider:
         self.paid = inner.paid  # type: ignore[attr-defined]
         self.cache_hits = 0
 
-    async def complete(self, system: str, user: str) -> LlmResponse:
-        key = ResponseCache.key(self.model, self._version, system, user)
+    async def complete(self, system: str, user: str, *, structured: bool = True) -> LlmResponse:
+        key = ResponseCache.key(self.model, self._version, system, user, structured)
         cached = self._cache.get(key)
         if cached is not None:
             self.cache_hits += 1
             return cached
-        response = await self._inner.complete(system, user)  # type: ignore[attr-defined]
+        response = await self._inner.complete(system, user, structured=structured)  # type: ignore[attr-defined]
         self._cache.put(key, response)
         return response
 

@@ -39,7 +39,7 @@ class LlmProvider(Protocol):
     #: money or quota is spent per call (false for the mock)
     paid: bool
 
-    async def complete(self, system: str, user: str) -> LlmResponse: ...
+    async def complete(self, system: str, user: str, *, structured: bool = True) -> LlmResponse: ...
 
 
 def approx_tokens(text: str) -> int:
@@ -59,7 +59,7 @@ class MockProvider:
         self.model = model
         self._reply = reply if reply is not None else json.dumps({"facts": []})
 
-    async def complete(self, system: str, user: str) -> LlmResponse:
+    async def complete(self, system: str, user: str, *, structured: bool = True) -> LlmResponse:
         text = self._reply(system, user) if callable(self._reply) else self._reply
         return LlmResponse(text, self.model, approx_tokens(system + user), approx_tokens(text))
 

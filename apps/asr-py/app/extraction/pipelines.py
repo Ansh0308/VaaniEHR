@@ -1,6 +1,7 @@
 """Three extraction pipelines for the ablation (PRD 14.3 experiment 2), all on any LlmProvider (the mock this run):
 
-- plain:       the model is asked for JSON in free text; the reply is parsed leniently; no schema, no grounding.
+- plain:       its OWN prompt (extract_plain_v1), no response_format and no schema; the reply is parsed leniently;
+                invalid JSON is counted; no grounding.
 - constrained: the reply must validate against the STRICT schema (LlmOutput); an invalid reply gives no facts.
 - grounded:    constrained + the grounding validator; ungrounded facts are dropped and counted (hallucination metric).
 Only `grounded` produces facts that may be stored (they carry a source span). The others are for measurement.
@@ -29,6 +30,8 @@ from app.extraction.text import escape_for_prompt, normalise, text_hash, unescap
 
 PROMPT_VERSION = "extract_v1"
 PROMPT_FILE = Path(__file__).resolve().parents[2] / "prompts" / f"{PROMPT_VERSION}.md"
+PLAIN_PROMPT_VERSION = "extract_plain_v1"
+PLAIN_PROMPT_FILE = Path(__file__).resolve().parents[2] / "prompts" / f"{PLAIN_PROMPT_VERSION}.md"
 Pipeline = Literal["plain", "constrained", "grounded"]
 
 
@@ -38,6 +41,19 @@ def system_prompt() -> str:
 
 def prompt_hash() -> str:
     return hashlib.sha256(PROMPT_FILE.read_bytes()).hexdigest()
+
+
+def plain_system_prompt() -> str:
+    return PLAIN_PROMPT_FILE.read_text(encoding="utf-8")
+
+
+def prompt_version_of(pipeline: str) -> str:
+    return PLAIN_PROMPT_VERSION if pipeline == "plain" else PROMPT_VERSION
+
+
+def prompt_hash_of(pipeline: str) -> str:
+    path = PLAIN_PROMPT_FILE if pipeline == "plain" else PROMPT_FILE
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -73,6 +89,8 @@ class PipelineResult:
     dropped_ungrounded: int = 0
     dropped_invalid: int = 0
     schema_failures: int = 0
+    #: plain pipeline: replies from which no JSON object could be read at all
+    invalid_json: int = 0
     grounded_exact: int = 0
     grounded_fuzzy: int = 0
     response: LlmResponse | None = None
@@ -82,15 +100,21 @@ _FENCE = re.compile(r"^```[a-zA-Z]*\s*|\s*```$")
 
 
 def _lenient_json(text: str) -> object | None:
-    """plain pipeline only: strip code fences and take the outermost {...}."""
+    """plain pipeline only: strip code fences, then read the outermost {...} or [...] (a facts object or a list)."""
     cleaned = _FENCE.sub("", text.strip())
-    start, end = cleaned.find("{"), cleaned.rfind("}")
-    if start < 0 or end <= start:
-        return None
-    try:
-        return json.loads(cleaned[start : end + 1])
-    except ValueError:
-        return None
+    first: object | None = None
+    for opener, closer in (("{", "}"), ("[", "]")):
+        start, end = cleaned.find(opener), cleaned.rfind(closer)
+        if start < 0 or end <= start:
+            continue
+        try:
+            data = json.loads(cleaned[start : end + 1])
+        except ValueError:
+            continue
+        if isinstance(data, list) or (isinstance(data, dict) and "facts" in data):
+            return data
+        first = first if first is not None else data
+    return first
 
 
 def _predicted(
@@ -117,13 +141,20 @@ async def run_pipeline(
     pipeline: Pipeline, provider: LlmProvider, segments: list[SegmentIn]
 ) -> PipelineResult:
     result = PipelineResult(pipeline)
-    response = await provider.complete(system_prompt(), build_user_prompt(segments))
+    if pipeline == "plain":
+        # the baseline: its own shorter prompt and NO structured-output request to the endpoint
+        response = await provider.complete(
+            plain_system_prompt(), build_user_prompt(segments), structured=False
+        )
+    else:
+        response = await provider.complete(system_prompt(), build_user_prompt(segments))
     result.response = response
 
     if pipeline == "plain":
         data = _lenient_json(response.text)
-        items = data.get("facts") if isinstance(data, dict) else None
+        items = data.get("facts") if isinstance(data, dict) else data
         if not isinstance(items, list):
+            result.invalid_json += 1
             result.dropped_invalid += 1
             return result
         for item in items:

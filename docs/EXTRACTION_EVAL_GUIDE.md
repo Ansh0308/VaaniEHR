@@ -81,3 +81,24 @@ The earlier "severity was over-produced" reading was mostly the labelling conven
 
 ### 8.2 `xingchen-agi/xing4.0-29b-a4b:free`: no result
 2026-10-18: the endpoint answered HTTP 429 ("temporarily rate-limited upstream") on every attempt in two tries (3 and then 5 retries with backoff, concurrency 1), so no evaluation was possible. Retry later, or add the owner's own provider key to OpenRouter for separate limits. No table.
+
+### 8.3 Ablation with a real plain pipeline: `nvidia/nemotron-3.5-super-vl:free`, run 2026-10-19
+The three pipelines are now genuinely different. **plain** uses its own shorter prompt `extract_plain_v1`, sends NO `response_format` and no schema, parses leniently (code fences, a facts object or a bare list) and counts replies with no readable JSON. **constrained** uses `extract_v1` with `response_format: json_object` and the strict schema. **grounded** is constrained plus the grounding validator. Same 13 cases, same model, same gold as 8.1b (56 facts). No prompt was tuned. constrained and grounded were read from the cache (same reply as before); only plain needed new calls: 19 HTTP requests (13 distinct replies + 6 retried attempts after errors; statuses not logged), inside the 60-request cap.
+
+| type | plain (`extract_plain_v1`) P / R / F1 | constrained (`extract_v1`) P / R / F1 | grounded (`extract_v1`) P / R / F1 |
+| --- | --- | --- | --- |
+| symptom | 0.93 / 0.93 / 0.93 | 0.97 / 0.97 / 0.97 | 0.97 / 0.97 / 0.97 |
+| duration | 0.82 / 1.00 / 0.90 | 0.82 / 1.00 / 0.90 | 0.90 / 1.00 / 0.95 |
+| severity | 1.00 / 0.50 / 0.67 | 0.80 / 1.00 / 0.89 | 0.80 / 1.00 / 0.89 |
+| vital | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| allergy | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| past_condition | 1.00 / 1.00 / 1.00 | 0.50 / 0.50 / 0.50 | 1.00 / 0.50 / 0.67 |
+| current_medicine | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| OVERALL (micro) | 0.93 / 0.93 / 0.93 | 0.92 / 0.96 / 0.94 | 0.95 / 0.96 / 0.96 |
+| NEGATION | 0.83 / 0.83 / 0.83 (2 wrong, 2 missed) | 1.00 / 1.00 / 1.00 | 1.00 / 1.00 / 1.00 |
+| invalid JSON replies | 0 | 0 (schema failures 0) | 0 (schema failures 0) |
+| ungrounded dropped | not checked (plain has no grounding) | not checked | 2 of 59 |
+| requests | 19 | 0 (cache) | 0 (cache) |
+
+**Reading.** (1) One free model, three prompt/format variants, 13 small acted or synthetic cases and a first-draft gold: nothing here is general, and the plain row differs from the others in BOTH the prompt and the output format, so the table cannot say which of the two caused a difference. (2) On these cases the structured, grounded pipeline was best overall (F1 0.96 vs 0.93) and the only one with a hallucination count; plain missed half of the severity facts and got negation wrong four times, while constrained and grounded got all 12 negations right. (3) With 56 gold facts, one fact moves a row by several points; plain was better on past_condition by a single fact. Do not compare with other work.
+
