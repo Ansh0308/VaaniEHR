@@ -9,12 +9,14 @@ import type { AuthProvider } from './auth/types.js';
 import { PgMockClinicOSAdapter } from './clinicos/PgMockClinicOSAdapter.js';
 import type { Config } from './config/env.js';
 import { createNoticeStore } from './consent/notices.js';
+import { loadCatalog } from './pathways/catalog.js';
 import type { Services } from './services.js';
 
 export async function createServices(config: Config, pool: pg.Pool): Promise<Services> {
   const directory = new PgMockClinicOSAdapter(pool);
   const notices = createNoticeStore();
   const dummyPasswordHash = await makeDummyHash(config.bcryptCost);
+  const pathways = loadCatalog(config);
 
   if (config.authProvider === 'dev') {
     // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
@@ -30,6 +32,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       notices,
       lockoutKey: `lockout:${config.devAuthSecret as string}`,
       dummyPasswordHash,
+      pathways,
     };
   }
   // Phase 12 stub: every call throws NOT_IMPLEMENTED. Password login does not exist in this mode.
@@ -43,5 +46,6 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     notices,
     lockoutKey: randomBytes(32).toString('hex'), // password login does not exist in this mode
     dummyPasswordHash,
+    pathways,
   };
 }

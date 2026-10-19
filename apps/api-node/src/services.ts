@@ -1,4 +1,5 @@
 // Dependencies handed to every route handler. Built once in server.ts (and by tests).
+import type { PathwayCatalog } from './pathways/catalog.js';
 import type pg from 'pg';
 import type { DevAuthProvider } from './auth/DevAuthProvider.js';
 import type { AuthProvider } from './auth/types.js';
@@ -22,4 +23,6 @@ export interface Services {
   lockoutKey: string;
   /** bcrypt hash used to equalise timing when the e-mail is unknown. */
   dummyPasswordHash: string;
+  /** pathways, slot map and engine parameters (Phase 6A); loaded once at start-up */
+  pathways: PathwayCatalog;
 }

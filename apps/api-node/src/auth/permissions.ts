@@ -26,6 +26,12 @@ export const PERMISSIONS = {
   'fact.read': ['doctor'],
   'fact.write': ['doctor'],
 
+  // pathway questions and candidate conditions (Phase 6A): the session's own doctor only
+  'question.read': ['doctor'],
+  'question.act': ['doctor'],
+  'candidate.read': ['doctor'],
+  'candidate.select': ['doctor'],
+
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],

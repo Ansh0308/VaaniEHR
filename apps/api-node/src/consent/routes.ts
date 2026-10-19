@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { errors } from '../http/errors.js';
 import { authedRoute, permRoute, type RouteDef } from '../http/routeRegistry.js';
 import { loadSession } from '../sessions/service.js';
+import { deleteDerivedPathwayRows } from '../pathways/service.js';
 import { deleteDraftSegments } from '../transcripts/routes.js';
 import { CONSENT_SCOPES, NOTICE_LANGUAGES, type ConsentScope } from './notices.js';
 import { getEffectiveConsent, listConsentEvents } from './service.js';
@@ -134,7 +135,7 @@ export function consentRoutes(): RouteDef[] {
       tag: 'Consent',
       summary:
         'Withdraw consent (all granted scopes, or the listed ones). Always allowed while the session exists.',
-      audit: ['CONSENT_WITHDRAWN', 'TRANSCRIPT_DRAFT_DELETED'],
+      audit: ['CONSENT_WITHDRAWN', 'TRANSCRIPT_DRAFT_DELETED', 'PATHWAY_DATA_DELETED'],
       params: idParams,
       body: withdrawBody,
       response: consentView.extend({ stopRecording: z.boolean() }),
@@ -178,6 +179,17 @@ export function consentRoutes(): RouteDef[] {
               resourceId: session.id,
               sessionId: session.id,
               meta: { segmentCount: deleted.segments, factCount: deleted.facts },
+            });
+          }
+          // ADR-D34: suggested questions and the candidate shortlist are derived from AI processing too
+          const pathway = await deleteDerivedPathwayRows(ctx.db, session.id);
+          if (pathway.questions > 0 || pathway.candidates > 0) {
+            await ctx.audit({
+              action: 'PATHWAY_DATA_DELETED',
+              resourceType: 'session',
+              resourceId: session.id,
+              sessionId: session.id,
+              meta: { questionCount: pathway.questions, candidateCount: pathway.candidates },
             });
           }
         }

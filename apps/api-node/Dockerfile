@@ -13,6 +13,8 @@ COPY apps/web/package.json apps/web/
 COPY packages/rules/package.json packages/rules/
 RUN npm ci -w apps/api-node --include-workspace-root
 COPY tsconfig.base.json ./
+COPY packages/rules/src packages/rules/src
+COPY packages/rules/tsconfig.json packages/rules/
 COPY apps/api-node apps/api-node
 RUN npm run build -w apps/api-node
 
@@ -32,7 +34,8 @@ WORKDIR /repo/apps/api-node
 COPY --from=deps /repo/node_modules /repo/node_modules
 COPY --from=deps /repo/apps/api-node/node_modules ./node_modules
 COPY --from=build /repo/apps/api-node/dist ./dist
+# pathway files are read at run time; mount or copy the owner's data/pathways and set PATHWAYS_DIR (no clinical content is baked in)
 COPY apps/api-node/package.json ./package.json
 USER node
 EXPOSE 4000
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/apps/api-node/src/server.js"]

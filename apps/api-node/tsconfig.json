@@ -4,8 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
-    "noEmit": true,
-    "rootDir": "."
+    "noEmit": true
   },
   "include": ["src", "test", "vitest.config.ts"]
 }

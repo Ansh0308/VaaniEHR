@@ -281,6 +281,43 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         ).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  // ---- pathway questions and candidates (ADR-D34): the same, both ways
+  'GET /sessions/:id/questions/next': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/questions/next`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/questions/:eventId/action': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'post',
+            `/sessions/${y.sessionId}/questions/${randomUUID()}/action`,
+            x.tokens[role],
+            { action: 'asked' },
+          )
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'GET /sessions/:id/candidates': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/candidates`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/candidates/select': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/candidates/select`, x.tokens[role], {
+            notListed: true,
+            text: 'x',
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   'GET /sessions/:id/transcript': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)
       expect(

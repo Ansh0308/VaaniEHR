@@ -32,6 +32,11 @@ export const PRD_EXPECTED: Record<
   'PATCH /sessions/:id/facts/:factId': ['doctor'],
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
+  // pathway questions and candidate conditions: the session's own doctor only (ADR-D34)
+  'GET /sessions/:id/questions/next': ['doctor'],
+  'POST /sessions/:id/questions/:eventId/action': ['doctor'],
+  'GET /sessions/:id/candidates': ['doctor'],
+  'POST /sessions/:id/candidates/select': ['doctor'],
   // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)
   'POST /internal/audio-assets': 'service',
   'POST /internal/audio-assets/:id/deleted': 'service',

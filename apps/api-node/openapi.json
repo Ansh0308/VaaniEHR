@@ -2325,7 +2325,8 @@
         ],
         "x-audit-actions": [
           "CONSENT_WITHDRAWN",
-          "TRANSCRIPT_DRAFT_DELETED"
+          "TRANSCRIPT_DRAFT_DELETED",
+          "PATHWAY_DATA_DELETED"
         ]
       }
     },
@@ -2870,6 +2871,10 @@
                 "FACT_CONFIRMED",
                 "FACT_REJECTED",
                 "FACT_EDITED",
+                "QUESTION_ACTED",
+                "RED_FLAG_ACKNOWLEDGED",
+                "CANDIDATE_SELECTED",
+                "PATHWAY_DATA_DELETED",
                 "MEDICINE_IMPORTED",
                 "MEDICINE_CODES_LOADED",
                 "MEDICINE_TRANSLIT_LOADED",
@@ -3077,6 +3082,10 @@
                       "FACT_CONFIRMED",
                       "FACT_REJECTED",
                       "FACT_EDITED",
+                      "QUESTION_ACTED",
+                      "RED_FLAG_ACKNOWLEDGED",
+                      "CANDIDATE_SELECTED",
+                      "PATHWAY_DATA_DELETED",
                       "MEDICINE_IMPORTED",
                       "MEDICINE_CODES_LOADED",
                       "MEDICINE_TRANSLIT_LOADED",
@@ -9341,6 +9350,819 @@
         ],
         "x-audit-actions": [
           "FACTS_EXTRACTED"
+        ]
+      }
+    },
+    "/sessions/{id}/questions/next": {
+      "get": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: the next suggested question, or a red flag, or \"more information needed\" (rules only, no language model)",
+        "operationId": "getSessionsIdQuestionsNext",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "outcome": {
+                          "type": "string",
+                          "enum": [
+                            "QUESTION",
+                            "RED_FLAG",
+                            "ABSTAIN",
+                            "COMPLETE"
+                          ]
+                        },
+                        "eventId": {
+                          "nullable": true,
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "eventStatus": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pathwayId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pathwayVersion": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "slot": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ask": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reasonText": {
+                          "type": "string"
+                        },
+                        "redFlags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "questionsUsed": {
+                          "type": "number"
+                        },
+                        "questionCap": {
+                          "type": "number"
+                        },
+                        "slotConflicts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "outcome",
+                        "eventId",
+                        "eventStatus",
+                        "nodeId",
+                        "pathwayId",
+                        "pathwayVersion",
+                        "slot",
+                        "ask",
+                        "reasonText",
+                        "redFlags",
+                        "questionsUsed",
+                        "questionCap",
+                        "slotConflicts"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "question.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/questions/{eventId}/action": {
+      "post": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: record what was done with a suggested question (asked, dismissed, snoozed) or acknowledge a red flag",
+        "operationId": "postSessionsIdQuestionsEventIdAction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "asked",
+                      "dismissed",
+                      "snoozed",
+                      "acknowledged"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "question.act",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "QUESTION_ACTED",
+          "RED_FLAG_ACKNOWLEDGED"
+        ]
+      }
+    },
+    "/sessions/{id}/candidates": {
+      "get": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: the top candidate conditions with evidence for and against, and the doctor's working condition if chosen",
+        "operationId": "getSessionsIdCandidates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "outcome": {
+                          "type": "string",
+                          "enum": [
+                            "QUESTION",
+                            "RED_FLAG",
+                            "ABSTAIN",
+                            "COMPLETE"
+                          ]
+                        },
+                        "notice": {
+                          "type": "string"
+                        },
+                        "candidates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "rank": {
+                                "type": "number"
+                              },
+                              "pathwayId": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "score": {
+                                "type": "number"
+                              },
+                              "evidenceFor": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "slot": {
+                                      "type": "string"
+                                    },
+                                    "nodeId": {
+                                      "nullable": true,
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "slot",
+                                    "nodeId"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "evidenceAgainst": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "slot": {
+                                      "type": "string"
+                                    },
+                                    "nodeId": {
+                                      "nullable": true,
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "slot",
+                                    "nodeId"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "source": {
+                                "type": "object",
+                                "properties": {
+                                  "doc": {
+                                    "type": "string"
+                                  },
+                                  "page": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "doc",
+                                  "page"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "rank",
+                              "pathwayId",
+                              "version",
+                              "title",
+                              "score",
+                              "evidenceFor",
+                              "evidenceAgainst",
+                              "source"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "selected": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "notListed": {
+                              "type": "boolean"
+                            },
+                            "pathwayId": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "version": {
+                              "nullable": true,
+                              "type": "number"
+                            },
+                            "title": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "text": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "selectedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "notListed",
+                            "pathwayId",
+                            "version",
+                            "title",
+                            "text",
+                            "selectedAt"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "outcome",
+                        "notice",
+                        "candidates",
+                        "selected"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "candidate.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/candidates/select": {
+      "post": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: choose a working condition from the loaded pathways, or record \"not listed\" with a short note",
+        "operationId": "postSessionsIdCandidatesSelect",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "pathwayId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "pathwayId",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "notListed": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      },
+                      "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "notListed",
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "notListed": {
+                          "type": "boolean"
+                        },
+                        "pathwayId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "version": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "title": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "text": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "selectedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "notListed",
+                        "pathwayId",
+                        "version",
+                        "title",
+                        "text",
+                        "selectedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "candidate.select",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "CANDIDATE_SELECTED"
         ]
       }
     }

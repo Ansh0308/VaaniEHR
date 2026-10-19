@@ -1,5 +1,6 @@
 // Validated configuration (NFR-SEC-04: no secrets in code; fail fast on missing/unsafe config).
 // Error messages name the offending variable but never echo its value.
+import { resolve } from 'node:path';
 import { z } from 'zod';
 
 const PLACEHOLDER = /^REPLACE_ME/i;
@@ -30,6 +31,13 @@ const rawSchema = z.object({
   LOCKOUT_MAX_FAILURES: z.coerce.number().int().min(1).max(100).default(5),
   LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
+  // Phase 6A: pathway files. Only status "active" loads unless PATHWAYS_ALLOW_TEST=true (refused in production).
+  PATHWAYS_DIR: z.string().min(1).optional(),
+  PATHWAYS_ALLOW_TEST: z.enum(['true', 'false']).default('false'),
+  PATHWAYS_SLOT_MAP: z.string().min(1).optional(),
+  PATHWAY_QUESTION_CAP: z.coerce.number().int().min(0).max(50).optional(),
+  PATHWAY_ABSTAIN_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
+  PATHWAY_AGAINST_PENALTY: z.coerce.number().min(0).max(1).optional(),
 });
 
 export interface Config {
@@ -50,6 +58,14 @@ export interface Config {
   lockoutMaxFailures: number;
   lockoutMs: number;
   bcryptCost: number;
+  pathways: {
+    /** folder with *.pathway.json (default: data/pathways at the repository root) */
+    dir: string;
+    allowTest: boolean;
+    slotMapFile: string | undefined;
+    /** overrides of the engine defaults; validated by the engine's own parser */
+    engine: Record<string, number>;
+  };
 }
 
 export class ConfigError extends Error {
@@ -103,6 +119,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (v.BCRYPT_COST < 10 && v.NODE_ENV !== 'test') {
     problems.push('BCRYPT_COST: must be at least 10 outside tests (default 12)');
   }
+  if (v.PATHWAYS_ALLOW_TEST === 'true' && v.NODE_ENV === 'production') {
+    problems.push('PATHWAYS_ALLOW_TEST: test pathways cannot be loaded when NODE_ENV=production');
+  }
   if (v.AUTH_PROVIDER === 'clinicos' && !v.CLINICOS_BASE_URL) {
     problems.push('CLINICOS_BASE_URL: is required when AUTH_PROVIDER=clinicos');
   }
@@ -126,5 +145,19 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     lockoutMaxFailures: v.LOCKOUT_MAX_FAILURES,
     lockoutMs: v.LOCKOUT_MINUTES * 60_000,
     bcryptCost: v.BCRYPT_COST,
+    pathways: {
+      dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../data/pathways'),
+      allowTest: v.PATHWAYS_ALLOW_TEST === 'true',
+      slotMapFile: v.PATHWAYS_SLOT_MAP,
+      engine: {
+        ...(v.PATHWAY_QUESTION_CAP === undefined ? {} : { question_cap: v.PATHWAY_QUESTION_CAP }),
+        ...(v.PATHWAY_ABSTAIN_THRESHOLD === undefined
+          ? {}
+          : { abstain_threshold: v.PATHWAY_ABSTAIN_THRESHOLD }),
+        ...(v.PATHWAY_AGAINST_PENALTY === undefined
+          ? {}
+          : { against_penalty: v.PATHWAY_AGAINST_PENALTY }),
+      },
+    },
   };
 }

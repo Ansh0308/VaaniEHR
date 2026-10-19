@@ -1,6 +1,7 @@
 // Helpers for tests that run against real PostgreSQL. Each test file gets its own throw-away database cloned from the
 // migrated template, with the seed data loaded (cheap bcrypt cost), the real app wiring, and ready-made logins.
 import { randomBytes } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import type { Express } from 'express';
 import pg from 'pg';
 import '../../src/db/types.js';
@@ -69,6 +70,16 @@ export interface Harness {
   close: () => Promise<void>;
 }
 
+const TOY_DIR = fileURLToPath(
+  new URL('../../../../packages/rules/fixtures/pathways', import.meta.url),
+);
+/** The fake toy pathways, allowed only because this is a test harness. */
+export const TOY_PATHWAYS_ENV = {
+  PATHWAYS_DIR: TOY_DIR,
+  PATHWAYS_ALLOW_TEST: 'true',
+  PATHWAYS_SLOT_MAP: `${TOY_DIR}/_toy/slot-map.json`,
+} as const;
+
 export const SEED_EMAIL = {
   admin: 'admin@example.invalid',
   doctor1: 'doctor1@example.invalid',
@@ -88,6 +99,7 @@ export async function createHarness(
     DATABASE_URL: db.appUrl,
     BCRYPT_COST: '4',
     LOGIN_RATE_LIMIT_MAX: '1000', // the rate-limit tests lower this explicitly
+    ...TOY_PATHWAYS_ENV, // fake toy pathways (status test); real pathways are never loaded by tests
     ...envOverrides,
   });
   const appPool = createPool(config.databaseUrl);

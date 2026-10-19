@@ -175,6 +175,16 @@ const fixture = (route: RouteDef): Call => {
         facts: [],
       },
     },
+    'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },
+    'POST /sessions/:id/questions/:eventId/action': {
+      path: `/sessions/${consentedSessionId}/questions/${consentedSessionId}/action`,
+      body: { action: 'asked' },
+    },
+    'GET /sessions/:id/candidates': { path: `/sessions/${consentedSessionId}/candidates` },
+    'POST /sessions/:id/candidates/select': {
+      path: `/sessions/${consentedSessionId}/candidates/select`,
+      body: { notListed: true, text: 'fixture note' },
+    },
     'GET /sessions/:id/transcript': { path: `/sessions/${consentedSessionId}/transcript` },
     'PUT /sessions/:id/transcript/segments': {
       path: `/sessions/${consentedSessionId}/transcript/segments`,
