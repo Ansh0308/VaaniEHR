@@ -43,6 +43,14 @@ export interface QuestionNode {
   /** one line: why the question is suggested ("asks because ...") */
   reason: Localized;
   info_weight: number;
+  /** the exact sentence copied from the source document (required on every node of an ACTIVE pathway) */
+  source_quote?: string;
+  /** the page of the source document the quote is on */
+  page?: string | number;
+  /** overrides the pathway's reviewer for this node; absent = the pathway's source.reviewed_by */
+  reviewed_by?: string;
+  /** internal concept id of the slot (not a SNOMED id); a missing one is only a lint warning */
+  concept_id?: string;
   /** if the slot has this value, the engine raises a red flag */
   red_flag_if?: Condition;
   edges?: Edge[];
@@ -52,6 +60,11 @@ export interface TerminalNode {
   id: string;
   type: 'terminal';
   label: Localized;
+  source_quote?: string;
+  page?: string | number;
+  reviewed_by?: string;
+  /** PRD 7.1 terminal flag: this end of the pathway means "refer". Treatment content is Phase 7, not here. */
+  refer?: boolean;
 }
 
 export type PathwayNode = QuestionNode | TerminalNode;

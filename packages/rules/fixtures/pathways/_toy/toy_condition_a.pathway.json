@@ -46,7 +46,8 @@
           },
           "to": "t1"
         }
-      ]
+      ],
+      "concept_id": "toy_c_toy_symptom_1"
     },
     {
       "id": "q2",
@@ -79,7 +80,8 @@
           },
           "to": "t1"
         }
-      ]
+      ],
+      "concept_id": "toy_c_toy_symptom_2"
     },
     {
       "id": "q3",
@@ -114,7 +116,8 @@
         "en": "Toy end of pathway A",
         "gu": "[TOY-GU] Toy end of pathway A",
         "hi": "[TOY-HI] Toy end of pathway A"
-      }
+      },
+      "refer": false
     }
   ],
   "rules": [

@@ -7,7 +7,7 @@ import { runCases, type CaseFile } from './cases.js';
 import { DEFAULT_ENGINE_CONFIG } from './config.js';
 import { loadPathwayDir, lockActive, pathwayHash } from './loader.js';
 import { factsToSlots, parseSlotMap } from './slots.js';
-import { CASES_DIR, TOY_DIR, clone, readJson, toyPathways } from './testutil.js';
+import { CASES_DIR, TOY_DIR, clone, readJson, toyPathways, withTrail } from './testutil.js';
 import {
   REQUIRED_PATHWAY_KEYS,
   REQUIRED_SOURCE_KEYS,
@@ -48,9 +48,47 @@ describe('validator', () => {
     expect(errorsOf(p)).toMatch(/reviewed_on/);
     p.source.reviewed_by = 'Dr Fake Reviewer';
     p.source.reviewed_on = '2026-10-01';
+    withTrail(p);
     expect(validatePathway(p).errors).toEqual([]);
     p.source.reviewed_by = '   ';
     expect(errorsOf(p)).toMatch(/reviewed_by/);
+  });
+  it('an ACTIVE pathway needs source_quote, page and a reviewer on every node; a test one is exempt', () => {
+    const p = withTrail(toy());
+    p.status = 'active';
+    p.source.reviewed_by = 'Dr Fake Reviewer';
+    p.source.reviewed_on = '2026-10-01';
+    expect(validatePathway(p).errors).toEqual([]);
+    delete p.nodes[1].source_quote;
+    delete p.nodes[2].page;
+    delete p.nodes[p.nodes.length - 1].refer;
+    const e = errorsOf(p);
+    expect(e).toMatch(/node q2: an active pathway needs source_quote/);
+    expect(e).toMatch(/node q3: an active pathway needs page/);
+    expect(e).toMatch(/terminal needs the refer flag/);
+    const t = toy(); // status test: no trail needed
+    expect(t.status).toBe('test');
+    expect(validatePathway(t).errors).toEqual([]);
+  });
+  it('a node may carry its own reviewer; without one the pathway reviewer counts', () => {
+    const p = withTrail(toy());
+    p.status = 'active';
+    p.source.reviewed_on = '2026-10-01';
+    p.source.reviewed_by = '';
+    p.nodes.forEach((n: Record<string, unknown>) => (n.reviewed_by = 'Dr Fake Reviewer'));
+    expect(errorsOf(p)).not.toMatch(/needs a reviewer/);
+    delete p.nodes[0].reviewed_by;
+    expect(errorsOf(p)).toMatch(/node q1: an active pathway needs a reviewer/);
+  });
+  it('wrong types in the optional trail fields are refused even on a test pathway', () => {
+    const p = toy();
+    p.nodes[0].source_quote = '  ';
+    p.nodes[0].page = -2;
+    p.nodes[p.nodes.length - 1].refer = 'yes';
+    const e = errorsOf(p);
+    expect(e).toMatch(/source_quote must be a non-empty text/);
+    expect(e).toMatch(/page must be a page number or text/);
+    expect(e).toMatch(/refer must be true or false/);
   });
   it('refuses diagnosis, medicine and treatment wording', () => {
     const p = toy();
@@ -105,6 +143,7 @@ describe('loader and versions', () => {
     p.version = version;
     p.source.reviewed_by = 'Dr Fake Reviewer';
     p.source.reviewed_on = '2026-10-01';
+    withTrail(p);
     return { ...p, ...over };
   };
 

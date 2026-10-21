@@ -189,6 +189,37 @@ export function validatePathway(raw: unknown, label = 'pathway'): Problems {
     errors.push(`${at}: start must name a question node`);
   }
 
+  // per-node source trail (Phase 6B): an ACTIVE pathway must show, for every node, the exact source sentence, its
+  // page and a reviewer; test and draft pathways are exempt (lint reports what is still missing)
+  const pathwayReviewer = source && nonEmpty(source.reviewed_by) ? source.reviewed_by : '';
+  for (const [nid, n] of byId) {
+    const where = `${at} node ${nid}`;
+    if ('source_quote' in n && !nonEmpty(n.source_quote) && n.source_quote !== undefined) {
+      errors.push(`${where}: source_quote must be a non-empty text`);
+    }
+    if ('page' in n && !(nonEmpty(n.page) || (typeof n.page === 'number' && n.page >= 0))) {
+      errors.push(`${where}: page must be a page number or text`);
+    }
+    if ('refer' in n && typeof n.refer !== 'boolean')
+      errors.push(`${where}: refer must be true or false`);
+    if ('concept_id' in n && !nonEmpty(n.concept_id))
+      errors.push(`${where}: concept_id must be a non-empty text`);
+    if (raw.status !== 'active') continue;
+    if (!nonEmpty(n.source_quote))
+      errors.push(`${where}: an active pathway needs source_quote on every node`);
+    if (!(nonEmpty(n.page) || (typeof n.page === 'number' && n.page >= 0))) {
+      errors.push(`${where}: an active pathway needs page on every node`);
+    }
+    if (!nonEmpty(n.reviewed_by) && !pathwayReviewer) {
+      errors.push(
+        `${where}: an active pathway needs a reviewer (node reviewed_by or source.reviewed_by)`,
+      );
+    }
+    if (n.type === 'terminal' && typeof n.refer !== 'boolean') {
+      errors.push(`${where}: an active terminal needs the refer flag (true or false)`);
+    }
+  }
+
   // reachability from start along edges (every node must be reachable)
   if (typeof raw.start === 'string' && byId.has(raw.start)) {
     const seen = new Set<string>([raw.start]);

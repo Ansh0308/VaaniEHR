@@ -28,3 +28,13 @@ export function rng(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** Fills the per-node source trail with FAKE values so a toy pathway can stand in for an active one in tests. */
+export function withTrail<T extends object>(p: T): T {
+  for (const n of (p as { nodes: Record<string, unknown>[] }).nodes) {
+    n.source_quote = `TOY quote for ${String(n.id)}`;
+    n.page = 1;
+    if (n.type === 'terminal') n.refer = false;
+  }
+  return p;
+}

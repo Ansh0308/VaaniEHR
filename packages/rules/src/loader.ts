@@ -11,6 +11,9 @@ import { validateSet } from './validate.js';
 
 export const LOCK_FILE = 'pathways.lock.json';
 export type Lock = Record<string, string>;
+// The lock file is {"source": "...", "hashes": {"id@version": sha256}}. It carries a source note so that it can live
+// in seed/pathways (ADR-D18). The older flat map is still read.
+const LOCK_SOURCE = 'pathway content hashes (immutability lock), written by the lock command';
 
 export interface LoadOptions {
   /** load status "test" pathways too (dev and tests only) */
@@ -52,7 +55,12 @@ function walk(dir: string): string[] {
 
 export function readLock(dir: string): Lock {
   const file = join(dir, LOCK_FILE);
-  return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as Lock) : {};
+  if (!existsSync(file)) return {};
+  const raw = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+  const hashes = raw.hashes;
+  if (typeof hashes === 'object' && hashes !== null) return hashes as Lock;
+  const { source: _ignored, ...flat } = raw;
+  return flat as Lock;
 }
 
 export function loadPathwayDir(dir: string, options: LoadOptions): Loaded {
@@ -66,13 +74,14 @@ export function loadPathwayDir(dir: string, options: LoadOptions): Loaded {
       problems.push(`${file}: not valid JSON`);
     }
   }
-  problems.push(...validateSet(items).errors);
+  // only files that can be used are checked: a draft being written never stops the service from starting
+  const usable = items.filter(({ data }) => {
+    const status = (data as { status?: unknown } | null)?.status;
+    return status === 'active' || (status === 'test' && options.allowTest);
+  });
+  problems.push(...validateSet(usable).errors);
   const lock = readLock(dir);
-  const eligible: Pathway[] = [];
-  for (const { data } of items) {
-    const p = data as Pathway;
-    if (p.status === 'active' || (p.status === 'test' && options.allowTest)) eligible.push(p);
-  }
+  const eligible = usable.map(({ data }) => data as Pathway);
   for (const p of eligible.filter((x) => x.status === 'active')) {
     const key = `${p.id}@${p.version}`;
     const recorded = lock[key];
@@ -107,7 +116,23 @@ export function lockActive(dir: string): { added: string[]; problems: string[] }
     }
   }
   if (problems.length === 0 && added.length > 0) {
-    writeFileSync(join(dir, LOCK_FILE), `${JSON.stringify(lock, null, 2)}\n`, 'utf8');
+    const body = { source: LOCK_SOURCE, hashes: lock };
+    writeFileSync(join(dir, LOCK_FILE), `${JSON.stringify(body, null, 2)}\n`, 'utf8');
   }
   return { added, problems };
+}
+
+/** Every usable version of every pathway (for the read-only viewer's version history), newest version first per id. */
+export function loadAllVersions(dir: string, options: LoadOptions): Pathway[] {
+  if (!existsSync(dir)) return [];
+  const out: Pathway[] = [];
+  for (const file of walk(dir)) {
+    try {
+      const p = JSON.parse(readFileSync(file, 'utf8')) as Pathway;
+      if (p.status === 'active' || (p.status === 'test' && options.allowTest)) out.push(p);
+    } catch {
+      // an unreadable file is reported by loadPathwayDir, never shown
+    }
+  }
+  return out.sort((a, b) => a.id.localeCompare(b.id) || b.version - a.version);
 }

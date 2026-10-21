@@ -59,6 +59,20 @@
         "outcome": "COMPLETE",
         "top": "toy_condition_c"
       }
+    },
+    {
+      "name": "C: symptom 6 absent ends the chain with a weaker score",
+      "slots": {
+        "toy_symptom_1": false,
+        "toy_symptom_2": true,
+        "toy_symptom_5": true,
+        "toy_symptom_6": false
+      },
+      "expect": {
+        "outcome": "COMPLETE",
+        "top": "toy_condition_c",
+        "max_score": 0.9
+      }
     }
   ]
 }

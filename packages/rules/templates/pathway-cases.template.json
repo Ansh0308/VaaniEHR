@@ -1,0 +1,31 @@
+{
+  "description": "TEMPLATE for the owner and the clinician. Copy to <pathway_id>.cases.json beside the other case files, replace every TODO, delete this line. Slots are CONFIRMED slot values; node keys are pathwayId/nodeId. Write the expected result from the SOURCE document, never from what the engine happens to do. No treatment content here (Phase 7).",
+  "cases": [
+    {
+      "name": "TODO: one readable sentence, for example 'nothing known: the first question is asked'",
+      "slots": {},
+      "asked": [],
+      "dismissed": [],
+      "snoozed": [],
+      "expect": {
+        "outcome": "QUESTION",
+        "node": "TODO_pathway_id/TODO_node_id"
+      }
+    },
+    {
+      "name": "TODO: a red-flag case: the slot value that makes the source say 'refer' or 'danger sign'",
+      "slots": { "TODO_slot": true },
+      "expect": { "outcome": "RED_FLAG", "node": "TODO_pathway_id/TODO_node_id" }
+    },
+    {
+      "name": "TODO: a case where the answers fit this condition well (give top and min_score)",
+      "slots": { "TODO_slot": true },
+      "expect": { "outcome": "COMPLETE", "top": "TODO_pathway_id", "min_score": 0.5 }
+    },
+    {
+      "name": "TODO: a case where nothing fits and the engine should say 'need more information'",
+      "slots": { "TODO_slot": false },
+      "expect": { "outcome": "ABSTAIN" }
+    }
+  ]
+}

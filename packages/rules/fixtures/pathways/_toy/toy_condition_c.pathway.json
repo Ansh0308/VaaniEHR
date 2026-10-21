@@ -46,7 +46,8 @@
           },
           "to": "t1"
         }
-      ]
+      ],
+      "concept_id": "toy_c_toy_symptom_2"
     },
     {
       "id": "q2",
@@ -79,7 +80,8 @@
           },
           "to": "t1"
         }
-      ]
+      ],
+      "concept_id": "toy_c_toy_symptom_5"
     },
     {
       "id": "q3",
@@ -112,7 +114,8 @@
           },
           "to": "t1"
         }
-      ]
+      ],
+      "concept_id": "toy_c_toy_symptom_6"
     },
     {
       "id": "t1",
@@ -121,7 +124,8 @@
         "en": "Toy end of pathway C",
         "gu": "[TOY-GU] Toy end of pathway C",
         "hi": "[TOY-HI] Toy end of pathway C"
-      }
+      },
+      "refer": false
     }
   ],
   "rules": [
