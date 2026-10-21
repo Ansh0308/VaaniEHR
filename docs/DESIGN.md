@@ -92,3 +92,8 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 ## Phase 6B pattern (pathway viewer)
 - **PathwaysPage:** read only. One pathway chosen from a select (44px), a plain banner "Draft - not clinically reviewed" for anything that is not active and signed off, a summary, the version history (each older version opens through the API), the nodes as cards (never a wide table, so it holds at 375px), and the scoring rules. Each card shows the node id, its type, the slot and answer type, red-flag condition, the text in English, Gujarati and Hindi each with its own `lang`, the exact source sentence in a left-ruled quote with its page, and the next steps; a missing source sentence says so in words. No editing controls exist on the page, and a test checks that.
 - All new Gujarati strings are placeholders and need review by a Gujarati speaker and the clinician.
+
+## Phase 6C patterns (pathway panels)
+- **RedFlagBanner:** `role="alert"`, a 2px ink border with a warning icon and words (never colour alone), the neutral line "Pathway red-flag condition met - doctor to review", one 44px Acknowledge button, and the line that it stays until acknowledged. No advice text.
+- **QuestionPanel and CandidatesPanel:** single column cards at 375px; every action is a 44px labelled button; the line "Suggestions are aids; the doctor decides." and, for non-active pathways, the dashed "Test pathway - not clinical" tag sit at the top of both. No score, percentage or confidence anywhere. Without consent the panels show one plain sentence and the doctor's kept decisions read only.
+- New Gujarati strings are placeholders and need review.

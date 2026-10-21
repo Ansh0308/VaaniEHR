@@ -53,3 +53,11 @@ Red flags first (a slot whose value matches a node's `red_flag_if` gives RED_FLA
 - Per node: `source_quote` (exact sentence), `page`, optional `reviewed_by`, optional `concept_id` (questions), `refer` (terminals). An ACTIVE pathway needs `source_quote`, `page`, a reviewer and the `refer` flag on every node it has; test pathways are exempt.
 - Authoring commands, folders and the review steps: `docs/PATHWAY_AUTHORING.md`. Where files live: `seed/pathways/` (active, tracked, locked), `data/pathways/drafts/` (drafts, git-ignored), `packages/rules/fixtures/pathways/_toy/` (fake, tests).
 - `npm run pathway:lint`, `pathway:new`, `pathway:version`, `pathways:coverage` exist beside `pathways:validate`, `:lock`, `:cases`.
+
+## Phase 6C: the doctor-side screens (UI)
+- **Where:** the consult screen (`/consult/:sessionId`), doctor only. A red-flag notice at the top, then below the facts: **Suggested questions** and **Candidate conditions**. Both hold the line "Suggestions are aids; the doctor decides." and, while any loaded pathway is not active, "Test pathway - not clinical".
+- **Questions:** the next suggested question (language select: en, gu, hi), why it is suggested, the slot, `Asked`, `Dismiss`, `Snooze`. A red flag shows a notice (alert, icon plus words) until `Acknowledge` is pressed. "Not enough information, no suggestion." and "No further questions from the pathway." are the other two outcomes.
+- **Candidates:** up to three, each with supporting and opposing facts (the confirmed facts that set the slots), its source document and page, `Select as working condition` and `Undo`, plus a "not listed" note. No score, percentage or confidence is shown.
+- **Consent withdrawn:** the panels explain in plain words, offer nothing, and show the doctor's kept decisions (working condition, acknowledged red flags) read only, from `GET /sessions/:id/pathway-record`.
+- **API additions:** `GET /sessions/:id/pathway-record`, `POST /sessions/:id/candidates/select/undo`; evidence carries `factId`; answers carry `notActive`, `pathwayTitle`, `pathwayStatus`.
+- **Words:** "candidates" and "working condition"; the screens never say diagnosis, prescribe or treat (a web test enforces it).
