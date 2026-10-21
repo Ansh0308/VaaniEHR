@@ -146,7 +146,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     lockoutMs: v.LOCKOUT_MINUTES * 60_000,
     bcryptCost: v.BCRYPT_COST,
     pathways: {
-      dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../data/pathways'),
+      dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../seed/pathways'),
       allowTest: v.PATHWAYS_ALLOW_TEST === 'true',
       slotMapFile: v.PATHWAYS_SLOT_MAP,
       engine: {

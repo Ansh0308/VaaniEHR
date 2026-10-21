@@ -29,7 +29,7 @@
 ```bash
 npm run pathways:validate -- packages/rules/fixtures/pathways --allow-test   # exit 1 on any problem
 npm run pathways:cases -- packages/rules/fixtures/pathways packages/rules/fixtures/cases
-npm run pathways:lock -- data/pathways                                       # records active versions; never edits an entry
+npm run pathways:lock -- seed/pathways                                       # records active versions; never edits an entry
 ```
 `npm run check` runs the first two on the toy fixtures.
 

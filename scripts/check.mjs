@@ -28,17 +28,25 @@ const steps = [
     () => run(node, ['scripts/sbom.mjs', '--reasons-only']),
   ],
   [
-    'guard: pathways validate + regression cases (toy fixtures)',
+    'guard: pathways (toy validate, cases, coverage, lint; seed/pathways validate + lock)',
     () => {
       const cli = ['--import', 'tsx', 'packages/rules/src/cli.ts'];
-      const v = run(node, [...cli, 'validate', 'packages/rules/fixtures/pathways', '--allow-test']);
-      if (v.status !== 0) return v;
-      return run(node, [
-        ...cli,
-        'cases',
-        'packages/rules/fixtures/pathways',
-        'packages/rules/fixtures/cases',
-      ]);
+      const toy = 'packages/rules/fixtures/pathways';
+      const cases = 'packages/rules/fixtures/cases';
+      const steps = [
+        ['validate', toy, '--allow-test'],
+        ['cases', toy, cases],
+        ['coverage', toy, cases, '--fail-under', '100'],
+        ['lint', toy],
+        // the real, tracked pathways (ADR-D18): must validate and be locked; an empty folder passes
+        ['validate', 'seed/pathways'],
+      ];
+      let last = { status: 0 };
+      for (const step of steps) {
+        last = run(node, [...cli, ...step]);
+        if (last.status !== 0) return last;
+      }
+      return last;
     },
   ],
   ['python lint (ruff)', () => run(node, ['scripts/py.mjs', 'ruff'])],
