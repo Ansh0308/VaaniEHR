@@ -295,6 +295,82 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'consult screen with the pathway panels (toy)',
+    show: async (language) => {
+      const granted = {
+        granted: true,
+        since: '2026-10-17T10:00:00.000Z',
+        noticeVersion: '0.1',
+        noticeLanguage: 'en',
+        source: 'staff',
+      };
+      const base = noConsent();
+      const loc = (en: string) => ({ en, gu: `[TOY-GU] ${en}`, hi: `[TOY-HI] ${en}` });
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}`,
+        language,
+        routes: {
+          'GET /sessions/:id/consent': () => ({
+            data: {
+              ...base,
+              scopes: { ...base.scopes, audio: granted, ai_processing: granted },
+              recordingAllowed: true,
+            },
+          }),
+          'GET /sessions/:id/pathway-record': () => ({
+            data: { selected: null, acknowledgedRedFlags: [], notActive: true },
+          }),
+          'GET /sessions/:id/questions/next': () => ({
+            data: {
+              outcome: 'RED_FLAG',
+              eventId: 'e1',
+              eventStatus: 'suggested',
+              nodeId: 'toy_condition_b/q3',
+              pathwayId: 'toy_condition_b',
+              pathwayVersion: 1,
+              pathwayTitle: loc('Toy condition B').en,
+              pathwayStatus: 'test',
+              notActive: true,
+              slot: 'toy_redflag_1',
+              ask: null,
+              reasonText: 'Toy reason',
+              redFlags: ['toy_condition_b/q3'],
+              questionsUsed: 1,
+              questionCap: 8,
+              slotConflicts: [],
+            },
+          }),
+          'GET /sessions/:id/candidates': () => ({
+            data: {
+              outcome: 'RED_FLAG',
+              notice: 'x',
+              notActive: true,
+              selected: null,
+              candidates: [
+                {
+                  rank: 1,
+                  pathwayId: 'toy_condition_a',
+                  version: 1,
+                  title: 'Toy condition A',
+                  status: 'test',
+                  score: 0.5,
+                  evidenceFor: [
+                    { ruleId: 'r1', slot: 'toy_symptom_1', nodeId: 'q1', factId: null },
+                  ],
+                  evidenceAgainst: [],
+                  source: { doc: 'TOY - not a real source', page: 0 },
+                },
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findByTestId('red-flag-banner');
+      await screen.findByText('Toy condition A', { exact: false });
+    },
+  },
+  {
     name: 'pathways viewer (toy)',
     show: async (language) => {
       const loc = (en: string) => ({ en, gu: `[TOY-GU] ${en}`, hi: `[TOY-HI] ${en}` });

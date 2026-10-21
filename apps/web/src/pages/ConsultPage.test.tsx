@@ -90,6 +90,33 @@ const open = (
     routes: {
       'GET /sessions/:id/consent': () => ({ data: consent }),
       'POST /sessions/:id/asr-token': () => ({ data: { token: 'tok-1', expiresInSeconds: 120 } }),
+      // no pathways loaded: the pathway aids stay quiet in the older tests
+      'GET /sessions/:id/pathway-record': () => ({
+        data: { selected: null, acknowledgedRedFlags: [], notActive: false },
+      }),
+      'GET /sessions/:id/questions/next': () => ({
+        data: {
+          outcome: 'ABSTAIN',
+          eventId: null,
+          eventStatus: null,
+          nodeId: null,
+          pathwayId: null,
+          pathwayVersion: null,
+          pathwayTitle: null,
+          pathwayStatus: null,
+          notActive: false,
+          slot: null,
+          ask: null,
+          reasonText: 'more information needed',
+          redFlags: [],
+          questionsUsed: 0,
+          questionCap: 8,
+          slotConflicts: [],
+        },
+      }),
+      'GET /sessions/:id/candidates': () => ({
+        data: { outcome: 'ABSTAIN', notice: 'x', notActive: false, candidates: [], selected: null },
+      }),
       ...extra,
     },
   });
@@ -569,5 +596,166 @@ describe('facts panel', () => {
       'GET /sessions/:id/facts': () => list([heard({ status: 'stale' })]),
     });
     expect(await screen.findByText('Text changed - re-check')).toBeTruthy();
+  });
+});
+
+describe('pathway aids on the consult screen', () => {
+  const toyNext = (over: Record<string, unknown> = {}) => ({
+    outcome: 'QUESTION',
+    eventId: 'e1',
+    eventStatus: 'suggested',
+    nodeId: 'toy_condition_a/q2',
+    pathwayId: 'toy_condition_a',
+    pathwayVersion: 1,
+    pathwayTitle: 'Toy condition A',
+    pathwayStatus: 'test',
+    notActive: true,
+    slot: 'toy_symptom_2',
+    ask: 'Toy question: is toy symptom 2 present?',
+    reasonText: 'Toy reason',
+    redFlags: [],
+    questionsUsed: 0,
+    questionCap: 8,
+    slotConflicts: [],
+    ...over,
+  });
+  const candidates = (selected: unknown = null) => ({
+    data: {
+      outcome: 'QUESTION',
+      notice: 'x',
+      notActive: true,
+      selected,
+      candidates: [
+        {
+          rank: 1,
+          pathwayId: 'toy_condition_a',
+          version: 1,
+          title: 'Toy condition A',
+          status: 'test',
+          score: 0.5,
+          evidenceFor: [{ ruleId: 'r1', slot: 'toy_symptom_1', nodeId: 'q1', factId: null }],
+          evidenceAgainst: [],
+          source: { doc: 'TOY - not a real source', page: 0 },
+        },
+      ],
+    },
+  });
+
+  it('question -> asked -> red flag banner -> acknowledge -> working condition -> undo; nothing happens by itself', async () => {
+    let phase: 'question' | 'redflag' | 'acknowledged' = 'question';
+    let selected: unknown = null;
+    const app = await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/questions/next': () => ({
+        data:
+          phase === 'question'
+            ? toyNext()
+            : toyNext({
+                outcome: 'RED_FLAG',
+                eventId: 'e2',
+                eventStatus: phase === 'redflag' ? 'suggested' : 'acknowledged',
+                ask: null,
+                reasonText: 'Toy reason: the toy warning sign',
+              }),
+      }),
+      'POST /sessions/:id/questions/:eventId/action': (req) => {
+        phase =
+          (req.body as { action: string }).action === 'acknowledged' ? 'acknowledged' : 'redflag';
+        return { data: { id: req.params.eventId ?? 'e1', status: 'x' } };
+      },
+      'GET /sessions/:id/candidates': () => candidates(selected),
+      'POST /sessions/:id/candidates/select': () => {
+        selected = {
+          notListed: false,
+          pathwayId: 'toy_condition_a',
+          version: 1,
+          title: 'Toy condition A',
+          text: null,
+          selectedAt: '2026-10-21T10:00:00.000Z',
+        };
+        return { status: 201, data: selected };
+      },
+      'POST /sessions/:id/candidates/select/undo': () => {
+        selected = null;
+        return { data: { undone: true } };
+      },
+    });
+    const questions = await screen.findByRole('region', { name: 'Suggested questions' });
+    await within(questions).findByText('Toy question: is toy symptom 2 present?');
+    expect(within(questions).getByText('Test pathway - not clinical')).toBeTruthy();
+    expect(app.callsTo('POST', `/sessions/${SESSION}/questions/e1/action`)).toHaveLength(0); // nothing by itself
+    expect(screen.queryByTestId('red-flag-banner')).toBeNull();
+
+    fireEvent.click(within(questions).getByRole('button', { name: 'Asked' }));
+    const banner = await screen.findByTestId('red-flag-banner');
+    expect(banner.getAttribute('role')).toBe('alert');
+    expect(banner.textContent).toContain('Pathway red-flag condition met - doctor to review');
+    fireEvent.click(within(banner).getByRole('button', { name: 'Acknowledge' }));
+    await waitFor(() => expect(screen.queryByTestId('red-flag-banner')).toBeNull());
+    expect(
+      app.callsTo('POST', `/sessions/${SESSION}/questions/e2/action`).map((c) => c.body),
+    ).toEqual([{ action: 'acknowledged' }]);
+
+    const panel = await screen.findByRole('region', { name: 'Candidate conditions' });
+    fireEvent.click(
+      await within(panel).findByRole('button', { name: 'Select as working condition' }),
+    );
+    expect(await within(panel).findByTestId('working-condition')).toBeTruthy();
+    expect(
+      app.callsTo('POST', `/sessions/${SESSION}/candidates/select`).map((c) => c.body),
+    ).toEqual([{ pathwayId: 'toy_condition_a', version: 1 }]);
+    fireEvent.click(within(panel).getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(within(panel).queryByTestId('working-condition')).toBeNull());
+    expect(app.callsTo('POST', `/sessions/${SESSION}/candidates/select/undo`)).toHaveLength(1);
+  });
+
+  it('with consent withdrawn both panels explain, offer nothing and ask for no suggestions', async () => {
+    const app = await open(consentWith(true, false), 'en', {
+      'GET /sessions/:id/pathway-record': () => ({
+        data: {
+          selected: {
+            notListed: false,
+            pathwayId: 'toy_condition_a',
+            version: 1,
+            title: 'Toy condition A',
+            text: null,
+            selectedAt: '2026-10-21T10:00:00.000Z',
+          },
+          acknowledgedRedFlags: [
+            {
+              eventId: 'r1',
+              pathwayId: 'toy_condition_b',
+              pathwayTitle: 'Toy condition B',
+              actedAt: '2026-10-21T10:00:00.000Z',
+            },
+          ],
+          notActive: true,
+        },
+      }),
+    });
+    const questions = await screen.findByRole('region', { name: 'Suggested questions' });
+    expect(await within(questions).findByText(/consent is not on record/)).toBeTruthy();
+    const candidatesPanel = screen.getByRole('region', { name: 'Candidate conditions' });
+    expect(within(candidatesPanel).getByText(/consent is not on record/)).toBeTruthy();
+    expect(within(candidatesPanel).getByText('Working condition: Toy condition A')).toBeTruthy();
+    expect(
+      within(questions).getByText(/red-flag condition acknowledged \(Toy condition B\)/),
+    ).toBeTruthy();
+    expect(within(questions).queryByRole('button', { name: 'Asked' })).toBeNull();
+    expect(
+      within(candidatesPanel).queryByRole('button', { name: 'Select as working condition' }),
+    ).toBeNull();
+    expect(app.callsTo('GET', `/sessions/${SESSION}/questions/next`)).toHaveLength(0);
+    expect(app.callsTo('GET', `/sessions/${SESSION}/candidates`)).toHaveLength(0);
+  });
+
+  it('a lost consent during a call turns into the plain explanation', async () => {
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/questions/next': () => ({
+        status: 403,
+        error: { code: 'CONSENT_REQUIRED', message: 'x' },
+      }),
+    });
+    const questions = await screen.findByRole('region', { name: 'Suggested questions' });
+    expect(await within(questions).findByText(/consent is not on record/)).toBeTruthy();
   });
 });

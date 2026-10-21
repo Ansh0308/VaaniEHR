@@ -11,11 +11,16 @@ import { errorText } from '../api/errorText';
 import type { ConsentState } from '../api/types';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
+import { CandidatesPanel } from '../components/clinical/CandidatesPanel';
 import { FactsPanel, type ExtractBlock } from '../components/clinical/FactsPanel';
+import { QuestionPanel } from '../components/clinical/QuestionPanel';
+import { RedFlagBanner } from '../components/clinical/RedFlagBanner';
 import { RecordBar } from '../components/clinical/RecordBar';
 import { TranscriptPane, type TranscriptSegment } from '../components/clinical/TranscriptPane';
 import { NeedsReview } from '../components/NeedsReview';
+import type { PathwayLang } from '../api/pathwayAids';
 import { useFacts, type Fact } from '../facts/useFacts';
+import { usePathwayAids } from '../facts/usePathwayAids';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Overlay';
@@ -35,6 +40,20 @@ export function ConsultPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const save = useTranscriptSave(sessionId, rec.segments, { onConfirmed: () => rec.lockAll() });
   const facts = useFacts(sessionId);
+  const consentOk =
+    consent.state.status === 'ready' &&
+    consent.state.data.scopes.audio.granted &&
+    consent.state.data.scopes.ai_processing.granted;
+  // Phase 6C: the pathway aids are read again when confirmed or rejected facts change, never on keystrokes
+  const [questionLang, setQuestionLang] = useState<PathwayLang>(
+    i18n.language === 'gu' ? 'gu' : 'en',
+  );
+  const refreshKey = facts.facts
+    .filter((f) => f.status === 'confirmed' || f.status === 'rejected')
+    .map((f) => `${f.id}:${f.status}`)
+    .sort()
+    .join(',');
+  const aids = usePathwayAids(sessionId, { lang: questionLang, consentOk, refreshKey });
   const [peek, setPeek] = useState<Fact | null>(null);
 
   // after a save the server may have marked facts stale (their words changed): read the list again
@@ -103,10 +122,6 @@ export function ConsultPage() {
       : []),
   ];
 
-  const consentOk =
-    consent.state.status === 'ready' &&
-    consent.state.data.scopes.audio.granted &&
-    consent.state.data.scopes.ai_processing.granted;
   const blocked: ExtractBlock = !consentOk
     ? 'consent'
     : rec.state === 'recording' || rec.state === 'connecting'
@@ -124,6 +139,12 @@ export function ConsultPage() {
         <p className="mt-1 text-base text-body">{t('consult:intro')}</p>
         {i18n.language === 'gu' ? <NeedsReview /> : null}
       </header>
+
+      <RedFlagBanner
+        next={aids.next}
+        busy={aids.busy}
+        onAcknowledge={(eventId) => void aids.act(eventId, 'acknowledged')}
+      />
 
       {consent.state.status === 'loading' ? (
         <Skeleton lines={2} label={t('consult:status.connecting')} />
@@ -183,6 +204,30 @@ export function ConsultPage() {
         onEdit={(id, body) => void facts.edit(id, body)}
         onAdd={facts.add}
         onPeek={setPeek}
+      />
+
+      <QuestionPanel
+        consentOk={consentOk}
+        loading={aids.loading}
+        busy={aids.busy}
+        error={aids.error}
+        next={aids.next}
+        record={aids.record}
+        lang={questionLang}
+        onLang={setQuestionLang}
+        onAct={(eventId, action) => void aids.act(eventId, action)}
+      />
+
+      <CandidatesPanel
+        consentOk={consentOk}
+        loading={aids.loading}
+        busy={aids.busy}
+        error={aids.error}
+        list={aids.candidates}
+        record={aids.record}
+        facts={facts.facts}
+        onSelect={(body) => void aids.select(body)}
+        onUndo={() => void aids.undo()}
       />
 
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card p-4">

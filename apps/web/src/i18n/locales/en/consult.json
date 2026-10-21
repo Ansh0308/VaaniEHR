@@ -125,5 +125,67 @@
     "addSave": "Add fact",
     "keys": "Keyboard: with a fact focused, press C to confirm, R to reject, E to edit. These keys do nothing while you type.",
     "arrived": "New facts arrived: {{count}}"
+  },
+  "pathway": {
+    "aid": "Suggestions are aids; the doctor decides.",
+    "testBanner": "Test pathway - not clinical",
+    "noConsent": "Audio and AI-processing consent is not on record, so the pathway aids are off and nothing is suggested.",
+    "loading": "Loading the suggestions",
+    "error": {
+      "load": "The suggestions could not be loaded. Try again in a moment.",
+      "save": "That action could not be saved. The list was refreshed."
+    },
+    "lang": {
+      "en": "English",
+      "gu": "Gujarati",
+      "hi": "Hindi"
+    },
+    "kept": {
+      "title": "Kept from before consent was withdrawn",
+      "readOnly": "These are the doctor's own decisions. They are shown read only.",
+      "redFlag": "Pathway red-flag condition acknowledged ({{title}})",
+      "working": "Working condition: {{title}}",
+      "notListed": "Working condition not listed: {{text}}"
+    },
+    "questions": {
+      "region": "Suggested questions",
+      "title": "Suggested questions",
+      "language": "Question language",
+      "why": "Suggested because:",
+      "slot": "Slot: {{slot}}",
+      "count": "{{used}} handled so far; at most {{cap}} are suggested",
+      "asked": "Asked",
+      "dismiss": "Dismiss",
+      "snooze": "Snooze",
+      "redFlagOpen": "A pathway red-flag condition is met. Review it in the notice above.",
+      "redFlagAcknowledged": "Pathway red-flag condition acknowledged. The pathway makes no further suggestions while it applies.",
+      "abstain": "Not enough information, no suggestion.",
+      "complete": "No further questions from the pathway.",
+      "conflict": "Confirmed facts disagree for: {{slots}}. These count as unknown."
+    },
+    "redFlag": {
+      "title": "Pathway red-flag condition met - doctor to review",
+      "acknowledge": "Acknowledge",
+      "stays": "This notice stays until you acknowledge it."
+    },
+    "candidates": {
+      "region": "Candidate conditions",
+      "title": "Candidates",
+      "none": "No candidates yet. Confirm facts to see candidates.",
+      "rank": "No. {{n}}:",
+      "supporting": "Supporting facts",
+      "against": "Facts against",
+      "factAbsent": "Not present: {{value}}",
+      "slotOnly": "{{slot}}",
+      "source": "Source: {{doc}}, page {{page}}",
+      "select": "Select as working condition",
+      "isSelected": "Working condition",
+      "undo": "Undo",
+      "working": "Working condition: {{title}}",
+      "workingNotListed": "Working condition not listed: {{text}}",
+      "notListed": "Working condition not listed",
+      "noteLabel": "Short note, in your own words",
+      "noteSave": "Save note"
+    }
   }
 }
