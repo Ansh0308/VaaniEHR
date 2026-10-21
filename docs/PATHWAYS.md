@@ -61,3 +61,6 @@ Red flags first (a slot whose value matches a node's `red_flag_if` gives RED_FLA
 - **Consent withdrawn:** the panels explain in plain words, offer nothing, and show the doctor's kept decisions (working condition, acknowledged red flags) read only, from `GET /sessions/:id/pathway-record`.
 - **API additions:** `GET /sessions/:id/pathway-record`, `POST /sessions/:id/candidates/select/undo`; evidence carries `factId`; answers carry `notActive`, `pathwayTitle`, `pathwayStatus`.
 - **Words:** "candidates" and "working condition"; the screens never say diagnosis, prescribe or treat (a web test enforces it).
+
+## Concept links feed the engine (remaining Phase 5 items)
+A slot is filled from a fact only when the fact is **confirmed** and its **concept link is confirmed by the doctor** (not stale, not just suggested). The slot map maps internal concept ids (from the concept list) to slots. A fact edited after its link was confirmed has a stale link and counts for nothing until the doctor confirms again.
