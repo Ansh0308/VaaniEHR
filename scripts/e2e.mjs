@@ -227,6 +227,17 @@ async function adminQuery(sql) {
   }
 }
 
+/** Runs one statement on the THROWAWAY application database as the owner role (test set-up only; fake data). */
+async function appQuery(sql, params = []) {
+  const client = new pg.Client({ connectionString: throwawayOwnerUrl.toString() });
+  await client.connect();
+  try {
+    return (await client.query(sql, params)).rows;
+  } finally {
+    await client.end();
+  }
+}
+
 // ---------------------------------------------------------------- main
 let browser;
 let asrDataDir = '';
@@ -572,6 +583,78 @@ try {
     await context.close();
   }
 
+  // ------------------------------------------------ doctor: pathway aids on the FAKE toy pathways (Phase 6C)
+  {
+    const { context, page } = await newPage(browser);
+    await signIn(page, 'doctor');
+    const [owner] = await appQuery(
+      'SELECT clinicos_clinic_id AS clinic, clinicos_doctor_id AS doctor FROM consultation_session WHERE id = $1',
+      [sessionId],
+    );
+    const addFact = (concept) =>
+      appQuery(
+        `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline, confirmed_at,
+           confirmed_by, concept_id) VALUES ($1,$2,'duration',$3,'manual','confirmed','manual', now(), $4, $5)`,
+        [sessionId, owner.clinic, `toy fact ${concept}`, owner.doctor, concept],
+      );
+    const open = async () => {
+      await goInApp(page, '/doctor');
+      await page.getByRole('heading', { name: 'Doctor dashboard', level: 1 }).waitFor();
+      await goInApp(page, `/consult/${sessionId}`);
+    };
+    await open();
+    const questions = page.getByRole('region', { name: 'Suggested questions' });
+    await questions.getByText('Test pathway - not clinical').waitFor();
+    await questions.getByText('Toy question: is toy symptom 1 present?').waitFor();
+    check(
+      (await page.getByTestId('red-flag-banner').count()) === 0,
+      'no red-flag notice before a red-flag fact is confirmed',
+    );
+    await questions.getByRole('button', { name: 'Asked' }).click();
+    await questions.getByText(/1 handled so far/).waitFor();
+
+    // two confirmed facts that carry toy concept ids: a symptom and the red-flag slot
+    await addFact('toy_c_toy_symptom_1');
+    await addFact('toy_c_toy_redflag_1');
+    await open();
+    const banner = page.getByTestId('red-flag-banner');
+    await banner.waitFor();
+    check(
+      (await banner.getAttribute('role')) === 'alert' &&
+        (await banner.innerText()).includes('Pathway red-flag condition met - doctor to review'),
+      'the red-flag notice is an alert with the neutral wording',
+    );
+    check(
+      !/treat|prescrib|diagnos/i.test(await banner.innerText()),
+      'the red-flag notice gives no advice',
+    );
+    await scan(page, 'en consultation (pathway aids, red flag)');
+    await banner.getByRole('button', { name: 'Acknowledge' }).click();
+    await banner.waitFor({ state: 'detached' });
+    await questions.getByText(/makes no further suggestions/).waitFor();
+
+    const candidatesPanel = page.getByRole('region', { name: 'Candidate conditions' });
+    await candidatesPanel.getByText('Suggestions are aids; the doctor decides.').waitFor();
+    await candidatesPanel
+      .locator('[data-candidate="toy_condition_a"]')
+      .getByRole('button', { name: 'Select as working condition' })
+      .click();
+    await candidatesPanel.getByTestId('working-condition').waitFor();
+    check(
+      (await candidatesPanel.getByTestId('working-condition').innerText()).includes(
+        'Toy condition A',
+      ),
+      'the working condition is shown after it is selected',
+    );
+    check(
+      !/%|confidence/i.test(await candidatesPanel.innerText()),
+      'the candidates show no percentage or confidence',
+    );
+    await scan(page, 'en consultation (pathway aids, working condition)');
+    await signOut(page);
+    await context.close();
+  }
+
   // ------------------------------------------------ staff withdraws consent: heard and stale facts go, confirmed stays
   {
     const { context, page } = await newPage(browser);
@@ -593,6 +676,21 @@ try {
       (await doctor.page.getByText('Text changed - re-check').count()) === 0 &&
         (await doctor.page.getByRole('group', { name: /^Symptoms:/ }).count()) === 1,
       'withdrawal removed the heard and stale facts and kept the confirmed one',
+    );
+    const afterQuestions = doctor.page.getByRole('region', { name: 'Suggested questions' });
+    await afterQuestions.getByText(/consent is not on record/).waitFor();
+    check(
+      (await afterQuestions.getByRole('button', { name: 'Asked' }).count()) === 0 &&
+        (await doctor.page.getByRole('button', { name: 'Select as working condition' }).count()) ===
+          0,
+      'after withdrawal the pathway panels offer nothing',
+    );
+    check(
+      (await afterQuestions.innerText()).includes('Pathway red-flag condition acknowledged') &&
+        (
+          await doctor.page.getByRole('region', { name: 'Candidate conditions' }).innerText()
+        ).includes('Working condition: Toy condition A'),
+      'the acknowledged red flag and the working condition are kept and shown read only',
     );
     await scan(doctor.page, 'en consultation (after withdrawal, confirmed fact kept)');
     await doctor.context.close();
