@@ -9,6 +9,7 @@ import consentEn from './locales/en/consent.json';
 import dashboardEn from './locales/en/dashboard.json';
 import medicinesEn from './locales/en/medicines.json';
 import patientsEn from './locales/en/patients.json';
+import pathwaysEn from './locales/en/pathways.json';
 import settingsEn from './locales/en/settings.json';
 import auditGu from './locales/gu/audit.json';
 import authGu from './locales/gu/auth.json';
@@ -17,6 +18,7 @@ import consentGu from './locales/gu/consent.json';
 import dashboardGu from './locales/gu/dashboard.json';
 import medicinesGu from './locales/gu/medicines.json';
 import patientsGu from './locales/gu/patients.json';
+import pathwaysGu from './locales/gu/pathways.json';
 import settingsGu from './locales/gu/settings.json';
 import clinicalEn from './locales/en/clinical.json';
 import consultEn from './locales/en/consult.json';
@@ -39,6 +41,7 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   auth: { en: authEn, gu: authGu },
   dashboard: { en: dashboardEn, gu: dashboardGu },
   patients: { en: patientsEn, gu: patientsGu },
+  pathways: { en: pathwaysEn, gu: pathwaysGu },
   consent: { en: consentEn, gu: consentGu },
   audit: { en: auditEn, gu: auditGu },
   settings: { en: settingsEn, gu: settingsGu },

@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Config } from '../config/env.js';
 import {
+  loadAllVersions,
   loadPathwayDir,
   parseEngineConfig,
   parseSlotMap,
@@ -14,6 +15,8 @@ import {
 
 export interface PathwayCatalog {
   pathways: Pathway[];
+  /** every usable version of every pathway (the read-only viewer's version history) */
+  allVersions: Pathway[];
   slotMap: SlotMap;
   engine: EngineConfig;
 }
@@ -28,5 +31,10 @@ export function loadCatalog(config: Config): PathwayCatalog {
   const slotMap = existsSync(mapPath)
     ? parseSlotMap(JSON.parse(readFileSync(mapPath, 'utf8')))
     : ({ version: 1, mappings: [] } as SlotMap);
-  return { pathways: loaded.pathways, slotMap, engine: parseEngineConfig(engine) };
+  return {
+    pathways: loaded.pathways,
+    allVersions: loadAllVersions(dir, { allowTest }),
+    slotMap,
+    engine: parseEngineConfig(engine),
+  };
 }

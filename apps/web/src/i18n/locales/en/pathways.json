@@ -1,0 +1,69 @@
+{
+  "title": "Guideline pathways",
+  "intro": "Read only. This page shows the pathways the question engine uses, with the exact source sentence behind every step. To change a pathway, make a new version with the command line; nothing is edited here.",
+  "loading": "Loading the pathways",
+  "empty": {
+    "title": "No pathways are loaded",
+    "body": "Real pathways are added by the project owner and a clinician reviewer. Until then there is nothing to show."
+  },
+  "pick": "Pathway",
+  "option": "{{title}} ({{id}})",
+  "draftBanner": "Draft - not clinically reviewed",
+  "testNote": "This is a fake test pathway. It is not from any guideline and must never be used with a patient.",
+  "draftNote": "This pathway is not active. It has not been signed off by a clinician.",
+  "unsignedNote": "This pathway has no clinician sign-off recorded.",
+  "summary": "Summary",
+  "signed": "Reviewed by {{by}} on {{on}}",
+  "unsigned": "Not signed off by a clinician",
+  "lang": {
+    "en": "English",
+    "gu": "Gujarati",
+    "hi": "Hindi"
+  },
+  "nodeType": {
+    "question": "Question",
+    "terminal": "End of branch"
+  },
+  "slot": "Slot {{slot}} ({{answer}})",
+  "redFlag": "Red flag if {{when}}",
+  "refer": {
+    "yes": "Refer",
+    "no": "No referral flag"
+  },
+  "weight": "Weight {{weight}}",
+  "ask": "Question text",
+  "reason": "Why it is asked",
+  "endLabel": "Label",
+  "choices": "Choices: {{list}}",
+  "sourceQuote": "Exact sentence from the source",
+  "noQuote": "No source sentence recorded yet",
+  "page": "Page {{page}}",
+  "noPage": "No page recorded",
+  "nodeReviewer": "reviewer {{by}}",
+  "concept": "concept {{id}}",
+  "edges": "Next steps",
+  "edge": "If {{when}}, go to {{to}}",
+  "fields": {
+    "id": "Pathway id",
+    "version": "Version",
+    "status": "Status",
+    "signoff": "Clinician sign-off",
+    "source": "Source document",
+    "title": "Name"
+  },
+  "status": {
+    "test": "Test (fake)",
+    "draft": "Draft",
+    "active": "Active"
+  },
+  "sourceLine": "{{doc}}, page {{page}}",
+  "history": "Version history",
+  "versionN": "Version {{n}}",
+  "openVersion": "Show version {{n}}",
+  "shown": "Shown below",
+  "newVersionHint": "An active version is never edited. A change is a new version made with the command line.",
+  "nodes": "Steps",
+  "startsAt": "Starts at {{id}}",
+  "rules": "Scoring rules",
+  "rule": "{{id}}: {{slot}} {{when}} (weight {{weight}})"
+}

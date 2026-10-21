@@ -10,6 +10,7 @@ import type { RouteDef } from '../http/routeRegistry.js';
 import { factInternalRoutes } from '../facts/internalRoutes.js';
 import { factRoutes } from '../facts/routes.js';
 import { pathwayRoutes } from '../pathways/routes.js';
+import { pathwayViewerRoutes } from '../pathways/viewerRoutes.js';
 import { medicineRoutes } from '../medicines/routes.js';
 import { patientRoutes } from '../patients/routes.js';
 import { sessionRoutes } from '../sessions/routes.js';
@@ -33,5 +34,6 @@ export function allRoutes(config: Config): RouteDef[] {
     ...factRoutes(),
     ...factInternalRoutes(),
     ...pathwayRoutes(),
+    ...pathwayViewerRoutes(),
   ];
 }

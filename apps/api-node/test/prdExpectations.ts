@@ -37,6 +37,9 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/questions/:eventId/action': ['doctor'],
   'GET /sessions/:id/candidates': ['doctor'],
   'POST /sessions/:id/candidates/select': ['doctor'],
+  // pathway viewer (PG-14): read-only, doctors and admins, configuration data (not clinic data)
+  'GET /pathways': ['doctor', 'admin'],
+  'GET /pathways/:id': ['doctor', 'admin'],
   // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)
   'POST /internal/audio-assets': 'service',
   'POST /internal/audio-assets/:id/deleted': 'service',

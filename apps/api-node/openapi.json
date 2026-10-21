@@ -10165,6 +10165,734 @@
           "CANDIDATE_SELECTED"
         ]
       }
+    },
+    "/pathways": {
+      "get": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor or admin: the loaded guideline pathways with their versions and sign-off state (read only)",
+        "operationId": "getPathways",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "pathways": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "object",
+                                "properties": {
+                                  "en": {
+                                    "type": "string"
+                                  },
+                                  "gu": {
+                                    "type": "string"
+                                  },
+                                  "hi": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "en",
+                                  "gu",
+                                  "hi"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "latestVersion": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "test",
+                                  "draft",
+                                  "active"
+                                ]
+                              },
+                              "signedOff": {
+                                "type": "boolean"
+                              },
+                              "notActive": {
+                                "type": "boolean"
+                              },
+                              "nodeCount": {
+                                "type": "number"
+                              },
+                              "versions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "version": {
+                                      "type": "number"
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "test",
+                                        "draft",
+                                        "active"
+                                      ]
+                                    },
+                                    "reviewedBy": {
+                                      "nullable": true,
+                                      "type": "string"
+                                    },
+                                    "reviewedOn": {
+                                      "nullable": true,
+                                      "type": "string"
+                                    },
+                                    "signedOff": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": [
+                                    "version",
+                                    "status",
+                                    "reviewedBy",
+                                    "reviewedOn",
+                                    "signedOff"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "latestVersion",
+                              "status",
+                              "signedOff",
+                              "notActive",
+                              "nodeCount",
+                              "versions"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "testPathwaysAllowed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "pathways",
+                        "testPathwaysAllowed"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "pathway.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      }
+    },
+    "/pathways/{id}": {
+      "get": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor or admin: one pathway version with every node, its text in en, gu and hi, its source quote and page (read only)",
+        "operationId": "getPathwaysId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "object",
+                          "properties": {
+                            "en": {
+                              "type": "string"
+                            },
+                            "gu": {
+                              "type": "string"
+                            },
+                            "hi": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "en",
+                            "gu",
+                            "hi"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "latestVersion": {
+                          "type": "number"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "test",
+                            "draft",
+                            "active"
+                          ]
+                        },
+                        "signedOff": {
+                          "type": "boolean"
+                        },
+                        "notActive": {
+                          "type": "boolean"
+                        },
+                        "nodeCount": {
+                          "type": "number"
+                        },
+                        "versions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "test",
+                                  "draft",
+                                  "active"
+                                ]
+                              },
+                              "reviewedBy": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "reviewedOn": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "signedOff": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "status",
+                              "reviewedBy",
+                              "reviewedOn",
+                              "signedOff"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "source": {
+                          "type": "object",
+                          "properties": {
+                            "doc": {
+                              "type": "string"
+                            },
+                            "page": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "doc",
+                            "page"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "reviewedBy": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "reviewedOn": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "start": {
+                          "type": "string"
+                        },
+                        "nodes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "question",
+                                  "terminal"
+                                ]
+                              },
+                              "slot": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "answer": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "choices": {
+                                "nullable": true,
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "ask": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "en": {
+                                    "type": "string"
+                                  },
+                                  "gu": {
+                                    "type": "string"
+                                  },
+                                  "hi": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "en",
+                                  "gu",
+                                  "hi"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "reason": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "en": {
+                                    "type": "string"
+                                  },
+                                  "gu": {
+                                    "type": "string"
+                                  },
+                                  "hi": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "en",
+                                  "gu",
+                                  "hi"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "label": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "en": {
+                                    "type": "string"
+                                  },
+                                  "gu": {
+                                    "type": "string"
+                                  },
+                                  "hi": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "en",
+                                  "gu",
+                                  "hi"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "infoWeight": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "redFlagIf": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "op": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "anyOf": [
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "string"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "anyOf": [
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "op",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "sourceQuote": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "page": {
+                                "nullable": true,
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "reviewedBy": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "conceptId": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "refer": {
+                                "nullable": true,
+                                "type": "boolean"
+                              },
+                              "edges": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "op": {
+                                      "type": "string"
+                                    },
+                                    "value": {
+                                      "anyOf": [
+                                        {
+                                          "anyOf": [
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "string"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "array",
+                                          "items": {
+                                            "anyOf": [
+                                              {
+                                                "type": "boolean"
+                                              },
+                                              {
+                                                "type": "number"
+                                              },
+                                              {
+                                                "type": "string"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "to": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "op",
+                                    "value",
+                                    "to"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "type",
+                              "slot",
+                              "answer",
+                              "choices",
+                              "ask",
+                              "reason",
+                              "label",
+                              "infoWeight",
+                              "redFlagIf",
+                              "sourceQuote",
+                              "page",
+                              "reviewedBy",
+                              "conceptId",
+                              "refer",
+                              "edges"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "rules": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "slot": {
+                                "type": "string"
+                              },
+                              "op": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {
+                                    "anyOf": [
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "boolean"
+                                        },
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "weight": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "slot",
+                              "op",
+                              "value",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "latestVersion",
+                        "status",
+                        "signedOff",
+                        "notActive",
+                        "nodeCount",
+                        "versions",
+                        "version",
+                        "source",
+                        "reviewedBy",
+                        "reviewedOn",
+                        "start",
+                        "nodes",
+                        "rules"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "pathway.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      }
     }
   },
   "components": {

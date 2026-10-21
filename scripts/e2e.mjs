@@ -306,6 +306,18 @@ try {
       CORS_ORIGIN: WEB,
       SIMULATED_DATA_ONLY: 'true',
       LOGIN_RATE_LIMIT_MAX: '1000', // this run signs in many times from one address
+      // the FAKE toy pathways, for the read-only pathway viewer (never real content)
+      PATHWAYS_DIR: join(root, 'packages', 'rules', 'fixtures', 'pathways'),
+      PATHWAYS_ALLOW_TEST: 'true',
+      PATHWAYS_SLOT_MAP: join(
+        root,
+        'packages',
+        'rules',
+        'fixtures',
+        'pathways',
+        '_toy',
+        'slot-map.json',
+      ),
     },
   });
   start(
@@ -584,6 +596,27 @@ try {
     );
     await scan(doctor.page, 'en consultation (after withdrawal, confirmed fact kept)');
     await doctor.context.close();
+  }
+
+  // ------------------------------------------------ doctor and admin: the read-only pathway viewer (toy pathways)
+  for (const role of ['doctor', 'admin']) {
+    const { context, page } = await newPage(browser);
+    await signIn(page, role);
+    await goInApp(page, '/admin/pathways');
+    await page.getByRole('heading', { name: 'Guideline pathways', level: 1 }).waitFor();
+    await page.getByText('Draft - not clinically reviewed').first().waitFor();
+    await page.getByText('[TOY-GU] Toy question: is toy symptom 1 present?').first().waitFor();
+    check(
+      (await page.getByRole('textbox').count()) === 0,
+      `the pathway viewer is read only for the ${role} (no text box)`,
+    );
+    check(
+      (await page.getByText('No source sentence recorded yet').count()) > 0,
+      'the viewer says plainly when a node has no source sentence',
+    );
+    await scan(page, `en pathways (${role}, toy)`);
+    await signOut(page);
+    await context.close();
   }
 
   // ------------------------------------------------ admin: chain, filters, export

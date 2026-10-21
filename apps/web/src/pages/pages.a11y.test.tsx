@@ -295,6 +295,63 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'pathways viewer (toy)',
+    show: async (language) => {
+      const loc = (en: string) => ({ en, gu: `[TOY-GU] ${en}`, hi: `[TOY-HI] ${en}` });
+      const summary = {
+        id: 'toy_condition_a',
+        title: loc('Toy condition A'),
+        latestVersion: 1,
+        status: 'test',
+        signedOff: false,
+        notActive: true,
+        nodeCount: 2,
+        versions: [
+          { version: 1, status: 'test', reviewedBy: null, reviewedOn: null, signedOff: false },
+        ],
+      };
+      const node = {
+        id: 'q1',
+        type: 'question',
+        slot: 'toy_symptom_1',
+        answer: 'boolean',
+        choices: null,
+        ask: loc('Toy question'),
+        reason: loc('Toy reason'),
+        label: null,
+        infoWeight: 5,
+        redFlagIf: null,
+        sourceQuote: 'A fake sentence.',
+        page: 1,
+        reviewedBy: null,
+        conceptId: null,
+        refer: null,
+        edges: [{ op: 'eq', value: true, to: 't1' }],
+      }; // fmt: skip
+      await renderApp({
+        role: 'admin',
+        path: '/admin/pathways',
+        language,
+        routes: {
+          'GET /pathways': () => ({ data: { pathways: [summary], testPathwaysAllowed: true } }),
+          'GET /pathways/:id': () => ({
+            data: {
+              ...summary,
+              version: 1,
+              source: { doc: 'TOY - not a real source', page: 0 },
+              reviewedBy: null,
+              reviewedOn: null,
+              start: 'q1',
+              nodes: [node],
+              rules: [{ id: 'r1', slot: 'toy_symptom_1', op: 'eq', value: true, weight: 3 }],
+            },
+          }),
+        },
+      });
+      await screen.findByText('A fake sentence.');
+    },
+  },
+  {
     name: 'template builder',
     show: async (language) => {
       await renderApp({ role: 'doctor', path: '/admin/templates/new', language });

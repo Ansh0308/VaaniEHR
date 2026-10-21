@@ -32,6 +32,9 @@ export const PERMISSIONS = {
   'candidate.read': ['doctor'],
   'candidate.select': ['doctor'],
 
+  // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
+  'pathway.read': ['doctor', 'admin'],
+
   // consent (F1, PG-05)
   'consent.read': ['doctor', 'staff', 'admin'],
   'consent.grant': ['doctor', 'staff', 'admin'],

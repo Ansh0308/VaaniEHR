@@ -68,7 +68,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     labelKey: 'shell:nav.items.pathways',
     icon: GitBranch,
     pg: 'PG-14',
-    roles: ['admin'],
+    roles: ['doctor', 'admin'],
   },
   {
     to: '/admin/safety',

@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage';
 import { MedicinesPage } from './pages/MedicinesPage';
 import { PatientsPage } from './pages/PatientsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { PathwaysPage } from './pages/PathwaysPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TemplateBuilderPage } from './pages/TemplateBuilderPage';
 import { TemplatesPage } from './pages/TemplatesPage';
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="admin/medicines" element={<MedicinesPage />} />
           </Route>
           <Route element={<RequireRole roles={['doctor', 'admin']} />}>
+            <Route path="admin/pathways" element={<PathwaysPage />} />
             <Route path="admin/templates" element={<TemplatesPage />} />
             <Route path="admin/templates/new" element={<TemplateBuilderPage key="new" />} />
             <Route path="admin/templates/:id" element={<TemplateBuilderPage key="edit" />} />

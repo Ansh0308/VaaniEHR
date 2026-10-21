@@ -175,6 +175,8 @@ const fixture = (route: RouteDef): Call => {
         facts: [],
       },
     },
+    'GET /pathways': { path: '/pathways' },
+    'GET /pathways/:id': { path: '/pathways/toy_condition_a' },
     'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },
     'POST /sessions/:id/questions/:eventId/action': {
       path: `/sessions/${consentedSessionId}/questions/${consentedSessionId}/action`,

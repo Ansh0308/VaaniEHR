@@ -10,6 +10,7 @@ import enConsent from './locales/en/consent.json';
 import enDashboard from './locales/en/dashboard.json';
 import enMedicines from './locales/en/medicines.json';
 import enPatients from './locales/en/patients.json';
+import enPathways from './locales/en/pathways.json';
 import enSettings from './locales/en/settings.json';
 import enCommon from './locales/en/common.json';
 import enDesign from './locales/en/design.json';
@@ -23,6 +24,7 @@ import guConsent from './locales/gu/consent.json';
 import guDashboard from './locales/gu/dashboard.json';
 import guMedicines from './locales/gu/medicines.json';
 import guPatients from './locales/gu/patients.json';
+import guPathways from './locales/gu/pathways.json';
 import guSettings from './locales/gu/settings.json';
 import guCommon from './locales/gu/common.json';
 import guDesign from './locales/gu/design.json';
@@ -45,6 +47,7 @@ export const NAMESPACES = [
   'medicines',
   'templates',
   'consult',
+  'pathways',
 ] as const;
 
 export const resources = {
@@ -56,6 +59,7 @@ export const resources = {
     auth: enAuth,
     dashboard: enDashboard,
     patients: enPatients,
+    pathways: enPathways,
     consent: enConsent,
     audit: enAudit,
     settings: enSettings,
@@ -71,6 +75,7 @@ export const resources = {
     auth: guAuth,
     dashboard: guDashboard,
     patients: guPatients,
+    pathways: guPathways,
     consent: guConsent,
     audit: guAudit,
     settings: guSettings,

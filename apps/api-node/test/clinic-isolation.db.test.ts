@@ -505,6 +505,9 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
 
 /** Routes whose data is the caller's own user or global static text, so there is no other clinic's data to reach. */
 const NOT_CLINIC_SCOPED = [
+  // the pathway viewer shows configuration files, the same for every clinic (ADR-D35)
+  'GET /pathways',
+  'GET /pathways/:id',
   'GET /internal/sessions/:id/transcript-segments',
   'POST /internal/sessions/:id/facts',
   // INTERNAL service-signed routes (ADR-D26): no user, no clinic filter; the clinic of an asset comes from its session
