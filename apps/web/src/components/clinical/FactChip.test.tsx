@@ -114,6 +114,8 @@ const fact = (over: Partial<Fact> = {}): Fact => ({
   edited: false,
   originalValue: null,
   conceptId: null,
+  conceptStatus: 'none',
+  conceptConfirmedAt: null,
   ...over,
 });
 

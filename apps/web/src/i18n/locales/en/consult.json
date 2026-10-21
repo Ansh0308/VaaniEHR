@@ -124,7 +124,27 @@
     "uncertain": "Uncertain",
     "addSave": "Add fact",
     "keys": "Keyboard: with a fact focused, press C to confirm, R to reject, E to edit. These keys do nothing while you type.",
-    "arrived": "New facts arrived: {{count}}"
+    "arrived": "New facts arrived: {{count}}",
+    "concept": {
+      "suggested": "Suggested concept: {{label}} ({{list}})",
+      "linked": "Concept: {{label}} ({{list}})",
+      "stale": "Concept link needs re-checking: {{label}} ({{list}})",
+      "confirm": "Confirm concept",
+      "confirmAgain": "Confirm {{label}} again",
+      "another": "Choose another",
+      "none": "None of these",
+      "clear": "Clear concept",
+      "choose": "Choose {{label}}",
+      "otherList": "Other suggested concepts",
+      "noneChosen": "No concept chosen",
+      "unreviewedList": "unreviewed list",
+      "reviewedList": "reviewed list",
+      "notLoaded": "Concept list not loaded. No concepts are suggested.",
+      "error": {
+        "load": "Concept suggestions could not be loaded.",
+        "save": "The concept change could not be saved."
+      }
+    }
   },
   "pathway": {
     "aid": "Suggestions are aids; the doctor decides.",

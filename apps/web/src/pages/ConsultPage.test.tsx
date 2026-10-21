@@ -90,6 +90,9 @@ const open = (
     routes: {
       'GET /sessions/:id/consent': () => ({ data: consent }),
       'POST /sessions/:id/asr-token': () => ({ data: { token: 'tok-1', expiresInSeconds: 120 } }),
+      'GET /sessions/:id/concept-suggestions': () => ({
+        data: { listLoaded: true, byFact: {}, conceptLabels: {} },
+      }),
       // no pathways loaded: the pathway aids stay quiet in the older tests
       'GET /sessions/:id/pathway-record': () => ({
         data: { selected: null, acknowledgedRedFlags: [], notActive: false },
@@ -757,5 +760,124 @@ describe('pathway aids on the consult screen', () => {
     });
     const questions = await screen.findByRole('region', { name: 'Suggested questions' });
     expect(await within(questions).findByText(/consent is not on record/)).toBeTruthy();
+  });
+});
+
+describe('concept links on the consult screen', () => {
+  const symptom = (over: Record<string, unknown> = {}) => ({
+    id: 'f1',
+    type: 'symptom',
+    value: 'toy symptom one',
+    negated: false,
+    uncertain: false,
+    speaker: null,
+    source: 'manual',
+    sourceSegmentSeq: null,
+    spanStart: null,
+    spanEnd: null,
+    evidenceQuote: null,
+    matchType: null,
+    status: 'confirmed',
+    edited: false,
+    originalValue: null,
+    pipeline: 'manual',
+    model: null,
+    conceptId: null,
+    conceptStatus: 'none',
+    conceptConfirmedAt: null,
+    snomedId: null,
+    confirmedAt: '2026-10-21T10:00:00.000Z',
+    ...over,
+  }); // fmt: skip
+  const list = (facts: unknown[]) => ({
+    data: { facts, heardCount: 0, confirmedCount: facts.length, rejectedCount: 0, staleCount: 0 },
+  });
+
+  it('Confirm concept sends the link; then the facts and the pathway panels are read again; Clear removes it', async () => {
+    let linked = false;
+    const app = await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/facts': () =>
+        list([
+          symptom(linked ? { conceptId: 'toy_c_toy_symptom_1', conceptStatus: 'confirmed' } : {}),
+        ]),
+      'GET /sessions/:id/concept-suggestions': () => ({
+        data: {
+          listLoaded: true,
+          byFact: linked
+            ? {}
+            : {
+                f1: [
+                  {
+                    conceptId: 'toy_c_toy_symptom_1',
+                    label: 'toy symptom one',
+                    reviewStatus: 'unreviewed',
+                  },
+                ],
+              },
+          conceptLabels: linked ? { toy_c_toy_symptom_1: 'toy symptom one' } : {},
+        },
+      }),
+      'POST /sessions/:id/facts/:factId/concept': () => {
+        linked = true;
+        return { data: symptom({ conceptId: 'toy_c_toy_symptom_1', conceptStatus: 'confirmed' }) };
+      },
+      'DELETE /sessions/:id/facts/:factId/concept': () => {
+        linked = false;
+        return { data: symptom() };
+      },
+    });
+    expect(
+      await screen.findByText('Suggested concept: toy symptom one (unreviewed list)'),
+    ).toBeTruthy();
+    const nextBefore = app.callsTo('GET', `/sessions/${SESSION}/questions/next`).length;
+    expect(app.callsTo('POST', `/sessions/${SESSION}/facts/f1/concept`)).toHaveLength(0); // never by itself
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm concept' }));
+    expect(await screen.findByText('Concept: toy symptom one (unreviewed list)')).toBeTruthy();
+    expect(app.callsTo('POST', `/sessions/${SESSION}/facts/f1/concept`).map((c) => c.body)).toEqual(
+      [{ conceptId: 'toy_c_toy_symptom_1' }],
+    );
+    await waitFor(() =>
+      expect(app.callsTo('GET', `/sessions/${SESSION}/questions/next`).length).toBeGreaterThan(
+        nextBefore,
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Clear concept' }));
+    expect(
+      await screen.findByText('Suggested concept: toy symptom one (unreviewed list)'),
+    ).toBeTruthy();
+    expect(app.callsTo('DELETE', `/sessions/${SESSION}/facts/f1/concept`)).toHaveLength(1);
+  });
+
+  it('the pathway panels are not read again when nothing about the links or confirmed facts changed', async () => {
+    const app = await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/facts': () => list([symptom()]),
+    });
+    await screen.findByRole('region', { name: 'Suggested questions' });
+    await waitFor(() =>
+      expect(app.callsTo('GET', `/sessions/${SESSION}/questions/next`).length).toBeGreaterThan(0),
+    );
+    const count = app.callsTo('GET', `/sessions/${SESSION}/questions/next`).length;
+    await flush();
+    await flush();
+    expect(app.callsTo('GET', `/sessions/${SESSION}/questions/next`)).toHaveLength(count);
+  });
+
+  it('says plainly that the concept list is not loaded', async () => {
+    await open(consentWith(true, true), 'en', {
+      'GET /sessions/:id/facts': () => list([symptom()]),
+      'GET /sessions/:id/concept-suggestions': () => ({
+        data: { listLoaded: false, byFact: {}, conceptLabels: {} },
+      }),
+    });
+    expect(await screen.findByTestId('concepts-not-loaded')).toBeTruthy();
+    expect(screen.queryByText(/Suggested concept:/)).toBeNull();
+  });
+
+  it('asks for no suggestions without consent', async () => {
+    const app = await open(consentWith(true, false), 'en', {
+      'GET /sessions/:id/facts': () => list([symptom()]),
+    });
+    await screen.findByRole('region', { name: 'Suggested questions' });
+    expect(app.callsTo('GET', `/sessions/${SESSION}/concept-suggestions`)).toHaveLength(0);
   });
 });

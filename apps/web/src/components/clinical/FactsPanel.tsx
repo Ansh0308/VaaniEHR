@@ -16,9 +16,20 @@ import {
 import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Input, Select } from '../ui/Field';
+import type { ConceptSuggestions } from '../../api/concepts';
+import { ConceptLink } from './ConceptLink';
 import { FactChip } from './FactChip';
 
 export type ExtractBlock = 'empty' | 'unsaved' | 'recording' | 'consent' | null;
+
+export interface ConceptsView {
+  /** null until read, or when there is no consent */
+  data: ConceptSuggestions | null;
+  busy: boolean;
+  error: 'load' | 'save' | null;
+  onConfirm: (factId: string, conceptId: string) => void;
+  onClear: (factId: string) => void;
+}
 
 export interface FactsPanelProps {
   facts: Fact[];
@@ -42,6 +53,7 @@ export interface FactsPanelProps {
   }) => Promise<boolean>;
   /** a chip was hovered or focused (or left): the page highlights its words in the transcript */
   onPeek: (fact: Fact | null) => void;
+  concepts?: ConceptsView;
 }
 
 export function FactsPanel(props: FactsPanelProps) {
@@ -54,6 +66,22 @@ export function FactsPanel(props: FactsPanelProps) {
   const [uncertain, setUncertain] = useState(false);
 
   const testMode = mode === 'sample' || mode === 'blocked';
+  const conceptData = props.concepts?.data ?? null;
+  const conceptLinkFor = (f: Fact) => {
+    const c = props.concepts;
+    if (!c || !conceptData?.listLoaded || f.type !== 'symptom' || f.status === 'rejected')
+      return null;
+    return (
+      <ConceptLink
+        status={f.conceptStatus}
+        linkedLabel={f.conceptId ? (conceptData.conceptLabels[f.conceptId] ?? f.conceptId) : null}
+        suggestions={conceptData.byFact[f.id] ?? []}
+        busy={c.busy || props.busy}
+        onConfirm={(conceptId) => c.onConfirm(f.id, conceptId)}
+        onClear={() => c.onClear(f.id)}
+      />
+    );
+  };
   const cannot = props.blocked !== null || mode === 'blocked' || props.extracting;
 
   return (
@@ -86,6 +114,17 @@ export function FactsPanel(props: FactsPanelProps) {
           {t('consult:facts.addManual')}
         </Button>
       </div>
+
+      {conceptData && !conceptData.listLoaded ? (
+        <p className="text-sm text-body" data-testid="concepts-not-loaded">
+          {t('consult:facts.concept.notLoaded')}
+        </p>
+      ) : null}
+      {props.concepts?.error ? (
+        <Banner kind="blocked" live>
+          {t(`consult:facts.concept.error.${props.concepts.error}`)}
+        </Banner>
+      ) : null}
 
       {props.blocked ? (
         <p className="text-sm text-body">{t(`consult:facts.blocked.${props.blocked}`)}</p>
@@ -187,6 +226,7 @@ export function FactsPanel(props: FactsPanelProps) {
                       onReject={() => props.onReject(f.id)}
                       onEdit={(body) => props.onEdit(f.id, body)}
                       onPeek={(on) => props.onPeek(on ? f : null)}
+                      extra={conceptLinkFor(f)}
                     />
                   </li>
                 ))}

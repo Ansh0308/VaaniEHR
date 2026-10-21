@@ -20,6 +20,7 @@ import { TranscriptPane, type TranscriptSegment } from '../components/clinical/T
 import { NeedsReview } from '../components/NeedsReview';
 import type { PathwayLang } from '../api/pathwayAids';
 import { useFacts, type Fact } from '../facts/useFacts';
+import { useConceptSuggestions } from '../facts/useConceptSuggestions';
 import { usePathwayAids } from '../facts/usePathwayAids';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
@@ -50,10 +51,22 @@ export function ConsultPage() {
   );
   const refreshKey = facts.facts
     .filter((f) => f.status === 'confirmed' || f.status === 'rejected')
-    .map((f) => `${f.id}:${f.status}`)
+    .map((f) => `${f.id}:${f.status}:${f.conceptStatus}:${f.conceptId ?? ''}`)
     .sort()
     .join(',');
   const aids = usePathwayAids(sessionId, { lang: questionLang, consentOk, refreshKey });
+  // concept suggestions are read again when the facts, their words or a link change
+  const conceptsKey = facts.facts
+    .filter((f) => f.type === 'symptom' && f.status !== 'rejected')
+    .map((f) => `${f.id}:${f.value}:${f.conceptStatus}`)
+    .sort()
+    .join(',');
+  const concepts = useConceptSuggestions(sessionId, {
+    lang: questionLang,
+    consentOk,
+    key: conceptsKey,
+    onLinkChanged: facts.reload,
+  });
   const [peek, setPeek] = useState<Fact | null>(null);
 
   // after a save the server may have marked facts stale (their words changed): read the list again
@@ -204,6 +217,13 @@ export function ConsultPage() {
         onEdit={(id, body) => void facts.edit(id, body)}
         onAdd={facts.add}
         onPeek={setPeek}
+        concepts={{
+          data: concepts.data,
+          busy: concepts.busy,
+          error: concepts.error,
+          onConfirm: (factId, conceptId) => void concepts.confirm(factId, conceptId),
+          onClear: (factId) => void concepts.clear(factId),
+        }}
       />
 
       <QuestionPanel

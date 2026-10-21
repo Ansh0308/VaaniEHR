@@ -15,7 +15,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Field';
@@ -48,6 +48,8 @@ export interface FactChipProps {
   /** called with true when the chip is hovered or focused, false when not */
   onPeek?: (on: boolean) => void;
   busy?: boolean;
+  /** extra content under the fact (the concept link) */
+  extra?: ReactNode;
 }
 
 const STATUS_ICON: Record<FactStatus, LucideIcon> = {
@@ -79,6 +81,7 @@ export function FactChip({
   onEdit,
   onPeek,
   busy,
+  extra,
 }: FactChipProps) {
   const { t } = useTranslation('clinical');
   const [peek, setPeek] = useState(false);
@@ -192,6 +195,7 @@ export function FactChip({
           {t('clinical:fact.original')} <span lang={lang}>{originalValue}</span>
         </p>
       ) : null}
+      {extra}
       {peek && sentence ? (
         <p
           id={sentenceId}

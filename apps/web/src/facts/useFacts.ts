@@ -36,6 +36,9 @@ export interface Fact {
   edited: boolean;
   originalValue: string | null;
   conceptId: string | null;
+  /** none | confirmed (by the doctor) | stale (the words changed since) */
+  conceptStatus: 'none' | 'confirmed' | 'stale';
+  conceptConfirmedAt: string | null;
 }
 
 interface FactList {

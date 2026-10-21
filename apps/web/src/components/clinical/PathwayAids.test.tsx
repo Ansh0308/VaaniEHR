@@ -232,6 +232,8 @@ const fact = (over: Partial<Fact> = {}): Fact => ({
   edited: false,
   originalValue: null,
   conceptId: 'toy_c_toy_symptom_1',
+  conceptStatus: 'confirmed',
+  conceptConfirmedAt: '2026-10-21T10:00:00.000Z',
   ...over,
 });
 const list = (over: Partial<CandidateList> = {}): CandidateList => ({

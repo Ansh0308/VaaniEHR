@@ -318,6 +318,52 @@ const CASES: Case[] = [
               recordingAllowed: true,
             },
           }),
+          'GET /sessions/:id/facts': () => ({
+            data: {
+              facts: [
+                {
+                  id: 'f1',
+                  type: 'symptom',
+                  value: 'toy symptom one',
+                  negated: false,
+                  uncertain: false,
+                  speaker: null,
+                  source: 'manual',
+                  sourceSegmentSeq: null,
+                  spanStart: null,
+                  spanEnd: null,
+                  evidenceQuote: null,
+                  matchType: null,
+                  status: 'heard',
+                  edited: false,
+                  originalValue: null,
+                  pipeline: 'manual',
+                  model: null,
+                  conceptId: null,
+                  conceptStatus: 'none',
+                  conceptConfirmedAt: null,
+                  snomedId: null,
+                  confirmedAt: null,
+                },
+              ],
+              heardCount: 1,
+              confirmedCount: 0,
+              rejectedCount: 0,
+              staleCount: 0,
+            },
+          }),
+          'GET /sessions/:id/concept-suggestions': () => ({
+            data: {
+              listLoaded: true,
+              byFact: {
+                f1: [
+                  { conceptId: 'a', label: 'toy symptom one', reviewStatus: 'unreviewed' },
+                  { conceptId: 'b', label: 'toy symptom two', reviewStatus: 'unreviewed' },
+                ],
+              },
+              conceptLabels: {},
+            },
+          }),
           'GET /sessions/:id/pathway-record': () => ({
             data: { selected: null, acknowledgedRedFlags: [], notActive: true },
           }),
@@ -367,6 +413,9 @@ const CASES: Case[] = [
         },
       });
       await screen.findByTestId('red-flag-banner');
+      await screen.findByText(
+        /Suggested concept: toy symptom one|સૂચવેલ કન્સેપ્ટ: toy symptom one/,
+      );
       await screen.findByText('Toy condition A', { exact: false });
     },
   },
