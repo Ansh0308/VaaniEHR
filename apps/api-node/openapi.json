@@ -2871,6 +2871,8 @@
                 "FACT_CONFIRMED",
                 "FACT_REJECTED",
                 "FACT_EDITED",
+                "FACT_CONCEPT_CONFIRMED",
+                "FACT_CONCEPT_CLEARED",
                 "QUESTION_ACTED",
                 "RED_FLAG_ACKNOWLEDGED",
                 "CANDIDATE_SELECTED",
@@ -3083,6 +3085,8 @@
                       "FACT_CONFIRMED",
                       "FACT_REJECTED",
                       "FACT_EDITED",
+                      "FACT_CONCEPT_CONFIRMED",
+                      "FACT_CONCEPT_CLEARED",
                       "QUESTION_ACTED",
                       "RED_FLAG_ACKNOWLEDGED",
                       "CANDIDATE_SELECTED",
@@ -8330,6 +8334,18 @@
                                 "nullable": true,
                                 "type": "string"
                               },
+                              "conceptStatus": {
+                                "type": "string",
+                                "enum": [
+                                  "none",
+                                  "confirmed",
+                                  "stale"
+                                ]
+                              },
+                              "conceptConfirmedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              },
                               "snomedId": {
                                 "nullable": true,
                                 "type": "string"
@@ -8358,6 +8374,8 @@
                               "pipeline",
                               "model",
                               "conceptId",
+                              "conceptStatus",
+                              "conceptConfirmedAt",
                               "snomedId",
                               "confirmedAt"
                             ],
@@ -8628,6 +8646,18 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "conceptStatus": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "confirmed",
+                            "stale"
+                          ]
+                        },
+                        "conceptConfirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
                         "snomedId": {
                           "nullable": true,
                           "type": "string"
@@ -8656,6 +8686,8 @@
                         "pipeline",
                         "model",
                         "conceptId",
+                        "conceptStatus",
+                        "conceptConfirmedAt",
                         "snomedId",
                         "confirmedAt"
                       ],
@@ -8900,6 +8932,18 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "conceptStatus": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "confirmed",
+                            "stale"
+                          ]
+                        },
+                        "conceptConfirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
                         "snomedId": {
                           "nullable": true,
                           "type": "string"
@@ -8928,6 +8972,8 @@
                         "pipeline",
                         "model",
                         "conceptId",
+                        "conceptStatus",
+                        "conceptConfirmedAt",
                         "snomedId",
                         "confirmedAt"
                       ],
@@ -9352,6 +9398,685 @@
         ],
         "x-audit-actions": [
           "FACTS_EXTRACTED"
+        ]
+      }
+    },
+    "/sessions/{id}/concept-suggestions": {
+      "get": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: up to 3 suggested concepts per fact from the UNREVIEWED draft list (never stored; no score)",
+        "operationId": "getSessionsIdConceptSuggestions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "listLoaded": {
+                          "type": "boolean"
+                        },
+                        "byFact": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "conceptId": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "reviewStatus": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unreviewed",
+                                    "reviewed"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "conceptId",
+                                "label",
+                                "reviewStatus"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "conceptLabels": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "listLoaded",
+                        "byFact",
+                        "conceptLabels"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/facts/{factId}/concept": {
+      "post": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: confirm the concept link of a fact (the only way a link is ever set; records who and when)",
+        "operationId": "postSessionsIdFactsFactIdConcept",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "factId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conceptId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "conceptId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "symptom",
+                            "duration",
+                            "severity",
+                            "vital",
+                            "allergy",
+                            "past_condition",
+                            "current_medicine",
+                            "red_flag_mention"
+                          ]
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "negated": {
+                          "type": "boolean"
+                        },
+                        "uncertain": {
+                          "type": "boolean"
+                        },
+                        "speaker": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "extracted",
+                            "manual"
+                          ]
+                        },
+                        "sourceSegmentSeq": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanStart": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanEnd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "evidenceQuote": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "matchType": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "exact",
+                            "fuzzy"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "heard",
+                            "confirmed",
+                            "rejected",
+                            "stale"
+                          ]
+                        },
+                        "edited": {
+                          "type": "boolean"
+                        },
+                        "originalValue": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pipeline": {
+                          "type": "string"
+                        },
+                        "model": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptStatus": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "confirmed",
+                            "stale"
+                          ]
+                        },
+                        "conceptConfirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "snomedId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "confirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "value",
+                        "negated",
+                        "uncertain",
+                        "speaker",
+                        "source",
+                        "sourceSegmentSeq",
+                        "spanStart",
+                        "spanEnd",
+                        "evidenceQuote",
+                        "matchType",
+                        "status",
+                        "edited",
+                        "originalValue",
+                        "pipeline",
+                        "model",
+                        "conceptId",
+                        "conceptStatus",
+                        "conceptConfirmedAt",
+                        "snomedId",
+                        "confirmedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FACT_CONCEPT_CONFIRMED"
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Facts"
+        ],
+        "summary": "Doctor: clear the concept link of a fact",
+        "operationId": "deleteSessionsIdFactsFactIdConcept",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "factId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "symptom",
+                            "duration",
+                            "severity",
+                            "vital",
+                            "allergy",
+                            "past_condition",
+                            "current_medicine",
+                            "red_flag_mention"
+                          ]
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "negated": {
+                          "type": "boolean"
+                        },
+                        "uncertain": {
+                          "type": "boolean"
+                        },
+                        "speaker": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "unknown",
+                            "doctor",
+                            "patient"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "extracted",
+                            "manual"
+                          ]
+                        },
+                        "sourceSegmentSeq": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanStart": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "spanEnd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "evidenceQuote": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "matchType": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "exact",
+                            "fuzzy"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "heard",
+                            "confirmed",
+                            "rejected",
+                            "stale"
+                          ]
+                        },
+                        "edited": {
+                          "type": "boolean"
+                        },
+                        "originalValue": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pipeline": {
+                          "type": "string"
+                        },
+                        "model": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "conceptStatus": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "confirmed",
+                            "stale"
+                          ]
+                        },
+                        "conceptConfirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "snomedId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "confirmedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "value",
+                        "negated",
+                        "uncertain",
+                        "speaker",
+                        "source",
+                        "sourceSegmentSeq",
+                        "spanStart",
+                        "spanEnd",
+                        "evidenceQuote",
+                        "matchType",
+                        "status",
+                        "edited",
+                        "originalValue",
+                        "pipeline",
+                        "model",
+                        "conceptId",
+                        "conceptStatus",
+                        "conceptConfirmedAt",
+                        "snomedId",
+                        "confirmedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fact.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FACT_CONCEPT_CLEARED"
         ]
       }
     },

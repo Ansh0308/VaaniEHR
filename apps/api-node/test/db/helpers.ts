@@ -78,6 +78,10 @@ export const TOY_PATHWAYS_ENV = {
   PATHWAYS_DIR: TOY_DIR,
   PATHWAYS_ALLOW_TEST: 'true',
   PATHWAYS_SLOT_MAP: `${TOY_DIR}/_toy/slot-map.json`,
+  // the fake toy concept list (ids match the toy slot map); the owner's real draft list is never read by tests
+  CONCEPTS_FILE: fileURLToPath(
+    new URL('../../../../packages/rules/fixtures/concepts/toy-concepts.json', import.meta.url),
+  ),
 } as const;
 
 export const SEED_EMAIL = {

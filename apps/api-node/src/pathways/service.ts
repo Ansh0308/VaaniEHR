@@ -34,7 +34,7 @@ export async function computeState(
 ): Promise<PathwayState> {
   const facts = await db.query<FactForSlots>(
     `SELECT id::text AS id, status, concept_id, negated, uncertain FROM extracted_fact
-      WHERE session_id = $1 AND status = 'confirmed' AND concept_id IS NOT NULL`,
+      WHERE session_id = $1 AND status = 'confirmed' AND concept_status = 'confirmed' AND concept_id IS NOT NULL`,
     [sessionId],
   );
   const mapped = factsToSlots(facts.rows, catalog.slotMap);

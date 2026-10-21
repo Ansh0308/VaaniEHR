@@ -42,8 +42,8 @@ const record = (scope: string, granted = true, session = sessionId) =>
 const confirmedFact = (concept: string, negated = false, status = 'confirmed') =>
   h.db.owner.query(
     `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
-       confirmed_at, confirmed_by, concept_id)
-     VALUES ($1,$2,'symptom','toy fact',$3,'manual',$4,'manual', $5, $6, $7)`,
+       confirmed_at, confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+     VALUES ($1,$2,'symptom','toy fact',$3,'manual',$4,'manual', $5, $6, $7, 'confirmed', $6, now())`,
     [
       sessionId,
       clinicId,
@@ -234,7 +234,7 @@ describe('acting on a suggested question', () => {
     expect((await get()).nodeId).not.toBe(q.nodeId);
     await h.db.owner.query(
       `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline, confirmed_at,
-         confirmed_by, concept_id) VALUES ($1,$2,'symptom','toy','manual','confirmed','manual', now() + interval '1 second', $3, 'toy_c_toy_symptom_6')`,
+         confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at) VALUES ($1,$2,'symptom','toy','manual','confirmed','manual', now() + interval '1 second', $3, 'toy_c_toy_symptom_6', 'confirmed', $3, now() + interval '1 second')`,
       [s3, clinicId, doctorId],
     );
     expect((await get()).nodeId).toBe(q.nodeId);
@@ -364,8 +364,8 @@ describe('what the doctor panels need (Phase 6C)', () => {
   it('each piece of evidence points at the confirmed fact that set its slot; candidates carry their status', async () => {
     const inserted = await h.db.owner.query<{ id: string }>(
       `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
-         confirmed_at, confirmed_by, concept_id)
-       VALUES ($1,$2,'symptom','toy fact',false,'manual','confirmed','manual', now(), $3, 'toy_c_toy_symptom_1')
+         confirmed_at, confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+       VALUES ($1,$2,'symptom','toy fact',false,'manual','confirmed','manual', now(), $3, 'toy_c_toy_symptom_1', 'confirmed', $3, now())
        RETURNING id`,
       [s6, clinicId, doctorId],
     );

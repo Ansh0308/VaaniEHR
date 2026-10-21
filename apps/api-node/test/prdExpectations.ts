@@ -40,6 +40,10 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/candidates/select/undo': ['doctor'],
   'GET /sessions/:id/pathway-record': ['doctor'],
   // pathway viewer (PG-14): read-only, doctors and admins, configuration data (not clinic data)
+  // concept links (ADR-D37): the session's own doctor only
+  'GET /sessions/:id/concept-suggestions': ['doctor'],
+  'POST /sessions/:id/facts/:factId/concept': ['doctor'],
+  'DELETE /sessions/:id/facts/:factId/concept': ['doctor'],
   'GET /pathways': ['doctor', 'admin'],
   'GET /pathways/:id': ['doctor', 'admin'],
   // INTERNAL routes for asr-py: signed requests only; no user token of any role is accepted (ADR-D26)

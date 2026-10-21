@@ -38,6 +38,9 @@ export const factView = z.object({
   pipeline: z.string(),
   model: z.string().nullable(),
   conceptId: z.string().nullable(),
+  /** none | confirmed (by the doctor) | stale (the words changed since): the engine uses only 'confirmed' */
+  conceptStatus: z.enum(['none', 'confirmed', 'stale']),
+  conceptConfirmedAt: z.string().nullable(),
   snomedId: z.string().nullable(),
   confirmedAt: z.string().nullable(),
 });
@@ -61,6 +64,8 @@ interface FactRow {
   pipeline: string;
   model: string | null;
   concept_id: string | null;
+  concept_status: 'none' | 'confirmed' | 'stale';
+  concept_confirmed_at: Date | null;
   snomed_id: string | null;
   confirmed_at: Date | null;
 }
@@ -84,6 +89,8 @@ export const toFactView = (r: FactRow) => ({
   pipeline: r.pipeline,
   model: r.model,
   conceptId: r.concept_id,
+  conceptStatus: r.concept_status,
+  conceptConfirmedAt: r.concept_confirmed_at ? r.concept_confirmed_at.toISOString() : null,
   snomedId: r.snomed_id,
   confirmedAt: r.confirmed_at ? r.confirmed_at.toISOString() : null,
 });
@@ -92,7 +99,7 @@ export async function readFacts(db: Queryable, sessionId: string, status?: strin
   const r = await db.query<FactRow>(
     `SELECT f.id, f.type, f.value, f.negated, f.uncertain, f.speaker, f.source, s.seq, f.span_start, f.span_end,
             f.evidence_quote, f.match_type, f.status, f.edited, f.original_value, f.pipeline, f.model, f.concept_id,
-            f.snomed_id, f.confirmed_at
+            f.concept_status, f.concept_confirmed_at, f.snomed_id, f.confirmed_at
        FROM extracted_fact f LEFT JOIN transcript_segment s ON s.id = f.source_segment_id
       WHERE f.session_id = $1 AND ($2::text IS NULL OR f.status = $2)
       ORDER BY coalesce(s.seq, 1000000), f.span_start NULLS LAST, f.created_at`,
@@ -127,7 +134,8 @@ export async function markStaleForSegments(
   let stale = 0;
   for (const s of segs.rows) {
     const r = await db.query(
-      `UPDATE extracted_fact SET status = 'stale', confirmed_at = NULL, updated_at = now()
+      `UPDATE extracted_fact SET status = 'stale', confirmed_at = NULL, updated_at = now(),
+              concept_status = CASE WHEN concept_id IS NOT NULL THEN 'stale' ELSE concept_status END
         WHERE source_segment_id = $1 AND status IN ('heard', 'confirmed') AND segment_text_hash <> $2`,
       [s.id, textHash(s.text)],
     );

@@ -1,4 +1,5 @@
 // Dependencies handed to every route handler. Built once in server.ts (and by tests).
+import type { ConceptCatalog } from './concepts/catalog.js';
 import type { PathwayCatalog } from './pathways/catalog.js';
 import type pg from 'pg';
 import type { DevAuthProvider } from './auth/DevAuthProvider.js';
@@ -25,4 +26,6 @@ export interface Services {
   dummyPasswordHash: string;
   /** pathways, slot map and engine parameters (Phase 6A); loaded once at start-up */
   pathways: PathwayCatalog;
+  /** the unreviewed draft concept list for suggestions (remaining Phase 5 items) */
+  concepts: ConceptCatalog;
 }

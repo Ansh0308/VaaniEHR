@@ -79,7 +79,10 @@ async function build(mutation: Mutation) {
             {
               query: (sql: string, v?: unknown[]) =>
                 db.query(
-                  sql.replace("AND status = 'confirmed' AND concept_id", 'AND concept_id'),
+                  sql.replace(
+                    "AND status = 'confirmed' AND concept_status = 'confirmed' AND concept_id",
+                    'AND concept_id',
+                  ),
                   v,
                 ),
             },
@@ -150,8 +153,8 @@ async function violations(
   const fact = (concept: string, status: string) =>
     h.db.owner.query(
       `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline, confirmed_at,
-         confirmed_by, concept_id)
-       VALUES ($1,$2,'symptom','toy fact','manual',$3,'manual',$4,$5,$6)`,
+         confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+       VALUES ($1,$2,'symptom','toy fact','manual',$3,'manual',$4,$5,$6,'confirmed',$5, now())`,
       [session, clinicId, status, status === 'confirmed' ? new Date() : null, doctorId, concept],
     );
 

@@ -182,6 +182,16 @@ const fixture = (route: RouteDef): Call => {
     'GET /sessions/:id/pathway-record': {
       path: `/sessions/${consentedSessionId}/pathway-record`,
     },
+    'GET /sessions/:id/concept-suggestions': {
+      path: `/sessions/${consentedSessionId}/concept-suggestions`,
+    },
+    'POST /sessions/:id/facts/:factId/concept': {
+      path: `/sessions/${consentedSessionId}/facts/${consentedSessionId}/concept`,
+      body: { conceptId: 'x' },
+    },
+    'DELETE /sessions/:id/facts/:factId/concept': {
+      path: `/sessions/${consentedSessionId}/facts/${consentedSessionId}/concept`,
+    },
     'GET /pathways': { path: '/pathways' },
     'GET /pathways/:id': { path: '/pathways/toy_condition_a' },
     'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },

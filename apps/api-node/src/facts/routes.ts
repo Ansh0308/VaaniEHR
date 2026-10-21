@@ -2,6 +2,7 @@
 // the session's own doctor, clinic-scoped. Changing a fact needs audio + ai_processing consent at that moment.
 // A confirmed fact is only ever changed by an explicit doctor action here, never by the extraction pipeline.
 import { z } from 'zod';
+import { markLinkStaleOnEdit } from '../concepts/service.js';
 import { getEffectiveConsent } from '../consent/service.js';
 import type { Queryable } from '../db/tx.js';
 import { errors } from '../http/errors.js';
@@ -191,6 +192,8 @@ export function factRoutes(): RouteDef[] {
             span = { start: at, end: at + quote.length, hash: textHash(text) };
           }
           const edit = b.action === 'edit';
+          // a changed value makes the concept link stale: the doctor must confirm it again
+          if (edit && b.value !== undefined) await markLinkStaleOnEdit(ctx.db, f.id, b.value);
           await ctx.db.query(
             `UPDATE extracted_fact SET
                original_value = CASE WHEN $2::boolean AND NOT edited THEN value ELSE original_value END,

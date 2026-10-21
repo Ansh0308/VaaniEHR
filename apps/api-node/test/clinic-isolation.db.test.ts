@@ -34,7 +34,7 @@ let A: World;
 let B: World;
 
 const call = (
-  method: 'get' | 'post' | 'put' | 'patch',
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete',
   path: string,
   token: string,
   body?: object,
@@ -312,6 +312,40 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
       expect(
         (await call('post', `/sessions/${y.sessionId}/candidates/select/undo`, x.tokens[role], {}))
           .status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  // ---- concept links (ADR-D37): the same, both ways
+  'GET /sessions/:id/concept-suggestions': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/concept-suggestions`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/facts/:factId/concept': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'post',
+            `/sessions/${y.sessionId}/facts/${randomUUID()}/concept`,
+            x.tokens[role],
+            {
+              conceptId: 'x',
+            },
+          )
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'DELETE /sessions/:id/facts/:factId/concept': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'delete',
+            `/sessions/${y.sessionId}/facts/${randomUUID()}/concept`,
+            x.tokens[role],
+          )
+        ).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
   'GET /sessions/:id/candidates': async (x, y) => {

@@ -32,6 +32,8 @@ const rawSchema = z.object({
   LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
   // Phase 6A: pathway files. Only status "active" loads unless PATHWAYS_ALLOW_TEST=true (refused in production).
+  // the owner's UNREVIEWED draft concept list (git-ignored); missing = the screen says "Concept list not loaded"
+  CONCEPTS_FILE: z.string().min(1).optional(),
   PATHWAYS_DIR: z.string().min(1).optional(),
   PATHWAYS_ALLOW_TEST: z.enum(['true', 'false']).default('false'),
   PATHWAYS_SLOT_MAP: z.string().min(1).optional(),
@@ -58,6 +60,7 @@ export interface Config {
   lockoutMaxFailures: number;
   lockoutMs: number;
   bcryptCost: number;
+  concepts: { file: string };
   pathways: {
     /** folder with *.pathway.json (default: data/pathways at the repository root) */
     dir: string;
@@ -145,6 +148,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     lockoutMaxFailures: v.LOCKOUT_MAX_FAILURES,
     lockoutMs: v.LOCKOUT_MINUTES * 60_000,
     bcryptCost: v.BCRYPT_COST,
+    concepts: {
+      file: v.CONCEPTS_FILE ?? resolve(process.cwd(), '../../data/concepts/concepts.json'),
+    },
     pathways: {
       dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../seed/pathways'),
       allowTest: v.PATHWAYS_ALLOW_TEST === 'true',

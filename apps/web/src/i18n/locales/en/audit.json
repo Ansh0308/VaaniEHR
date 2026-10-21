@@ -72,6 +72,8 @@
     "FACT_CONFIRMED": "Fact confirmed by the doctor",
     "FACT_REJECTED": "Fact rejected by the doctor",
     "FACT_EDITED": "Fact edited by the doctor",
+    "FACT_CONCEPT_CONFIRMED": "The doctor confirmed a concept link on a fact",
+    "FACT_CONCEPT_CLEARED": "The doctor cleared a concept link on a fact",
     "QUESTION_ACTED": "The doctor acted on a suggested question",
     "RED_FLAG_ACKNOWLEDGED": "The doctor acknowledged a red flag",
     "CANDIDATE_SELECTED": "The doctor chose a working condition",
