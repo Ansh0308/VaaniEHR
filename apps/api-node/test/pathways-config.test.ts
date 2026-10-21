@@ -53,7 +53,11 @@ describe('the catalog', () => {
     expect(none.pathways).toEqual([]);
     const dir = mkdtempSync(join(tmpdir(), 'pw-'));
     dirs.push(dir);
-    writeFileSync(join(dir, 'bad.pathway.json'), JSON.stringify({ id: 'x', status: 'test' }), 'utf8');
+    writeFileSync(
+      join(dir, 'bad.pathway.json'),
+      JSON.stringify({ id: 'x', status: 'test' }),
+      'utf8',
+    );
     expect(() =>
       loadCatalog(testConfig({ PATHWAYS_DIR: dir, PATHWAYS_ALLOW_TEST: 'true' })),
     ).toThrow(/not valid/);
