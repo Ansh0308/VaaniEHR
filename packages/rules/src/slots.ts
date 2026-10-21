@@ -29,6 +29,8 @@ export interface SlotResult {
   conflicts: string[];
   /** how many facts set a slot */
   used: number;
+  /** slot -> the (first, by id) confirmed fact that set it; for showing the supporting fact */
+  factIds: Record<string, string>;
 }
 
 export function parseSlotMap(raw: unknown): SlotMap {
@@ -46,6 +48,7 @@ export function parseSlotMap(raw: unknown): SlotMap {
 export function factsToSlots(facts: FactForSlots[], map: SlotMap): SlotResult {
   const byConcept = new Map(map.mappings.map((m) => [m.concept_id, m]));
   const seen = new Map<string, boolean>();
+  const by = new Map<string, string>();
   const conflicted = new Set<string>();
   let used = 0;
   for (const f of [...facts].sort((a, b) => a.id.localeCompare(b.id))) {
@@ -56,9 +59,12 @@ export function factsToSlots(facts: FactForSlots[], map: SlotMap): SlotResult {
     const prior = seen.get(m.slot);
     if (prior !== undefined && prior !== value) conflicted.add(m.slot);
     seen.set(m.slot, value);
+    if (!by.has(m.slot)) by.set(m.slot, f.id);
     used += 1;
   }
   const slots: Record<string, SlotValue> = {};
   for (const [slot, value] of seen) if (!conflicted.has(slot)) slots[slot] = value;
-  return { slots, conflicts: [...conflicted].sort(), used };
+  const factIds: Record<string, string> = {};
+  for (const slot of Object.keys(slots)) factIds[slot] = by.get(slot) as string;
+  return { slots, conflicts: [...conflicted].sort(), used, factIds };
 }

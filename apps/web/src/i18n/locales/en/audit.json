@@ -75,6 +75,7 @@
     "QUESTION_ACTED": "The doctor acted on a suggested question",
     "RED_FLAG_ACKNOWLEDGED": "The doctor acknowledged a red flag",
     "CANDIDATE_SELECTED": "The doctor chose a working condition",
+    "CANDIDATE_SELECTION_UNDONE": "The doctor undid the working condition",
     "PATHWAY_DATA_DELETED": "Unconfirmed question suggestions deleted (consent withdrawn)",
     "MEDICINE_IMPORTED": "Medicine list imported",
     "MEDICINE_CODES_LOADED": "Medicine codes loaded",

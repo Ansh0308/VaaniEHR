@@ -342,6 +342,65 @@ describe('who may call, and consent at call time', () => {
   });
 });
 
+describe('what the doctor panels need (Phase 6C)', () => {
+  let s6: string;
+  beforeAll(async () => {
+    s6 = await newSession();
+    await record('audio', true, s6);
+    await record('ai_processing', true, s6);
+  });
+  const on = (method: 'get' | 'post', path: string, body?: object) =>
+    call(method, path, body, doctor, s6);
+
+  it('the next question names its pathway, its status and whether any loaded pathway is not active', async () => {
+    const d = (await on('get', '/questions/next')).body.data;
+    expect(d).toMatchObject({
+      pathwayTitle: 'Toy condition A',
+      pathwayStatus: 'test',
+      notActive: true,
+    });
+  });
+
+  it('each piece of evidence points at the confirmed fact that set its slot; candidates carry their status', async () => {
+    const inserted = await h.db.owner.query<{ id: string }>(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
+         confirmed_at, confirmed_by, concept_id)
+       VALUES ($1,$2,'symptom','toy fact',false,'manual','confirmed','manual', now(), $3, 'toy_c_toy_symptom_1')
+       RETURNING id`,
+      [s6, clinicId, doctorId],
+    );
+    const factId = inserted.rows[0]?.id;
+    const d = (await on('get', '/candidates')).body.data;
+    const a = d.candidates.find((c: { pathwayId: string }) => c.pathwayId === 'toy_condition_a');
+    expect(a.status).toBe('test');
+    expect(a.evidenceFor[0]).toMatchObject({ slot: 'toy_symptom_1', factId });
+    expect(d.notActive).toBe(true);
+  });
+
+  it('undo clears the working condition, keeps the old row as history, is audited and needs consent', async () => {
+    expect((await on('post', '/candidates/select/undo', {})).status).toBe(409); // nothing to undo yet
+    await on('post', '/candidates/select', { pathwayId: 'toy_condition_a', version: 1 });
+    const done = await on('post', '/candidates/select/undo', {});
+    expect(done.status).toBe(200);
+    expect((await on('get', '/candidates')).body.data.selected).toBeNull();
+    const rows = await h.db.owner.query(
+      "SELECT superseded_at FROM candidate WHERE session_id = $1 AND kind = 'selected'",
+      [s6],
+    );
+    expect(rows.rows).toHaveLength(1);
+    expect(rows.rows[0]?.superseded_at).not.toBeNull();
+    const audit = await h.db.owner.query(
+      "SELECT meta FROM audit_log WHERE action = 'CANDIDATE_SELECTION_UNDONE' AND session_id = $1",
+      [s6],
+    );
+    expect(audit.rows.map((r) => r.meta)).toEqual([{}]);
+    const bare = await newSession();
+    expect((await call('post', '/candidates/select/undo', {}, doctor, bare)).body.error.code).toBe(
+      'CONSENT_REQUIRED',
+    );
+  });
+});
+
 describe('withdrawal and the database guards', () => {
   it('deletes suggested questions and the derived shortlist; keeps the acknowledged red flag and the working condition', async () => {
     const before = await h.db.owner.query(
@@ -412,5 +471,21 @@ describe('withdrawal and the database guards', () => {
         (e: Error) => e.message,
       );
     expect(bad).toMatch(/candidate_selected_shape/);
+  });
+});
+
+describe('the kept record after withdrawal (Phase 6C)', () => {
+  it("is readable without consent and holds only the doctor's own decisions", async () => {
+    const res = await call('get', '/pathway-record');
+    expect(res.status).toBe(200);
+    expect(res.body.data.acknowledgedRedFlags).toHaveLength(1);
+    expect(res.body.data.acknowledgedRedFlags[0]).toMatchObject({ pathwayId: 'toy_condition_b' });
+    expect(res.body.data.selected).toMatchObject({ notListed: true });
+    // while the suggestions themselves stay refused
+    expect((await call('get', '/questions/next')).body.error.code).toBe('CONSENT_REQUIRED');
+    expect((await call('get', '/candidates')).body.error.code).toBe('CONSENT_REQUIRED');
+  });
+  it('another doctor cannot read it', async () => {
+    expect((await call('get', '/pathway-record', undefined, doctor2)).status).toBe(404);
   });
 });

@@ -301,6 +301,19 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         ).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  'GET /sessions/:id/pathway-record': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/pathway-record`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/candidates/select/undo': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('post', `/sessions/${y.sessionId}/candidates/select/undo`, x.tokens[role], {}))
+          .status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   'GET /sessions/:id/candidates': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)
       expect(

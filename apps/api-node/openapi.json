@@ -2874,6 +2874,7 @@
                 "QUESTION_ACTED",
                 "RED_FLAG_ACKNOWLEDGED",
                 "CANDIDATE_SELECTED",
+                "CANDIDATE_SELECTION_UNDONE",
                 "PATHWAY_DATA_DELETED",
                 "MEDICINE_IMPORTED",
                 "MEDICINE_CODES_LOADED",
@@ -3085,6 +3086,7 @@
                       "QUESTION_ACTED",
                       "RED_FLAG_ACKNOWLEDGED",
                       "CANDIDATE_SELECTED",
+                      "CANDIDATE_SELECTION_UNDONE",
                       "PATHWAY_DATA_DELETED",
                       "MEDICINE_IMPORTED",
                       "MEDICINE_CODES_LOADED",
@@ -9466,6 +9468,22 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "pathwayTitle": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "pathwayStatus": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "test",
+                            "draft",
+                            "active"
+                          ]
+                        },
+                        "notActive": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
@@ -9481,7 +9499,10 @@
                         "redFlags",
                         "questionsUsed",
                         "questionCap",
-                        "slotConflicts"
+                        "slotConflicts",
+                        "pathwayTitle",
+                        "pathwayStatus",
+                        "notActive"
                       ],
                       "additionalProperties": false
                     }
@@ -9759,6 +9780,9 @@
                         "notice": {
                           "type": "string"
                         },
+                        "notActive": {
+                          "type": "boolean"
+                        },
                         "candidates": {
                           "type": "array",
                           "items": {
@@ -9775,6 +9799,14 @@
                               },
                               "title": {
                                 "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "test",
+                                  "draft",
+                                  "active"
+                                ]
                               },
                               "score": {
                                 "type": "number"
@@ -9793,12 +9825,17 @@
                                     "nodeId": {
                                       "nullable": true,
                                       "type": "string"
+                                    },
+                                    "factId": {
+                                      "nullable": true,
+                                      "type": "string"
                                     }
                                   },
                                   "required": [
                                     "ruleId",
                                     "slot",
-                                    "nodeId"
+                                    "nodeId",
+                                    "factId"
                                   ],
                                   "additionalProperties": false
                                 }
@@ -9817,12 +9854,17 @@
                                     "nodeId": {
                                       "nullable": true,
                                       "type": "string"
+                                    },
+                                    "factId": {
+                                      "nullable": true,
+                                      "type": "string"
                                     }
                                   },
                                   "required": [
                                     "ruleId",
                                     "slot",
-                                    "nodeId"
+                                    "nodeId",
+                                    "factId"
                                   ],
                                   "additionalProperties": false
                                 }
@@ -9856,6 +9898,7 @@
                               "pathwayId",
                               "version",
                               "title",
+                              "status",
                               "score",
                               "evidenceFor",
                               "evidenceAgainst",
@@ -9905,6 +9948,7 @@
                       "required": [
                         "outcome",
                         "notice",
+                        "notActive",
                         "candidates",
                         "selected"
                       ],
@@ -9964,6 +10008,307 @@
         "x-permission": "candidate.read",
         "x-allowed-roles": [
           "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/pathway-record": {
+      "get": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: what the doctor decided and keeps (the working condition, acknowledged red flags). Readable after consent is withdrawn, because it holds only the doctor's own decisions",
+        "operationId": "getSessionsIdPathwayRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "selected": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "notListed": {
+                              "type": "boolean"
+                            },
+                            "pathwayId": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "version": {
+                              "nullable": true,
+                              "type": "number"
+                            },
+                            "title": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "text": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "selectedAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "notListed",
+                            "pathwayId",
+                            "version",
+                            "title",
+                            "text",
+                            "selectedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "acknowledgedRedFlags": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "eventId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "pathwayId": {
+                                "type": "string"
+                              },
+                              "pathwayTitle": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "actedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "eventId",
+                              "pathwayId",
+                              "pathwayTitle",
+                              "actedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "notActive": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "selected",
+                        "acknowledgedRedFlags",
+                        "notActive"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "candidate.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/candidates/select/undo": {
+      "post": {
+        "tags": [
+          "Pathways"
+        ],
+        "summary": "Doctor: undo the working-condition choice (the earlier row is kept as history, marked superseded)",
+        "operationId": "postSessionsIdCandidatesSelectUndo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "undone": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "undone"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "candidate.select",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "CANDIDATE_SELECTION_UNDONE"
         ]
       }
     },

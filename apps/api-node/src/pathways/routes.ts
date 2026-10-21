@@ -41,18 +41,25 @@ const nextShape = z.object({
   questionsUsed: z.number(),
   questionCap: z.number(),
   slotConflicts: z.array(z.string()),
+  pathwayTitle: z.string().nullable(),
+  pathwayStatus: z.enum(['test', 'draft', 'active']).nullable(),
+  /** true when any loaded pathway is not active: the screen then says "Test pathway - not clinical" */
+  notActive: z.boolean(),
 });
 
 const evidenceShape = z.object({
   ruleId: z.string(),
   slot: z.string(),
   nodeId: z.string().nullable(),
+  /** the confirmed fact that set this slot, if any (the screen shows that fact) */
+  factId: z.string().nullable(),
 });
 const candidateShape = z.object({
   rank: z.number(),
   pathwayId: z.string(),
   version: z.number(),
   title: z.string(),
+  status: z.enum(['test', 'draft', 'active']),
   score: z.number(),
   evidenceFor: z.array(evidenceShape),
   evidenceAgainst: z.array(evidenceShape),
@@ -72,6 +79,7 @@ const candidatesShape = z.object({
   outcome: z.enum(['QUESTION', 'RED_FLAG', 'ABSTAIN', 'COMPLETE']),
   /** shown with the list: these are suggestions for the doctor to consider, not a diagnosis */
   notice: z.string(),
+  notActive: z.boolean(),
   candidates: z.array(candidateShape),
   selected: selectedShape,
 });
@@ -116,6 +124,25 @@ async function readSelected(
 const NOTICE =
   'Candidates for the doctor to consider, with the evidence for and against. This is not a diagnosis; the doctor decides.';
 
+const titleIn = (
+  pathways: { id: string; title: Record<'en' | 'gu' | 'hi', string> }[],
+  id: string | null,
+  lang: 'en' | 'gu' | 'hi',
+): string | null => (id === null ? null : (pathways.find((p) => p.id === id)?.title[lang] ?? null));
+
+const recordShape = z.object({
+  selected: selectedShape,
+  acknowledgedRedFlags: z.array(
+    z.object({
+      eventId: z.uuid(),
+      pathwayId: z.string(),
+      pathwayTitle: z.string().nullable(),
+      actedAt: z.string(),
+    }),
+  ),
+  notActive: z.boolean(),
+});
+
 export function pathwayRoutes(): RouteDef[] {
   return [
     permRoute<IdParams, unknown, LangQuery>('question.read', {
@@ -151,6 +178,9 @@ export function pathwayRoutes(): RouteDef[] {
             questionsUsed: state.questionsUsed,
             questionCap: catalog.engine.question_cap,
             slotConflicts: state.conflicts,
+            pathwayTitle: titleIn(catalog.pathways, out.pathway_id, ctx.query.lang),
+            pathwayStatus: catalog.pathways.find((p) => p.id === out.pathway_id)?.status ?? null,
+            notActive: catalog.pathways.some((p) => p.status !== 'active'),
           },
         };
       },
@@ -224,7 +254,7 @@ export function pathwayRoutes(): RouteDef[] {
         if (!session) throw errors.notFound('Session not found');
         await requireConsent(ctx.db, session.id);
         const catalog = ctx.services.pathways;
-        const { out } = await computeState(ctx.db, catalog, session.id, ctx.query.lang);
+        const { out, factIds } = await computeState(ctx.db, catalog, session.id, ctx.query.lang);
         // the shortlist is a snapshot kept for evaluation; each read replaces the previous one
         await ctx.db.query("DELETE FROM candidate WHERE session_id = $1 AND kind = 'derived'", [
           session.id,
@@ -244,27 +274,102 @@ export function pathwayRoutes(): RouteDef[] {
           data: {
             outcome: out.outcome,
             notice: NOTICE,
+            notActive: catalog.pathways.some((p) => p.status !== 'active'),
             candidates: out.candidates.map((c, i) => ({
               rank: i + 1,
               pathwayId: c.pathway_id,
               version: c.version,
               title: c.title,
+              status: catalog.pathways.find((p) => p.id === c.pathway_id)?.status ?? 'test',
               score: c.score,
               evidenceFor: c.evidence_for.map((e) => ({
                 ruleId: e.rule_id,
                 slot: e.slot,
                 nodeId: e.node_id,
+                factId: factIds[e.slot] ?? null,
               })),
               evidenceAgainst: c.evidence_against.map((e) => ({
                 ruleId: e.rule_id,
                 slot: e.slot,
                 nodeId: e.node_id,
+                factId: factIds[e.slot] ?? null,
               })),
               source: c.source,
             })),
             selected: await readSelected(ctx.db, session.id, titleOf),
           },
         };
+      },
+    }),
+
+    permRoute<IdParams, unknown, LangQuery>('candidate.read', {
+      method: 'get',
+      path: '/sessions/:id/pathway-record',
+      tag: 'Pathways',
+      summary:
+        "Doctor: what the doctor decided and keeps (the working condition, acknowledged red flags). Readable after consent is withdrawn, because it holds only the doctor's own decisions",
+      audit: [],
+      params: idParams,
+      query: langQuery,
+      response: recordShape,
+      handler: async (ctx) => {
+        const session = await loadSession(ctx.db, ctx.auth, ctx.params.id);
+        if (!session) throw errors.notFound('Session not found');
+        const catalog = ctx.services.pathways;
+        const lang = ctx.query.lang;
+        const titleOf = (id: string | null) => titleIn(catalog.pathways, id, lang);
+        const flags = await ctx.db.query<{
+          id: string;
+          pathway_id: string;
+          acted_at: Date;
+        }>(
+          `SELECT id, pathway_id, acted_at FROM question_event
+            WHERE session_id = $1 AND kind = 'red_flag' AND status = 'acknowledged' ORDER BY acted_at`,
+          [session.id],
+        );
+        return {
+          data: {
+            selected: await readSelected(ctx.db, session.id, titleOf),
+            acknowledgedRedFlags: flags.rows.map((r) => ({
+              eventId: r.id,
+              pathwayId: r.pathway_id,
+              pathwayTitle: titleOf(r.pathway_id),
+              actedAt: r.acted_at.toISOString(),
+            })),
+            notActive: catalog.pathways.some((p) => p.status !== 'active'),
+          },
+        };
+      },
+    }),
+
+    permRoute<IdParams>('candidate.select', {
+      method: 'post',
+      path: '/sessions/:id/candidates/select/undo',
+      tag: 'Pathways',
+      summary:
+        'Doctor: undo the working-condition choice (the earlier row is kept as history, marked superseded)',
+      audit: ['CANDIDATE_SELECTION_UNDONE'],
+      params: idParams,
+      response: z.object({ undone: z.literal(true) }),
+      handler: async (ctx) => {
+        const session = await loadSession(ctx.db, ctx.auth, ctx.params.id);
+        if (!session) throw errors.notFound('Session not found');
+        await requireConsent(ctx.db, session.id);
+        const done = await ctx.db.query<{ id: string }>(
+          `UPDATE candidate SET superseded_at = now()
+            WHERE session_id = $1 AND kind = 'selected' AND superseded_at IS NULL RETURNING id`,
+          [session.id],
+        );
+        const row = done.rows[0];
+        if (!row) throw errors.conflict('There is no working condition to undo');
+        await ctx.audit({
+          action: 'CANDIDATE_SELECTION_UNDONE',
+          resourceType: 'candidate',
+          resourceId: row.id,
+          sessionId: session.id,
+          meta: {},
+        });
+        return { data: { undone: true as const } };
       },
     }),
 

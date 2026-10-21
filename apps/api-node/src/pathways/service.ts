@@ -22,6 +22,8 @@ export interface PathwayState {
   conflicts: string[];
   /** question events that count towards the cap */
   questionsUsed: number;
+  /** slot -> id of the confirmed fact that set it (the screen looks the fact up; no text leaves the database here) */
+  factIds: Record<string, string>;
 }
 
 export async function computeState(
@@ -69,6 +71,7 @@ export async function computeState(
   return {
     out,
     conflicts: mapped.conflicts,
+    factIds: mapped.factIds,
     questionsUsed: new Set([...asked, ...dismissed]).size,
   };
 }
