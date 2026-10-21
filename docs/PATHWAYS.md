@@ -48,3 +48,8 @@ Red flags first (a slot whose value matches a node's `red_flag_if` gives RED_FLA
 
 ## Facts to slots
 `packages/rules/fixtures/pathways/_toy/slot-map.json` maps toy concept ids to slots. Only confirmed, certain facts with a mapped concept id set a slot; a negated fact means "absent"; two disagreeing confirmed facts leave the slot unknown. Real concept ids wait for the reviewed word list (OCI-017).
+
+## Phase 6B additions
+- Per node: `source_quote` (exact sentence), `page`, optional `reviewed_by`, optional `concept_id` (questions), `refer` (terminals). An ACTIVE pathway needs `source_quote`, `page`, a reviewer and the `refer` flag on every node it has; test pathways are exempt.
+- Authoring commands, folders and the review steps: `docs/PATHWAY_AUTHORING.md`. Where files live: `seed/pathways/` (active, tracked, locked), `data/pathways/drafts/` (drafts, git-ignored), `packages/rules/fixtures/pathways/_toy/` (fake, tests).
+- `npm run pathway:lint`, `pathway:new`, `pathway:version`, `pathways:coverage` exist beside `pathways:validate`, `:lock`, `:cases`.

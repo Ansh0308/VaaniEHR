@@ -88,3 +88,7 @@ Type: DM Sans (body), Fredoka (page titles only), Noto Sans Gujarati in **every*
 - **FactsPanel:** a single column that works at 375px: title, "Test mode - sample extraction" tag when no real model is used, the Extract facts button (never automatic) and Add by hand, plain-word errors in a blocked banner, facts grouped under type headings, the key help line, and a visually hidden polite live region for new facts.
 - **TranscriptPane highlight:** the words a focused fact came from are wrapped in `<mark>` with a thick underline and a pale background (visible without colour).
 - All new Gujarati strings are placeholders and need review by a Gujarati speaker and the clinician.
+
+## Phase 6B pattern (pathway viewer)
+- **PathwaysPage:** read only. One pathway chosen from a select (44px), a plain banner "Draft - not clinically reviewed" for anything that is not active and signed off, a summary, the version history (each older version opens through the API), the nodes as cards (never a wide table, so it holds at 375px), and the scoring rules. Each card shows the node id, its type, the slot and answer type, red-flag condition, the text in English, Gujarati and Hindi each with its own `lang`, the exact source sentence in a left-ruled quote with its page, and the next steps; a missing source sentence says so in words. No editing controls exist on the page, and a test checks that.
+- All new Gujarati strings are placeholders and need review by a Gujarati speaker and the clinician.
