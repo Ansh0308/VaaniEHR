@@ -329,6 +329,8 @@ try {
         '_toy',
         'slot-map.json',
       ),
+      // the FAKE toy concept list: its ids match the toy slot map (the owner's real draft list is never read here)
+      CONCEPTS_FILE: join(root, 'packages', 'rules', 'fixtures', 'concepts', 'toy-concepts.json'),
     },
   });
   start(
@@ -552,8 +554,28 @@ try {
       (await page.locator('mark').first().innerText()) === 'Namaste, tav kyarthi',
       'hovering a fact highlights its words in the transcript',
     );
-    await factA.getByRole('button', { name: /^Confirm / }).click();
+    await factA.getByRole('button', { name: /^Confirm Namaste/ }).click();
     await factA.getByText('Confirmed', { exact: true }).waitFor();
+    // remaining Phase 5 items: the (toy, unreviewed) list suggests a concept for the fact; the doctor confirms it; the
+    // question panel moves on because the symptom slot is now known
+    const questionPanel = page.getByRole('region', { name: 'Suggested questions' });
+    await questionPanel.getByText('Toy question: is toy symptom 1 present?').waitFor();
+    await factA.getByText('Suggested concept: toy symptom one (unreviewed list)').waitFor();
+    check(
+      (await factA.innerText()).search(/%|score|confidence/i) < 0,
+      'the concept suggestion shows no score or percentage',
+    );
+    check(
+      (await page.getByRole('button', { name: 'Confirm concept' }).count()) >= 1 &&
+        (await factA.evaluate((el) => el.textContent.includes('Concept: toy symptom one'))) ===
+          false,
+      'a concept is only suggested until the doctor confirms it',
+    );
+    await scan(page, 'en consultation (concept suggested)');
+    await factA.getByRole('button', { name: 'Confirm concept' }).click();
+    await factA.getByText('Concept: toy symptom one (unreviewed list)').waitFor();
+    await questionPanel.getByText('Toy question: is toy symptom 2 present?').waitFor();
+    await scan(page, 'en consultation (concept confirmed, question moved on)');
     // edit the words the OTHER fact came from: that fact becomes stale
     const seg2 = page.getByRole('listitem').filter({ hasText: 'Drug-A twice a day' });
     await seg2.getByRole('button', { name: /^Edit segment/ }).click();
@@ -594,7 +616,8 @@ try {
     const addFact = (concept) =>
       appQuery(
         `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline, confirmed_at,
-           confirmed_by, concept_id) VALUES ($1,$2,'duration',$3,'manual','confirmed','manual', now(), $4, $5)`,
+           confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+         VALUES ($1,$2,'duration',$3,'manual','confirmed','manual', now(), $4, $5, 'confirmed', $4, now())`,
         [sessionId, owner.clinic, `toy fact ${concept}`, owner.doctor, concept],
       );
     const open = async () => {
@@ -605,7 +628,7 @@ try {
     await open();
     const questions = page.getByRole('region', { name: 'Suggested questions' });
     await questions.getByText('Test pathway - not clinical').waitFor();
-    await questions.getByText('Toy question: is toy symptom 1 present?').waitFor();
+    await questions.getByText('Toy question: is toy symptom 2 present?').waitFor(); // symptom 1 is known since the concept was confirmed
     check(
       (await page.getByTestId('red-flag-banner').count()) === 0,
       'no red-flag notice before a red-flag fact is confirmed',
