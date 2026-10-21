@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "source": "TEST FIXTURE: made-up toy concepts; the ids match the toy pathway slot map. Not a clinical list.",
+  "concepts": [
+    {
+      "id": "toy_c_toy_symptom_1",
+      "labels": {
+        "en": ["toy symptom one", "namaste tav kyarthi"],
+        "gu": ["[TOY-GU] toy symptom one"],
+        "hi": ["[TOY-HI] toy symptom one"]
+      },
+      "review_status": "unreviewed",
+      "snomed_id": null
+    },
+    {
+      "id": "toy_c_toy_symptom_2",
+      "labels": {
+        "en": ["toy symptom two", "drug a twice a"],
+        "gu": ["[TOY-GU] toy symptom two"],
+        "hi": ["[TOY-HI] toy symptom two"]
+      },
+      "review_status": "unreviewed",
+      "snomed_id": null
+    },
+    {
+      "id": "toy_c_toy_symptom_5",
+      "labels": {
+        "en": ["toy symptom five", "toy shared word"],
+        "gu": ["[TOY-GU] toy symptom five"],
+        "hi": ["[TOY-HI] toy symptom five"]
+      },
+      "review_status": "unreviewed",
+      "snomed_id": null
+    },
+    {
+      "id": "toy_c_toy_symptom_6",
+      "labels": {
+        "en": ["toy symptom six", "toy shared word"],
+        "gu": ["[TOY-GU] toy symptom six"],
+        "hi": ["[TOY-HI] toy symptom six"]
+      },
+      "review_status": "unreviewed",
+      "snomed_id": null
+    },
+    {
+      "id": "toy_c_toy_redflag_1",
+      "labels": {
+        "en": ["toy warning sign"],
+        "gu": ["[TOY-GU] toy warning sign"],
+        "hi": ["[TOY-HI] toy warning sign"]
+      },
+      "review_status": "unreviewed",
+      "snomed_id": null
+    }
+  ]
+}

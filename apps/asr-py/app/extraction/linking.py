@@ -129,6 +129,19 @@ def load_concepts(path: Path) -> list[Concept]:
     return out
 
 
+@dataclass(frozen=True)
+class Suggestion:
+    """One suggested concept for the doctor to confirm or refuse. No score is ever shown on screen."""
+
+    concept_id: str
+    form: str
+    method: str
+    score: float
+
+
+_TIER = {"exact": 0, "contained": 1, "fuzzy": 2}
+
+
 class Linker:
     def __init__(self, concepts: list[Concept]) -> None:
         self.concepts = {c.id: c for c in concepts}
@@ -171,6 +184,28 @@ class Linker:
         cid, (_, _, method, form) = ranked[0]
         score = 1.0 if method != "fuzzy" else round(self._score(words, form), 3)
         return Link(cid, form, method, score, self.concepts[cid].review_status)
+
+    def suggest(self, fact_type: str, value: str, limit: int = 3) -> list[Suggestion]:
+        """Up to `limit` concepts, best first: exact, then contained (longer form first), then fuzzy (higher ratio first),
+        ties by concept id. Unlike link(), a tie is NOT dropped: the doctor chooses. The TypeScript port in
+        packages/rules/src/linking.ts must give the same answers (fixtures/concepts/linker-parity.json)."""
+        if fact_type not in LINKABLE_TYPES:
+            return []
+        words = norm(value).split()
+        if not words:
+            return []
+        best: dict[str, tuple[tuple[int, float, int, str], Suggestion]] = {}
+        for cid, form, fwords in self._forms:
+            hit = self._match(words, fwords)
+            if hit is None:
+                continue
+            method, score = hit
+            score = round(score, 3)
+            key = (_TIER[method], -score, -len(" ".join(fwords)), cid)
+            if cid not in best or key < best[cid][0]:
+                best[cid] = (key, Suggestion(cid, form, method, score))
+        ranked = sorted(best.values(), key=lambda pair: pair[0])
+        return [s for _, s in ranked[:limit]]
 
     @staticmethod
     def _score(words: list[str], form: str) -> float:
@@ -243,12 +278,55 @@ def precision_check(linker: Linker, gold_md: Path) -> dict[str, int]:
     return counts
 
 
+def measure(linker: Linker, cases: list) -> dict[str, int]:
+    """How often the right concept is in the top 1 and top 3, over the gold facts. MEASURE ONLY: nothing is tuned.
+
+    `cases` are eval_extraction.Case objects. Only symptom facts can be linked; the expected concept is the one whose
+    English form equals the gold value (qualifiers in brackets ignored). Each fact is tried twice: with the words that
+    were said (the evidence quote) and with the gold value (English)."""
+    by_en = {norm(f): cid for cid, c in linker.concepts.items() for f in c.labels.get("en", [])}
+    counts = {
+        "gold_facts": 0, "symptom_facts": 0, "expected_in_list": 0,
+        "quote_top1": 0, "quote_top3": 0, "quote_none": 0,
+        "value_top1": 0, "value_top3": 0, "value_none": 0,
+    }  # fmt: skip
+    for case in cases:
+        for g in case.gold:
+            counts["gold_facts"] += 1
+            if g.type != "symptom":
+                continue
+            counts["symptom_facts"] += 1
+            expected = by_en.get(_base_value(g.value))
+            if expected is None:
+                continue
+            counts["expected_in_list"] += 1
+            for name, text in (("quote", g.quote), ("value", _base_text(g.value))):
+                ids = [s.concept_id for s in linker.suggest("symptom", text, 3)]
+                counts[f"{name}_top1"] += int(ids[:1] == [expected])
+                counts[f"{name}_top3"] += int(expected in ids)
+                counts[f"{name}_none"] += int(not ids)
+    return counts
+
+
+def _base_text(value: str) -> str:
+    return re.sub(r"\([^)]*\)", " ", value)
+
+
 def main(argv: list[str], out=print) -> int:  # noqa: ANN001
     parser = argparse.ArgumentParser(prog="python -m app.extraction.linking")
     sub = parser.add_subparsers(dest="cmd", required=True)
     conv = sub.add_parser("convert")
     conv.add_argument("--draft", default=str(CONCEPTS_DIR / "concepts_draft.txt"))
     conv.add_argument("--out", default=str(CONCEPTS_DIR / "concepts.json"))
+    mea = sub.add_parser("measure")
+    mea.add_argument("--concepts", default=str(CONCEPTS_DIR / "concepts.json"))
+    mea.add_argument(
+        "--gold-md", default=str(REPO_ROOT / "audio" / "own" / "READ_ALOUD_AND_GOLD.md")
+    )
+    mea.add_argument(
+        "--fixtures",
+        default=str(REPO_ROOT / "apps" / "asr-py" / "tests" / "fixtures" / "extraction"),
+    )
     chk = sub.add_parser("check")
     chk.add_argument("--concepts", default=str(CONCEPTS_DIR / "concepts.json"))
     chk.add_argument(
@@ -259,6 +337,13 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         data = convert_draft(Path(args.draft).read_text(encoding="utf-8"))
         Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
         out(f"{len(data['concepts'])} concepts written (all unreviewed, snomed_id NULL)")  # type: ignore[arg-type]
+        return 0
+    if args.cmd == "measure":
+        from app.eval_extraction import load_cases  # noqa: PLC0415
+
+        cases = load_cases(Path(args.gold_md).parent, Path(args.gold_md), None, Path(args.fixtures))
+        for key, value in measure(Linker(load_concepts(Path(args.concepts))), cases).items():
+            out(f"{key}: {value}")
         return 0
     linker = Linker(load_concepts(Path(args.concepts)))
     for key, value in precision_check(linker, Path(args.gold_md)).items():

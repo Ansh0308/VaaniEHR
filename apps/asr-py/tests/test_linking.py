@@ -101,3 +101,75 @@ def test_precision_check_counts_correct_wrong_and_unlinked(linker, tmp_path):
     assert counts["gold_symptoms"] == 4 and counts["linked"] == 3
     assert counts["correct"] == 2 and counts["wrong"] == 1 and counts["unlinked"] == 1
     assert counts["gold_value_not_in_list"] == 1
+
+
+# ---------------------------------------------------------------- suggest (remaining Phase 5 items)
+def _parity():
+    import json
+
+    from app.config import REPO_ROOT
+
+    path = REPO_ROOT / "packages" / "rules" / "fixtures" / "concepts" / "linker-parity.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_suggest_ranks_exact_before_contained_before_fuzzy_and_keeps_ties(tmp_path):
+    from app.extraction.linking import Concept, Linker
+
+    linker = Linker(
+        [
+            Concept("a", {"en": ["pain"]}),
+            Concept("b", {"en": ["pain"]}),
+            Concept("c", {"en": ["chest pain"]}),
+            Concept("d", {"en": ["chest paine"]}),
+        ]
+    )
+    got = linker.suggest("symptom", "chest pain", 3)
+    assert [(s.concept_id, s.method) for s in got] == [
+        ("c", "exact"),
+        ("a", "contained"),
+        ("b", "contained"),
+    ]
+    tie = linker.suggest("symptom", "pain", 3)
+    assert [s.concept_id for s in tie] == ["a", "b"]  # a tie is kept: the doctor chooses
+    assert len(linker.suggest("symptom", "pain", 1)) == 1
+    assert linker.suggest("allergy", "pain") == [] and linker.suggest("symptom", "  ") == []
+
+
+def test_the_python_linker_matches_the_parity_file_the_typescript_port_is_tested_against():
+    from app.extraction.linking import Concept, Linker
+
+    doc = _parity()
+    linker = Linker([Concept(c["id"], c["labels"]) for c in doc["concepts"]])
+    for case in doc["cases"]:
+        got = [
+            {"concept_id": s.concept_id, "form": s.form, "method": s.method, "score": s.score}
+            for s in linker.suggest(case["type"], case["value"], case["limit"])
+        ]
+        assert got == case["expect"], (case["type"], case["value"], case["limit"])
+
+
+def test_measure_counts_top1_and_top3_over_gold_facts():
+    from app.eval_extraction import Case, GoldFact
+    from app.extraction.linking import Concept, Linker, measure
+
+    linker = Linker(
+        [Concept("c1", {"en": ["fever"], "gu": ["તાવ"]}), Concept("c2", {"en": ["cough"]})]
+    )
+    case = Case(
+        "x",
+        ["તાવ છે", "cough"],
+        [
+            GoldFact("symptom", "fever", False, False, "તાવ છે"),
+            GoldFact("symptom", "cough (dry)", False, False, "cough"),
+            GoldFact("symptom", "nothing in the list", False, False, "tav"),
+            GoldFact("duration", "2 days", False, False, "x"),
+        ],
+    )
+    counts = measure(linker, [case])
+    assert (
+        counts["gold_facts"] == 4
+        and counts["symptom_facts"] == 3
+        and counts["expected_in_list"] == 2
+    )
+    assert counts["quote_top1"] == 2 and counts["quote_top3"] == 2 and counts["value_top1"] == 2
