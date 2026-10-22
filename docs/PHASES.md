@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Remaining Phase 5 items done (concept suggestions from the owner's UNREVIEWED draft list, the doctor-confirmed concept link with stale handling, and its use by the question engine; ADR-D37; gold measurement in docs/ENTITY_LINKING.md). Still open: the reviewed word list (OCI-017), the real pathways and a clinician reviewer (OCI-019), OCI-020/021, Parrotlet-e (skipped), a language model for phrasing. Next: the owner says go.
+> **Resume status (one line, updated after every step):** Phase 8 Run 1 done (ADR-D38): Prescription tab (PG-08), server-side sign-off with named blockers and password re-entry, signed snapshot with hash through a VisitRepository, "Safety checks were not run" acknowledgement enforced, immutability (registry lock + database triggers), amendments with a reason and history, minimal sign page. Still open: Phase 8 Run 2 (real sign page with diff, amendment screen, visit record page), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019), OCI-016/020/021. Next: the owner says go.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
@@ -79,6 +79,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 - **Goal:** bring everything into one calm screen, then make signing a safe, auditable act.
 - **PRD references:** F7, PG-06...PG-10, journeys 6.1 and 6.2.
 - **Deliverables:** unified consultation workspace layout, history sidebar, sign-off page with AI-vs-final diff, amendment flow, immutable signed visit, visit record page.
+- **Status (2026-10-22):** Run 1 done (ADR-D38): Prescription tab (PG-08) in the existing workspace, server-side sign-off with named blockers, password re-entry, signed snapshot with hash through a VisitRepository, SafetyChecks placeholder with the enforced "Safety checks were not run" acknowledgement, immutability (registry lock + database triggers), amendments with a reason and a version history, and a minimal sign page. **Run 2 pending:** sign page with AI-vs-final diff, amendment screen, visit record page, history sidebar, keyboard-only run-through. Phase 7 (suggestions, safety engine) is not built; the exit-criteria items that need it (signing blocked by red safety alerts) wait for it.
 - **Exit criteria:** end-to-end demo with the mock engine and toy pathway: consent -> record -> facts -> question -> select condition -> prescription -> sign; signing blocked by unresolved red alerts or unconfirmed facts; signed record cannot be edited except by logged amendment; keyboard-only run-through works.
 
 ## Phase 9 - FHIR builder, validator and ABHA sandbox (M6) (prompts 9.1, 9.2)
@@ -121,7 +122,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 | Phase 2 deliverable "login with ClinicOS-style JWT" | ADR-D4 | Dev provider now, `ClinicOSTokenAuth` in Phase 12 |
 | Phase 4/8 socket relay | ADR-D10 | Authenticate at handshake; no PHI via ClinicOS sockets |
 | Phase 7 prompt 7.1 "30+ test cases" | PRD v1.1 (§7.2 / M-09 / App. F) says at least 50 | At least 50 |
-| Phase 8 "re-enters password or PIN to sign" | Under `ClinicOSTokenAuth` there is no password in VaaniEHR | Decide in Phase 8 (open question) |
+| Phase 8 "re-enters password or PIN to sign" | Under `ClinicOSTokenAuth` there is no password in VaaniEHR | Decided in ADR-D38: standalone mode re-checks the doctor's own password; ClinicOS mode answers 503 until Phase 12 supplies re-authentication |
 | Phase 10 "reuse the ClinicOS message_log table shape" | ClinicOS shape is `patientId, channel, template, status(sent/failed/delivered)`; PRD §8.2 `whatsapp_summary` is richer | Use the PRD §8.2 shape; do not depend on ClinicOS messaging |
 | Phase 12 prompt 12.1 step 1 proposes ClinicOS schema changes (ABHA, HPR, coded visit fields, consent scopes) | PRD v1.1 §8.4: none in v1; those fields live in VaaniEHR tables (ADR-D11) | Propose only the two changes in §8.4 (rate-limit exemption, optional socket auth), each needing approval |
 | Plan paths `data/pathways`, `data/medicines`, `data/safety`, `data/fhir/golden` (prompts 3.1, 6.1, 7.1, 9.1) | ADR-D18: committed seed content lives in `seed/`; `data/` and `audio/` are private and ignored | Use `seed/pathways`, `seed/medicines`, `seed/safety`, `seed/fhir/golden`; raw NLEM PDF stays in private `data/medicines/raw/`; every seed row has a `source` |
