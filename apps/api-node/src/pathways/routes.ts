@@ -189,6 +189,7 @@ export function pathwayRoutes(): RouteDef[] {
     permRoute<EventParams, ActionBody>('question.act', {
       method: 'post',
       path: '/sessions/:id/questions/:eventId/action',
+      lockedWhenSigned: true,
       tag: 'Pathways',
       summary:
         'Doctor: record what was done with a suggested question (asked, dismissed, snoozed) or acknowledge a red flag',
@@ -345,6 +346,7 @@ export function pathwayRoutes(): RouteDef[] {
     permRoute<IdParams>('candidate.select', {
       method: 'post',
       path: '/sessions/:id/candidates/select/undo',
+      lockedWhenSigned: true,
       tag: 'Pathways',
       summary:
         'Doctor: undo the working-condition choice (the earlier row is kept as history, marked superseded)',
@@ -376,6 +378,7 @@ export function pathwayRoutes(): RouteDef[] {
     permRoute<IdParams, SelectBody, LangQuery>('candidate.select', {
       method: 'post',
       path: '/sessions/:id/candidates/select',
+      lockedWhenSigned: true,
       tag: 'Pathways',
       summary:
         'Doctor: choose a working condition from the loaded pathways, or record "not listed" with a short note',

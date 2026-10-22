@@ -16,6 +16,7 @@ import type { PermissionId } from '../auth/permissions.js';
 import type { AuthContext } from '../auth/types.js';
 import { withTransaction, type Queryable } from '../db/tx.js';
 import type { Services } from '../services.js';
+import { errors } from './errors.js';
 import { ok } from './respond.js';
 import { validate } from './validate.js';
 
@@ -88,6 +89,12 @@ interface RouteBase<P, B, Q> {
   responseType?: 'json' | 'csv';
   /** Middleware that runs before authentication (e.g. the login rate limiter). */
   pre?: RequestHandler[];
+  /**
+   * The route changes the content of a session (`:id`) and so is refused once that session's visit is signed (409
+   * VISIT_SIGNED), before the handler runs. Only the caller's own signed sessions are looked at, so the answer reveals
+   * nothing about other doctors' or clinics' sessions. A database trigger is the second guard (migration 0014).
+   */
+  lockedWhenSigned?: boolean;
 }
 
 export interface RouteDef {
@@ -104,6 +111,7 @@ export interface RouteDef {
   successStatus: number;
   responseType: 'json' | 'csv';
   pre: RequestHandler[];
+  lockedWhenSigned?: boolean;
   handler: (ctx: PublicContext<unknown, unknown, unknown>) => Promise<HandlerResult>;
 }
 
@@ -158,6 +166,7 @@ function finish<P, B, Q>(
     successStatus: def.successStatus ?? 200,
     responseType: def.responseType ?? 'json',
     pre: def.pre ?? [],
+    lockedWhenSigned: def.lockedWhenSigned ?? false,
     handler: def.handler as RouteDef['handler'],
   };
 }
@@ -230,6 +239,18 @@ export function mountRoutes(router: Router, defs: readonly RouteDef[], services:
               await withTransaction(services.pool, (own) => record(input, own));
             },
           };
+          if (def.lockedWhenSigned && req.auth) {
+            const sessionId = (ctx.params as { id?: string } | undefined)?.id;
+            if (sessionId) {
+              const signed = await db.query(
+                `SELECT 1 FROM visit_record v JOIN consultation_session s ON s.id = v.session_id
+                  WHERE v.session_id = $1 AND v.status = 'signed' AND v.clinic_id = $2
+                    AND s.clinicos_doctor_id = $3`,
+                [sessionId, req.auth.clinicId, req.auth.sub],
+              );
+              if ((signed.rowCount ?? 0) > 0) throw errors.visitSigned();
+            }
+          }
           return def.handler(ctx);
         };
 

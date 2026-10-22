@@ -147,6 +147,7 @@ export function transcriptRoutes(): RouteDef[] {
     permRoute<IdParams, SaveBody>('transcript.write', {
       method: 'put',
       path: '/sessions/:id/transcript/segments',
+      lockedWhenSigned: true,
       tag: 'Transcript',
       summary:
         'Doctor: autosave transcript segments (create or update drafts by sequence number); needs audio and AI-processing consent now; a confirmed segment cannot be changed',
@@ -210,6 +211,7 @@ export function transcriptRoutes(): RouteDef[] {
     permRoute<IdParams>('transcript.write', {
       method: 'post',
       path: '/sessions/:id/transcript/confirm',
+      lockedWhenSigned: true,
       tag: 'Transcript',
       summary:
         'Doctor: confirm the transcript. Draft segments become confirmed text that is part of the record and can no longer be changed or deleted',

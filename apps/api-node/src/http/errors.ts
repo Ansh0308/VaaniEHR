@@ -12,6 +12,10 @@ export type ErrorCode =
   | 'CONSENT_REQUIRED'
   | 'NOT_IMPLEMENTED'
   | 'NOT_READY'
+  | 'SIGN_BLOCKED'
+  | 'SAFETY_ACK_REQUIRED'
+  | 'INVALID_PASSWORD'
+  | 'VISIT_SIGNED'
   | 'INTERNAL';
 
 export class AppError extends Error {
@@ -19,6 +23,8 @@ export class AppError extends Error {
     public readonly code: ErrorCode,
     message: string,
     public readonly status: number,
+    /** machine-readable extras for the client (the named blockers of a refused sign-off); never clinical text */
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'AppError';
@@ -41,4 +47,20 @@ export const errors = {
   consentRequired: (message: string) => new AppError('CONSENT_REQUIRED', message, 403),
   notImplemented: (message: string) => new AppError('NOT_IMPLEMENTED', message, 501),
   notReady: (message = 'Service not ready') => new AppError('NOT_READY', message, 503),
+  signBlocked: (blockers: readonly unknown[]) =>
+    new AppError('SIGN_BLOCKED', 'The visit cannot be signed yet', 409, { blockers }),
+  safetyAckRequired: () =>
+    new AppError(
+      'SAFETY_ACK_REQUIRED',
+      'Safety checks were not run: acknowledge this to sign',
+      400,
+    ),
+  // 403, not 401: a wrong password at sign-off must not look like an expired session to the client
+  invalidPassword: () => new AppError('INVALID_PASSWORD', 'The password is not correct', 403),
+  visitSigned: () =>
+    new AppError(
+      'VISIT_SIGNED',
+      'This visit is signed and cannot be changed; amend it instead',
+      409,
+    ),
 };

@@ -74,6 +74,7 @@ export function conceptRoutes(): RouteDef[] {
     permRoute<FactParams, ConfirmBody>('fact.write', {
       method: 'post',
       path: '/sessions/:id/facts/:factId/concept',
+      lockedWhenSigned: true,
       tag: 'Facts',
       summary:
         'Doctor: confirm the concept link of a fact (the only way a link is ever set; records who and when)',
@@ -118,6 +119,7 @@ export function conceptRoutes(): RouteDef[] {
     permRoute<FactParams>('fact.write', {
       method: 'delete',
       path: '/sessions/:id/facts/:factId/concept',
+      lockedWhenSigned: true,
       tag: 'Facts',
       summary: 'Doctor: clear the concept link of a fact',
       audit: ['FACT_CONCEPT_CLEARED'],

@@ -15,6 +15,7 @@ export function asrRoutes(): RouteDef[] {
     permRoute<IdParams>('asr.token', {
       method: 'post',
       path: '/sessions/:id/asr-token',
+      lockedWhenSigned: true,
       tag: 'Speech',
       summary: `Doctor: get a ${ASR_TOKEN_TTL_SECONDS}-second token to stream audio to the speech service; refused unless audio and AI-processing consent are on record`,
       audit: ['ASR_TOKEN_ISSUED'],

@@ -30,6 +30,18 @@ export const PRD_EXPECTED: Record<
   'GET /sessions/:id/facts': ['doctor'],
   'POST /sessions/:id/facts': ['doctor'],
   'PATCH /sessions/:id/facts/:factId': ['doctor'],
+  // prescription rows, sign-off, signed record and amendments: the session's own doctor only (ADR-D38)
+  'GET /sessions/:id/prescription': ['doctor'],
+  'POST /sessions/:id/prescription/items': ['doctor'],
+  'PATCH /sessions/:id/prescription/items/:itemId': ['doctor'],
+  'DELETE /sessions/:id/prescription/items/:itemId': ['doctor'],
+  'POST /sessions/:id/prescription/apply-template': ['doctor'],
+  'GET /sessions/:id/sign-readiness': ['doctor'],
+  'POST /sessions/:id/sign': ['doctor'],
+  'POST /sessions/:id/amend': ['doctor'],
+  'GET /sessions/:id/visit': ['doctor'],
+  'GET /sessions/:id/visit/versions': ['doctor'],
+  'GET /sessions/:id/visit/versions/:version': ['doctor'],
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
   // pathway questions and candidate conditions: the session's own doctor only (ADR-D34)

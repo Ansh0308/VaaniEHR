@@ -16,7 +16,7 @@ interface BodyParserError extends Error {
 /** Central error handler. Never leaks stack traces or internal messages to the client. */
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof AppError) {
-    fail(res, err.status, err.code, err.message);
+    fail(res, err.status, err.code, err.message, err.details);
     return;
   }
 

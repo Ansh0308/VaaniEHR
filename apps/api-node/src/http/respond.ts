@@ -7,7 +7,7 @@ export interface SuccessBody<T> {
 }
 export interface ErrorBody {
   success: false;
-  error: { code: ErrorCode; message: string };
+  error: { code: ErrorCode; message: string; details?: Record<string, unknown> };
 }
 
 /** Success envelope: { success: true, data }. JSON keys are camelCase by convention. */
@@ -17,7 +17,16 @@ export function ok<T>(res: Response, data: T, status = 200): void {
 }
 
 /** Error envelope: { success: false, error: { code, message } }. */
-export function fail(res: Response, status: number, code: ErrorCode, message: string): void {
-  const body: ErrorBody = { success: false, error: { code, message } };
+export function fail(
+  res: Response,
+  status: number,
+  code: ErrorCode,
+  message: string,
+  details?: Record<string, unknown>,
+): void {
+  const body: ErrorBody = {
+    success: false,
+    error: { code, message, ...(details ? { details } : {}) },
+  };
   res.status(status).json(body);
 }

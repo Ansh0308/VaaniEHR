@@ -13,10 +13,12 @@ import { factRoutes } from '../facts/routes.js';
 import { pathwayRoutes } from '../pathways/routes.js';
 import { pathwayViewerRoutes } from '../pathways/viewerRoutes.js';
 import { medicineRoutes } from '../medicines/routes.js';
+import { prescriptionRoutes } from '../prescription/routes.js';
 import { patientRoutes } from '../patients/routes.js';
 import { sessionRoutes } from '../sessions/routes.js';
 import { templateRoutes } from '../templates/routes.js';
 import { transcriptRoutes } from '../transcripts/routes.js';
+import { visitRoutes } from '../visits/routes.js';
 
 export const API_PREFIX = '/api/v1';
 
@@ -37,5 +39,7 @@ export function allRoutes(config: Config): RouteDef[] {
     ...conceptRoutes(),
     ...pathwayRoutes(),
     ...pathwayViewerRoutes(),
+    ...prescriptionRoutes(),
+    ...visitRoutes(),
   ];
 }

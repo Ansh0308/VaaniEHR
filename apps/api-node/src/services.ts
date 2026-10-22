@@ -7,6 +7,8 @@ import type { AuthProvider } from './auth/types.js';
 import type { ClinicOSAdapter, DevLoginSource } from './clinicos/ClinicOSAdapter.js';
 import type { Config } from './config/env.js';
 import type { NoticeStore } from './consent/notices.js';
+import type { VisitRepository } from './visits/repository.js';
+import type { SafetyChecks } from './visits/safety.js';
 
 export interface Services {
   config: Config;
@@ -28,4 +30,8 @@ export interface Services {
   pathways: PathwayCatalog;
   /** the unreviewed draft concept list for suggestions (remaining Phase 5 items) */
   concepts: ConceptCatalog;
+  /** where signed visit records live (standalone Postgres now; ClinicOS in Phase 12) */
+  visits: VisitRepository;
+  /** the safety engine's place (Phase 7); today "not configured" */
+  safety: SafetyChecks;
 }

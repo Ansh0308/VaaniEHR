@@ -32,6 +32,15 @@ export const PERMISSIONS = {
   'candidate.read': ['doctor'],
   'candidate.select': ['doctor'],
 
+  // prescription rows (PG-08, Phase 8): the session's own doctor only
+  'prescription.read': ['doctor'],
+  'prescription.write': ['doctor'],
+
+  // sign-off, signed record and amendments (F7, Phase 8): the session's own doctor only
+  'visit.read': ['doctor'],
+  'visit.sign': ['doctor'],
+  'visit.amend': ['doctor'],
+
   // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
   'pathway.read': ['doctor', 'admin'],
 

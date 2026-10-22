@@ -12,6 +12,8 @@ import { createNoticeStore } from './consent/notices.js';
 import { loadConceptCatalog } from './concepts/catalog.js';
 import { loadCatalog } from './pathways/catalog.js';
 import type { Services } from './services.js';
+import { PgVisitRepository } from './visits/pgRepository.js';
+import { NotConfiguredSafetyChecks } from './visits/safety.js';
 
 export async function createServices(config: Config, pool: pg.Pool): Promise<Services> {
   const directory = new PgMockClinicOSAdapter(pool);
@@ -19,6 +21,8 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
   const dummyPasswordHash = await makeDummyHash(config.bcryptCost);
   const pathways = loadCatalog(config);
   const concepts = loadConceptCatalog(config);
+  const visits = new PgVisitRepository();
+  const safety = new NotConfiguredSafetyChecks();
 
   if (config.authProvider === 'dev') {
     // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
@@ -36,6 +40,8 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       dummyPasswordHash,
       pathways,
       concepts,
+      visits,
+      safety,
     };
   }
   // Phase 12 stub: every call throws NOT_IMPLEMENTED. Password login does not exist in this mode.
@@ -51,5 +57,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     dummyPasswordHash,
     pathways,
     concepts,
+    visits,
+    safety,
   };
 }

@@ -192,6 +192,41 @@ const fixture = (route: RouteDef): Call => {
     'DELETE /sessions/:id/facts/:factId/concept': {
       path: `/sessions/${consentedSessionId}/facts/${consentedSessionId}/concept`,
     },
+    'GET /sessions/:id/prescription': { path: `/sessions/${consentedSessionId}/prescription` },
+    'POST /sessions/:id/prescription/items': {
+      path: `/sessions/${consentedSessionId}/prescription/items`,
+      body: { medicineId: null, name: 'rbac fixture medicine', frequency: 'OD', duration: '1 day' },
+    },
+    'PATCH /sessions/:id/prescription/items/:itemId': {
+      path: `/sessions/${consentedSessionId}/prescription/items/00000000-0000-4000-8000-000000000001`,
+      body: { duration: '2 days' },
+    },
+    'DELETE /sessions/:id/prescription/items/:itemId': {
+      path: `/sessions/${consentedSessionId}/prescription/items/00000000-0000-4000-8000-000000000001`,
+    },
+    'POST /sessions/:id/prescription/apply-template': {
+      path: `/sessions/${consentedSessionId}/prescription/apply-template`,
+      body: { templateId: '00000000-0000-4000-8000-000000000001' },
+    },
+    'GET /sessions/:id/sign-readiness': { path: `/sessions/${consentedSessionId}/sign-readiness` },
+    'POST /sessions/:id/sign': {
+      path: `/sessions/${consentedSessionId}/sign`,
+      body: { password: h.passwords[SEED_EMAIL.doctor1], safetyNotRunAcknowledged: true },
+    },
+    'POST /sessions/:id/amend': {
+      path: `/sessions/${consentedSessionId}/amend`,
+      body: {
+        password: h.passwords[SEED_EMAIL.doctor1],
+        safetyNotRunAcknowledged: true,
+        reason: 'rbac fixture',
+        medicines: [],
+      },
+    },
+    'GET /sessions/:id/visit': { path: `/sessions/${consentedSessionId}/visit` },
+    'GET /sessions/:id/visit/versions': { path: `/sessions/${consentedSessionId}/visit/versions` },
+    'GET /sessions/:id/visit/versions/:version': {
+      path: `/sessions/${consentedSessionId}/visit/versions/1`,
+    },
     'GET /pathways': { path: '/pathways' },
     'GET /pathways/:id': { path: '/pathways/toy_condition_a' },
     'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },

@@ -91,6 +91,14 @@
     "TEMPLATE_CREATED": "ટેમ્પલેટ બનાવ્યું",
     "TEMPLATE_UPDATED": "ટેમ્પલેટ સુધાર્યું",
     "TEMPLATE_RETIRED": "ટેમ્પલેટ નિવૃત્ત કર્યું",
-    "TEMPLATE_RESTORED": "ટેમ્પલેટ પાછું લાવ્યા"
+    "TEMPLATE_RESTORED": "ટેમ્પલેટ પાછું લાવ્યા",
+    "PRESCRIPTION_ITEM_ADDED": "પ્રિસ્ક્રિપ્શનની લીટી ઉમેરી",
+    "PRESCRIPTION_ITEM_EDITED": "પ્રિસ્ક્રિપ્શનની લીટી બદલી",
+    "PRESCRIPTION_ITEM_REMOVED": "પ્રિસ્ક્રિપ્શનની લીટી કાઢી",
+    "PRESCRIPTION_TEMPLATE_APPLIED": "પ્રિસ્ક્રિપ્શનમાં ટેમ્પલેટ લાગુ કર્યું",
+    "VISIT_SIGNED": "મુલાકાત પર સહી કરી",
+    "VISIT_SIGN_REFUSED": "સહી નકારાઈ",
+    "VISIT_AMENDED": "સહી થયેલી મુલાકાતમાં સુધારો કર્યો",
+    "VISIT_AMEND_REFUSED": "સુધારો નકારાયો"
   }
 }

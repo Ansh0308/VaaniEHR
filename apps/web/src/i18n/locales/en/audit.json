@@ -91,6 +91,14 @@
     "TEMPLATE_CREATED": "Template created",
     "TEMPLATE_UPDATED": "Template edited",
     "TEMPLATE_RETIRED": "Template retired",
-    "TEMPLATE_RESTORED": "Template restored"
+    "TEMPLATE_RESTORED": "Template restored",
+    "PRESCRIPTION_ITEM_ADDED": "Prescription row added",
+    "PRESCRIPTION_ITEM_EDITED": "Prescription row edited",
+    "PRESCRIPTION_ITEM_REMOVED": "Prescription row removed",
+    "PRESCRIPTION_TEMPLATE_APPLIED": "Template applied to a prescription",
+    "VISIT_SIGNED": "Visit signed",
+    "VISIT_SIGN_REFUSED": "Sign-off refused",
+    "VISIT_AMENDED": "Signed visit amended",
+    "VISIT_AMEND_REFUSED": "Amendment refused"
   }
 }

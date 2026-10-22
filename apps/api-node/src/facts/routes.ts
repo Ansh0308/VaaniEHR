@@ -99,6 +99,7 @@ export function factRoutes(): RouteDef[] {
     permRoute<IdParams, ManualBody>('fact.write', {
       method: 'post',
       path: '/sessions/:id/facts',
+      lockedWhenSigned: true,
       tag: 'Facts',
       summary:
         'Doctor: add a fact by hand (flagged manual; it has no source span and is confirmed at once)',
@@ -145,6 +146,7 @@ export function factRoutes(): RouteDef[] {
     permRoute<FactParams, PatchBody>('fact.write', {
       method: 'patch',
       path: '/sessions/:id/facts/:factId',
+      lockedWhenSigned: true,
       tag: 'Facts',
       summary:
         'Doctor: confirm, reject or edit one fact. A stale fact (its source text changed) is re-confirmed only if its evidence quote is still in the segment',

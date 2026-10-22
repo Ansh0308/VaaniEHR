@@ -281,6 +281,112 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         ).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  // ---- prescription, sign-off, signed record (ADR-D38): another clinic's session is 'not found' for the doctor, roles first for others
+  'GET /sessions/:id/prescription': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/prescription`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/prescription/items': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/prescription/items`, x.tokens[role], {
+            medicineId: null,
+            name: 'rbac fixture medicine',
+            frequency: 'OD',
+            duration: '1 day',
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'PATCH /sessions/:id/prescription/items/:itemId': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'patch',
+            `/sessions/${y.sessionId}/prescription/items/00000000-0000-4000-8000-000000000001`,
+            x.tokens[role],
+            { duration: '2 days' },
+          )
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'DELETE /sessions/:id/prescription/items/:itemId': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'delete',
+            `/sessions/${y.sessionId}/prescription/items/00000000-0000-4000-8000-000000000001`,
+            x.tokens[role],
+          )
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/prescription/apply-template': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call(
+            'post',
+            `/sessions/${y.sessionId}/prescription/apply-template`,
+            x.tokens[role],
+            { templateId: '00000000-0000-4000-8000-000000000001' },
+          )
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'GET /sessions/:id/sign-readiness': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/sign-readiness`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/sign': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/sign`, x.tokens[role], {
+            password: h.passwords[SEED_EMAIL.doctor1],
+            safetyNotRunAcknowledged: true,
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/amend': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/amend`, x.tokens[role], {
+            password: h.passwords[SEED_EMAIL.doctor1],
+            safetyNotRunAcknowledged: true,
+            reason: 'rbac fixture',
+            medicines: [],
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'GET /sessions/:id/visit': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect((await call('get', `/sessions/${y.sessionId}/visit`, x.tokens[role])).status).toBe(
+        role === 'doctor' ? 404 : 403,
+      );
+  },
+  'GET /sessions/:id/visit/versions': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/visit/versions`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'GET /sessions/:id/visit/versions/:version': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/visit/versions/1`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   // ---- pathway questions and candidates (ADR-D34): the same, both ways
   'GET /sessions/:id/questions/next': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)

@@ -115,6 +115,12 @@ export function factInternalRoutes(): RouteDef[] {
         if (!consent.recordingAllowed) {
           throw errors.consentRequired('Consent required for: audio, ai_processing');
         }
+        // a signed visit's content is locked: no new facts arrive after sign-off (Phase 8)
+        const signed = await ctx.db.query(
+          "SELECT 1 FROM visit_record WHERE session_id = $1 AND status = 'signed'",
+          [ctx.params.id],
+        );
+        if ((signed.rowCount ?? 0) > 0) throw errors.visitSigned();
         const b = ctx.body;
         const segs = await ctx.db.query<{ id: string; text: string }>(
           `SELECT id, coalesce(edited_text, original_text) AS text FROM transcript_segment
