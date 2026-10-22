@@ -176,7 +176,10 @@ export function SignPage() {
       ) : null}
 
       <p>
-        <Link to={back} className="text-base font-semibold text-ink underline">
+        <Link
+          to={back}
+          className="inline-flex min-h-11 items-center text-base font-semibold text-ink underline"
+        >
           {t('consult:sign.back')}
         </Link>
       </p>

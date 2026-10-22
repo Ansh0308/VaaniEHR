@@ -719,6 +719,146 @@ try {
     await doctor.context.close();
   }
 
+  // ------------------------------------------------ doctor: prescription builder and sign-off (Phase 8 Run 1; fake data)
+  // facts confirmed -> medicine added from the master -> sign refused with named blockers -> blockers cleared -> signed
+  {
+    const [base] = await appQuery(
+      'SELECT clinicos_clinic_id AS clinic, clinicos_doctor_id AS doctor, clinicos_patient_id AS patient FROM consultation_session WHERE id = $1',
+      [sessionId],
+    );
+    const [staffUser] = await appQuery('SELECT id FROM mock_clinicos_user WHERE email = $1', [
+      EMAIL.staff,
+    ]);
+    const [made] = await appQuery(
+      `INSERT INTO consultation_session (clinicos_patient_id, clinicos_doctor_id, clinicos_clinic_id)
+       VALUES ($1,$2,$3) RETURNING id`,
+      [base.patient, base.doctor, base.clinic],
+    );
+    const rxSession = made.id;
+    for (const scope of ['audio', 'ai_processing']) {
+      await appQuery(
+        `INSERT INTO consent_event (session_id, clinic_id, scope, granted, notice_version, notice_language, source,
+           recorded_by_user_id, recorded_by_role, ts) VALUES ($1,$2,$3,true,'0.1','en','staff',$4,'staff',now())`,
+        [rxSession, base.clinic, scope, staffUser.id],
+      );
+    }
+    await appQuery(
+      `INSERT INTO medicine_master (generic_name, strength, dose_form, source, source_page)
+       VALUES ('Toy-Medicine (FAKE)', '100 mg', 'Tablet', 'e2e fixture', 9)`,
+    );
+    await appQuery(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline)
+       VALUES ($1,$2,'duration','2 days toy','manual','heard','manual')`,
+      [rxSession, base.clinic],
+    );
+
+    const { context, page } = await newPage(browser);
+    await signIn(page, 'doctor');
+    await goInApp(page, '/doctor');
+    await page.getByRole('heading', { name: 'Doctor dashboard', level: 1 }).waitFor();
+    await goInApp(page, `/consult/${rxSession}`);
+    await page.getByRole('region', { name: 'Facts from the transcript' }).waitFor();
+    // the medicine is added from the master list, on the Prescription tab
+    await page.getByRole('tab', { name: 'Prescription' }).click();
+    const picker = page.getByRole('combobox', { name: /Search the medicine master/ });
+    await picker.fill('toy-medicine');
+    await page.getByRole('option', { name: /Toy-Medicine/ }).click();
+    await page.getByLabel(/^Frequency/).selectOption('BD');
+    await page.getByRole('textbox', { name: /^Duration/ }).fill('5 days');
+    await page.getByRole('button', { name: 'Add medicine' }).click();
+    const list = page.getByRole('list', { name: 'Medicines on this prescription' });
+    await list.getByText('Toy-Medicine (FAKE)').waitFor();
+    check(
+      (await list.innerText()).includes('Source: e2e fixture, page 8'),
+      'the master source is shown on the prescription row',
+    );
+    await scan(page, 'en consultation (prescription tab)');
+
+    // first attempt: the heard fact is still unconfirmed, so the server refuses and names it
+    await page.getByRole('link', { name: 'Review and sign' }).click();
+    await page.getByRole('heading', { name: 'Sign this visit', level: 1 }).waitFor();
+    await page.getByText('1 fact is not confirmed yet.').waitFor();
+    // opening the workspace made the pathway engine suggest a question, so a working condition is needed too
+    await page
+      .getByText('A working condition has not been chosen (or marked as not listed).')
+      .waitFor();
+    await scan(page, 'en sign page (blocked)');
+    await page.getByLabel('Safety checks were not run').check();
+    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
+    await page.getByRole('button', { name: 'Sign visit' }).click();
+    await page.getByText('This visit cannot be signed yet').waitFor();
+    check(
+      (await appQuery('SELECT 1 FROM visit_record WHERE session_id = $1', [rxSession])).length ===
+        0,
+      'a refused sign-off stored nothing',
+    );
+
+    // clear the blocker: confirm the fact, then sign
+    await page.getByRole('link', { name: 'Back to the consultation' }).click();
+    await page.getByRole('button', { name: /^Confirm 2 days toy/ }).click();
+    await page
+      .getByRole('group', { name: /2 days toy/ })
+      .getByText('Confirmed')
+      .waitFor();
+    const rxCandidates = page.getByRole('region', { name: 'Candidate conditions' });
+    await rxCandidates.getByRole('button', { name: 'Working condition not listed' }).click();
+    await rxCandidates.getByLabel(/^Short note/).fill('toy working note');
+    await rxCandidates.getByRole('button', { name: 'Save note' }).click();
+    await rxCandidates.getByTestId('working-condition').waitFor();
+    await page.getByRole('tab', { name: 'Prescription' }).click();
+    await page.getByRole('link', { name: 'Review and sign' }).click();
+    await page.getByText('Nothing is blocking the sign-off.').waitFor();
+
+    // without the acknowledgement the server refuses, even though nothing else is open
+    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
+    await page.getByRole('button', { name: 'Sign visit' }).click();
+    await page
+      .getByRole('alert')
+      .getByText(/Safety checks were not run/)
+      .waitFor();
+    await page.getByLabel('Safety checks were not run').check();
+    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
+    await page.getByRole('button', { name: 'Sign visit' }).click();
+    await page.getByText('Visit signed').waitFor();
+    const signedRows = await appQuery(
+      `SELECT v.status, w.version, w.safety_configured, w.safety_not_run_acknowledged, w.content_hash
+         FROM visit_record v JOIN visit_record_version w ON w.visit_id = v.id WHERE v.session_id = $1`,
+      [rxSession],
+    );
+    check(
+      signedRows.length === 1 &&
+        signedRows[0].status === 'signed' &&
+        signedRows[0].version === 1 &&
+        signedRows[0].safety_configured === false &&
+        signedRows[0].safety_not_run_acknowledged === true &&
+        /^[0-9a-f]{64}$/.test(signedRows[0].content_hash),
+      'the signed record holds version 1, the hash and the "safety checks were not run" flag',
+    );
+    check(
+      (await page.getByText('Recorded: Safety checks were not run.').count()) === 1,
+      'the sign page shows the safety flag',
+    );
+    await scan(page, 'en sign page (signed)');
+
+    // the workspace is now locked
+    await page.getByRole('link', { name: 'Back to the consultation' }).click();
+    await page.getByRole('tab', { name: 'Prescription' }).click();
+    await page.getByText(/This visit is signed/).waitFor();
+    check(
+      (await page.getByRole('button', { name: 'Add medicine' }).count()) === 0,
+      'a signed visit offers no way to add a medicine',
+    );
+    const stored = await page.evaluate(() => [
+      ...Object.keys(window.localStorage),
+      ...Object.keys(window.sessionStorage),
+    ]);
+    check(
+      stored.every((key) => key === 'vaaniehr.language'),
+      'signing wrote nothing but the language choice to browser storage',
+    );
+    await context.close();
+  }
+
   // ------------------------------------------------ doctor and admin: the read-only pathway viewer (toy pathways)
   for (const role of ['doctor', 'admin']) {
     const { context, page } = await newPage(browser);
