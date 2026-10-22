@@ -22,6 +22,7 @@ type Mutation =
   | 'no-session-scoping'
   | 'no-app-lock'
   | 'no-db-trigger'
+  | 'no-facts-trigger'
   | 'wrong-hash'
   | 'amendment-not-audited';
 
@@ -162,6 +163,9 @@ async function build(mutation: Mutation) {
   const h = await helpers.createHarness();
   if (mutation === 'no-db-trigger') {
     await h.db.owner.query('DROP TRIGGER prescription_item_guard ON prescription_item');
+  }
+  if (mutation === 'no-facts-trigger') {
+    await h.db.owner.query('DROP TRIGGER extracted_fact_signed_guard ON extracted_fact');
   }
   return { helpers, h };
 }
@@ -352,6 +356,7 @@ async function violations(
   // 9) after signing: the API refuses changes, the database refuses changes, the hash matches the content
   {
     const s = await fresh();
+    await manualFact(s.session, 'confirmed');
     await s.call('post', '/prescription/items', {
       medicineId: medicine,
       frequency: 'OD',
@@ -376,6 +381,17 @@ async function violations(
         dbChanged = false;
       }
       if (dbChanged) found.push('the database changed a signed prescription');
+      let factChanged: boolean;
+      try {
+        const r = await h.appPool.query(
+          "UPDATE extracted_fact SET value = 'changed' WHERE session_id = $1",
+          [s.session],
+        );
+        factChanged = (r.rowCount ?? 0) > 0;
+      } catch {
+        factChanged = false;
+      }
+      if (factChanged) found.push('the database changed a fact of a signed visit');
       const expected = createHash('sha256')
         .update(canonical(signed.body.data.content))
         .digest('hex');
@@ -431,6 +447,7 @@ describe('each sign-off guard, when broken, is caught', () => {
     ['no-session-scoping', 'another doctor could sign this visit'],
     ['no-app-lock', 'the API changed a signed prescription'],
     ['no-db-trigger', 'the database changed a signed prescription'],
+    ['no-facts-trigger', 'the database changed a fact of a signed visit'],
     ['wrong-hash', 'the stored hash does not match the signed content'],
     ['amendment-not-audited', 'an amendment was not audited'],
   ] as const)('%s', async (mutation, expected) => {

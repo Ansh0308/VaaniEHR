@@ -266,3 +266,78 @@ describe('SafetyChecks ERROR state', () => {
     expect((await call('get', s, '/visit')).body.data.version).toBe(1);
   });
 });
+
+describe('database guard on the facts and transcript of a signed visit (migration 0015)', () => {
+  it('the app role cannot insert, change or delete them; consent withdrawal still can', async () => {
+    resetSignThrottle();
+    const s = await newSession();
+    for (const scope of ['audio', 'ai_processing']) {
+      await owner(
+        `INSERT INTO consent_event (session_id, clinic_id, scope, granted, notice_version, notice_language, source,
+           recorded_by_user_id, recorded_by_role, ts) VALUES ($1,$2,$3,true,'0.1','en','staff',$4,'staff',now())`,
+        [s, clinicId, scope, doctorId],
+      );
+    }
+    await owner(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline, confirmed_at, confirmed_by)
+       VALUES ($1,$2,'duration','2 days toy','manual','confirmed','manual',now(),$3)`,
+      [s, clinicId, doctorId],
+    );
+    await owner(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline)
+       VALUES ($1,$2,'duration','rejected toy','manual','rejected','manual')`,
+      [s, clinicId],
+    );
+    await owner(
+      `INSERT INTO transcript_segment (session_id, clinic_id, seq, original_text, engine)
+       VALUES ($1,$2,0,'toy draft words','mock')`,
+      [s, clinicId],
+    );
+    expect((await sign(s)).status).toBe(201);
+    const q = (sql: string, p: unknown[] = []) => h.appPool.query(sql, p);
+    const refused = /facts and transcript of a signed visit/;
+    await expect(
+      q("UPDATE extracted_fact SET value = 'x' WHERE session_id = $1", [s]),
+    ).rejects.toThrow(refused);
+    await expect(q('DELETE FROM extracted_fact WHERE session_id = $1', [s])).rejects.toThrow(
+      /facts and transcript of a signed visit|confirmed fact cannot be deleted/,
+    );
+    await expect(
+      q(
+        `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline)
+         VALUES ($1,$2,'duration','late','manual','heard','manual')`,
+        [s, clinicId],
+      ),
+    ).rejects.toThrow(refused);
+    await expect(
+      q("UPDATE transcript_segment SET edited_text = 'x' WHERE session_id = $1", [s]),
+    ).rejects.toThrow(refused);
+    await expect(q('DELETE FROM transcript_segment WHERE session_id = $1', [s])).rejects.toThrow(
+      refused,
+    );
+    // another session of the same doctor is not affected
+    const other = await newSession();
+    await expect(
+      q(
+        `INSERT INTO extracted_fact (session_id, clinic_id, type, value, source, status, pipeline)
+         VALUES ($1,$2,'duration','fine','manual','heard','manual')`,
+        [other, clinicId],
+      ),
+    ).resolves.toBeTruthy();
+    // consent withdrawal after signing: the draft segment and the rejected fact go, the confirmed fact stays
+    const res = await request(h.app)
+      .post(`/api/v1/sessions/${s}/consent/withdraw`)
+      .set(...bearer(doctor))
+      .send({ scopes: ['ai_processing'], source: 'patient' });
+    expect(res.status).toBe(200);
+    const left = (await owner('SELECT value FROM extracted_fact WHERE session_id = $1', [s])).rows;
+    expect(left).toEqual([{ value: '2 days toy' }]);
+    expect(
+      (await owner('SELECT 1 FROM transcript_segment WHERE session_id = $1', [s])).rowCount,
+    ).toBe(0);
+    // and the flag is off again afterwards
+    await expect(
+      q("UPDATE extracted_fact SET value = 'x' WHERE session_id = $1", [s]),
+    ).rejects.toThrow(refused);
+  });
+});

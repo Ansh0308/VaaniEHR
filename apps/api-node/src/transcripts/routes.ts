@@ -104,6 +104,9 @@ export async function deleteDraftSegments(
   db: Queryable,
   sessionId: string,
 ): Promise<{ segments: number; facts: number }> {
+  // The ONLY code that writes facts or segments of a SIGNED visit (migration 0015 refuses everyone else). The flag is
+  // transaction-local and switched off again below.
+  await db.query("SELECT set_config('vaani.withdrawal', 'on', true)");
   const facts = await db.query(
     "DELETE FROM extracted_fact WHERE session_id = $1 AND status <> 'confirmed'",
     [sessionId],
@@ -118,6 +121,7 @@ export async function deleteDraftSegments(
     "DELETE FROM transcript_segment WHERE session_id = $1 AND status = 'draft'",
     [sessionId],
   );
+  await db.query("SELECT set_config('vaani.withdrawal', 'off', true)");
   return { segments: segments.rowCount ?? 0, facts: facts.rowCount ?? 0 };
 }
 

@@ -79,6 +79,9 @@ describe('single audit writer', () => {
   it('only the consent routes insert consent events', () => {
     expect(filesContaining(/INSERT\s+INTO\s+consent_event/i)).toEqual(['consent/routes.ts']);
   });
+  it('only the consent-withdrawal function sets the signed-content flag (migration 0015)', () => {
+    expect(filesContaining(/vaani\.withdrawal/)).toEqual(['transcripts/routes.ts']);
+  });
 });
 
 describe('no personal data in logs or audit', () => {
