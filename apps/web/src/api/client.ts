@@ -8,6 +8,8 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
+    /** machine-readable extras from the server (the named blockers of a refused sign-off) */
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -44,7 +46,7 @@ export interface ApiOptions {
 interface Envelope<T> {
   success: boolean;
   data?: T;
-  error?: { code?: string; message?: string };
+  error?: { code?: string; message?: string; details?: Record<string, unknown> };
 }
 
 const PREFIX = '/api/v1';
@@ -89,14 +91,16 @@ export function createApi({ baseUrl, getToken, onUnauthorized, fetchImpl }: ApiO
   async function fail(response: Response): Promise<never> {
     let code = 'HTTP_ERROR';
     let message = `HTTP ${response.status}`;
+    let details: Record<string, unknown> | undefined;
     try {
       const envelope = (await response.json()) as Envelope<unknown>;
       code = envelope.error?.code ?? code;
       message = envelope.error?.message ?? message;
+      details = envelope.error?.details;
     } catch {
       /* not JSON: keep the generic values */
     }
-    throw new ApiError(response.status, code, message);
+    throw new ApiError(response.status, code, message, details);
   }
 
   async function json<T>(response: Response): Promise<T> {

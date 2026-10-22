@@ -312,7 +312,7 @@ async function violations(
   {
     const s = await fresh();
     const res = await s.sign({}, doctor2, password2);
-    if (res.status === 201 || (await stored(s.session)) > 0)
+    if (res.status === 201 || ((await stored(s.session)) ?? 0) > 0)
       found.push('another doctor could sign this visit');
   }
   // 9) after signing: the API refuses changes, the database refuses changes, the hash matches the content
@@ -331,7 +331,7 @@ async function violations(
         duration: '1 day',
       });
       if (add.status !== 409) found.push('the API changed a signed prescription');
-      let dbChanged = false;
+      let dbChanged: boolean;
       try {
         const r = await h.appPool.query(
           "UPDATE prescription_item SET duration = '9 days' WHERE session_id = $1",

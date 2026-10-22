@@ -12,6 +12,7 @@ import { MedicinesPage } from './pages/MedicinesPage';
 import { PatientsPage } from './pages/PatientsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PathwaysPage } from './pages/PathwaysPage';
+import { SignPage } from './pages/SignPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TemplateBuilderPage } from './pages/TemplateBuilderPage';
 import { TemplatesPage } from './pages/TemplatesPage';
@@ -50,6 +51,7 @@ export default function App() {
           </Route>
           <Route element={<RequireRole roles={['doctor']} />}>
             <Route path="consult/:sessionId" element={<ConsultPage />} />
+            <Route path="consult/:sessionId/sign" element={<SignPage />} />
           </Route>
           <Route element={<RequireRole roles={['doctor', 'staff', 'admin']} />}>
             <Route path="consult/:sessionId/consent" element={<ConsentPage />} />

@@ -25,6 +25,8 @@ export const rowView = z.object({
   /** where the master row comes from (NLEM edition and page); null for a free-text row */
   masterSource: z.string().nullable(),
   masterSourcePage: z.number().nullable(),
+  /** the page number printed on the page (PDF page minus one, like the medicine master) */
+  masterSourcePagePrinted: z.number().nullable(),
   masterReviewStatus: z.enum(['reviewed', 'not_reviewed']).nullable(),
   /** a required field is still empty (a template row without frequency or duration): the visit cannot be signed */
   incomplete: z.boolean(),
@@ -97,6 +99,7 @@ const toView = (r: DbRow): RowView => ({
   fromTemplateId: r.from_template_id,
   masterSource: r.m_source,
   masterSourcePage: r.m_source_page,
+  masterSourcePagePrinted: r.m_source_page === null ? null : r.m_source_page - 1,
   masterReviewStatus:
     r.source === 'master' ? (r.m_reviewed_on === null ? 'not_reviewed' : 'reviewed') : null,
   incomplete: !r.frequency || !r.duration,

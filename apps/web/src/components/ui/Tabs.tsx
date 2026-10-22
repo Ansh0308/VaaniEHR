@@ -12,11 +12,14 @@ export function Tabs({
   tabs,
   label,
   defaultId,
+  keepMounted = false,
 }: {
   tabs: TabItem[];
   /** Accessible name of the tab list. */
   label: string;
   defaultId?: string;
+  /** Keep every panel rendered (hidden when not selected), so live state inside a hidden panel is not lost. */
+  keepMounted?: boolean;
 }) {
   const base = useId();
   const [current, setCurrent] = useState(defaultId ?? tabs[0]?.id);
@@ -90,7 +93,7 @@ export function Tabs({
           tabIndex={0}
           className="pt-4"
         >
-          {tab.id === current ? tab.panel : null}
+          {keepMounted || tab.id === current ? tab.panel : null}
         </div>
       ))}
     </div>

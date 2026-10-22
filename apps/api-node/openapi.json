@@ -12094,6 +12094,10 @@
                                 "nullable": true,
                                 "type": "number"
                               },
+                              "masterSourcePagePrinted": {
+                                "nullable": true,
+                                "type": "number"
+                              },
                               "masterReviewStatus": {
                                 "nullable": true,
                                 "type": "string",
@@ -12121,6 +12125,7 @@
                               "fromTemplateId",
                               "masterSource",
                               "masterSourcePage",
+                              "masterSourcePagePrinted",
                               "masterReviewStatus",
                               "incomplete"
                             ],
@@ -12366,6 +12371,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "masterSourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "masterReviewStatus": {
                           "nullable": true,
                           "type": "string",
@@ -12393,6 +12402,7 @@
                         "fromTemplateId",
                         "masterSource",
                         "masterSourcePage",
+                        "masterSourcePagePrinted",
                         "masterReviewStatus",
                         "incomplete"
                       ],
@@ -12630,6 +12640,10 @@
                           "nullable": true,
                           "type": "number"
                         },
+                        "masterSourcePagePrinted": {
+                          "nullable": true,
+                          "type": "number"
+                        },
                         "masterReviewStatus": {
                           "nullable": true,
                           "type": "string",
@@ -12657,6 +12671,7 @@
                         "fromTemplateId",
                         "masterSource",
                         "masterSourcePage",
+                        "masterSourcePagePrinted",
                         "masterReviewStatus",
                         "incomplete"
                       ],
@@ -12977,6 +12992,10 @@
                                 "nullable": true,
                                 "type": "number"
                               },
+                              "masterSourcePagePrinted": {
+                                "nullable": true,
+                                "type": "number"
+                              },
                               "masterReviewStatus": {
                                 "nullable": true,
                                 "type": "string",
@@ -13004,6 +13023,7 @@
                               "fromTemplateId",
                               "masterSource",
                               "masterSourcePage",
+                              "masterSourcePagePrinted",
                               "masterReviewStatus",
                               "incomplete"
                             ],

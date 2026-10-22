@@ -260,6 +260,93 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'consultation prescription tab (rows, free-text form, template)',
+    show: async (language) => {
+      const rxRow = {
+        id: '5eed0000-0000-4000-8000-0000000004a1',
+        position: 0,
+        medicineId: fakeMedicine().id,
+        name: 'Drug-A (FAKE)',
+        source: 'master',
+        strength: '500 mg',
+        doseForm: 'Tablet',
+        dose: null,
+        frequency: 'BD',
+        duration: '5 days',
+        note: null,
+        fromTemplateId: null,
+        masterSource: 'test fixture',
+        masterSourcePage: 27,
+        masterSourcePagePrinted: 26,
+        masterReviewStatus: 'not_reviewed',
+        incomplete: false,
+      };
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}`,
+        language,
+        routes: {
+          'GET /sessions/:id/consent': () => ({ data: noConsent() }),
+          'GET /templates': () => ({
+            data: { items: [fakeSummary()], total: 1, limit: 100, offset: 0 },
+          }),
+          'GET /sessions/:id/prescription': () => ({
+            data: {
+              rows: [
+                rxRow,
+                {
+                  ...rxRow,
+                  id: '5eed0000-0000-4000-8000-0000000004a2',
+                  medicineId: null,
+                  name: 'Hand-typed (FAKE)',
+                  source: 'free_text',
+                  masterSource: null,
+                  masterReviewStatus: null,
+                  frequency: null,
+                  duration: null,
+                  incomplete: true,
+                },
+              ],
+              locked: false,
+            },
+          }),
+        },
+      });
+      fireEvent.click(await screen.findByRole('tab', { name: /Prescription|પ્રિસ્ક્રિપ્શન/ }));
+      await screen.findByText('Hand-typed (FAKE)');
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Medicine not in the master list|દવા માસ્ટર યાદીમાં નથી/,
+        }),
+      );
+    },
+  },
+  {
+    name: 'sign page (blockers and safety acknowledgement)',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}/sign`,
+        language,
+        routes: {
+          'GET /sessions/:id/sign-readiness': () => ({
+            data: {
+              signed: false,
+              blockers: [
+                { code: 'unconfirmed_facts', count: 2 },
+                { code: 'no_working_condition', count: 1 },
+              ],
+              medicineCount: 1,
+              safety: { configured: false, blocked: 0, message: 'x' },
+              currentVersion: null,
+            },
+          }),
+        },
+      });
+      await screen.findByRole('button', { name: /Sign visit|મુલાકાત પર સહી કરો/ });
+    },
+  },
+  {
     name: 'medicine master',
     show: async (language) => {
       await renderApp({

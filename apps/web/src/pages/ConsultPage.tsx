@@ -13,6 +13,7 @@ import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
 import { CandidatesPanel } from '../components/clinical/CandidatesPanel';
 import { FactsPanel, type ExtractBlock } from '../components/clinical/FactsPanel';
+import { PrescriptionTab } from '../components/clinical/PrescriptionTab';
 import { QuestionPanel } from '../components/clinical/QuestionPanel';
 import { RedFlagBanner } from '../components/clinical/RedFlagBanner';
 import { RecordBar } from '../components/clinical/RecordBar';
@@ -20,6 +21,8 @@ import { TranscriptPane, type TranscriptSegment } from '../components/clinical/T
 import { NeedsReview } from '../components/NeedsReview';
 import type { PathwayLang } from '../api/pathwayAids';
 import { useFacts, type Fact } from '../facts/useFacts';
+import { usePrescription } from '../prescription/usePrescription';
+import type { TemplateList } from '../api/templates';
 import { useConceptSuggestions } from '../facts/useConceptSuggestions';
 import { usePathwayAids } from '../facts/usePathwayAids';
 import { Banner } from '../components/ui/Banner';
@@ -27,6 +30,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Overlay';
 import { useToast } from '../components/ui/Toast';
 import { Skeleton } from '../components/ui/Feedback';
+import { Tabs } from '../components/ui/Tabs';
 
 export function ConsultPage() {
   const { t, i18n } = useTranslation('consult');
@@ -68,6 +72,8 @@ export function ConsultPage() {
     onLinkChanged: facts.reload,
   });
   const [peek, setPeek] = useState<Fact | null>(null);
+  const rx = usePrescription(sessionId);
+  const templates = useRequest(() => api.get<TemplateList>('/templates', { limit: 100 }), [api]);
 
   // after a save the server may have marked facts stale (their words changed): read the list again
   useEffect(() => {
@@ -145,20 +151,8 @@ export function ConsultPage() {
           ? 'unsaved'
           : null;
 
-  return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <header>
-        <h1 className="font-display text-3xl font-semibold text-ink">{t('consult:title')}</h1>
-        <p className="mt-1 text-base text-body">{t('consult:intro')}</p>
-        {i18n.language === 'gu' ? <NeedsReview /> : null}
-      </header>
-
-      <RedFlagBanner
-        next={aids.next}
-        busy={aids.busy}
-        onAcknowledge={(eventId) => void aids.act(eventId, 'acknowledged')}
-      />
-
+  const consultPanel = (
+    <>
       {consent.state.status === 'loading' ? (
         <Skeleton lines={2} label={t('consult:status.connecting')} />
       ) : consent.state.status === 'error' ? (
@@ -284,6 +278,57 @@ export function ConsultPage() {
           {t('consult:confirm.button')}
         </Button>
       </div>
+    </>
+  );
+
+  return (
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <header>
+        <h1 className="font-display text-3xl font-semibold text-ink">{t('consult:title')}</h1>
+        <p className="mt-1 text-base text-body">{t('consult:intro')}</p>
+        {i18n.language === 'gu' ? <NeedsReview /> : null}
+      </header>
+
+      <RedFlagBanner
+        next={aids.next}
+        busy={aids.busy}
+        onAcknowledge={(eventId) => void aids.act(eventId, 'acknowledged')}
+      />
+
+      <Tabs
+        label={t('consult:tabs.label')}
+        keepMounted
+        tabs={[
+          {
+            id: 'consult',
+            label: t('consult:tabs.consult'),
+            panel: <div className="flex flex-col gap-6">{consultPanel}</div>,
+          },
+          {
+            id: 'prescription',
+            label: t('consult:tabs.prescription'),
+            panel: (
+              <PrescriptionTab
+                rows={rx.rows}
+                locked={rx.locked}
+                loading={rx.loading}
+                busy={rx.busy}
+                error={rx.error}
+                templates={
+                  templates.state.status === 'ready'
+                    ? templates.state.data.items.filter((x) => !x.retired)
+                    : null
+                }
+                onAdd={rx.add}
+                onEdit={rx.edit}
+                onRemove={(id) => void rx.remove(id)}
+                onApplyTemplate={rx.applyTemplate}
+                signHref={`/consult/${sessionId}/sign`}
+              />
+            ),
+          },
+        ]}
+      />
 
       <Modal
         open={confirmOpen}

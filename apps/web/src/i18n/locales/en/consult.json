@@ -207,5 +207,95 @@
       "noteLabel": "Short note, in your own words",
       "noteSave": "Save note"
     }
+  },
+  "tabs": {
+    "label": "Consultation sections",
+    "consult": "Consultation",
+    "prescription": "Prescription"
+  },
+  "prescription": {
+    "region": "Prescription",
+    "title": "Prescription",
+    "intro": "Add the medicines you are prescribing. Nothing here is suggested to you and nothing is checked: the list is what you choose.",
+    "loading": "Loading the prescription",
+    "empty": "No medicines added yet. A visit can be signed without any.",
+    "listLabel": "Medicines on this prescription",
+    "addRegion": "Add a medicine",
+    "addTitle": "Add a medicine",
+    "search": "Search the medicine master",
+    "useFreeText": "Medicine not in the master list",
+    "backToMaster": "Search the master list instead",
+    "freeTextNote": "Not in master list: this medicine is typed by hand, has no source, and is marked on the row and on the signed record.",
+    "notInMaster": "Not in master list",
+    "sourceLine": "Source: {{source}}, page {{page}}",
+    "notReviewed": "not clinically reviewed",
+    "incomplete": "Frequency and duration are needed before this visit can be signed.",
+    "field": {
+      "name": "Medicine name",
+      "strength": "Strength",
+      "doseForm": "Form",
+      "dose": "Dose",
+      "frequency": "Frequency",
+      "frequencyChoose": "Choose frequency",
+      "duration": "Duration",
+      "note": "Note"
+    },
+    "add": "Add medicine",
+    "edit": "Edit",
+    "editRow": "Edit {{name}}",
+    "remove": "Remove",
+    "removeRow": "Remove {{name}}",
+    "saveRow": "Save changes",
+    "cancel": "Cancel",
+    "templateLabel": "Apply a template",
+    "templateChoose": "Choose a template",
+    "applyTemplate": "Apply template",
+    "locked": "This visit is signed. The prescription can no longer be changed here; amend the signed visit instead.",
+    "reviewSign": "Review and sign",
+    "openRecord": "Open the signed record",
+    "noChecks": "No suggestions and no safety checks are made here.",
+    "error": {
+      "load": "The prescription could not be loaded.",
+      "save": "The change could not be saved. Try again.",
+      "signed": "This visit is already signed and cannot be changed.",
+      "invalid": "Check the fields: a frequency from the list and a duration are needed, and a medicine typed by hand needs a name."
+    }
+  },
+  "sign": {
+    "title": "Sign this visit",
+    "intro": "The server checks what is still open. Signing locks the visit; changes after that are amendments with a reason.",
+    "loading": "Checking the visit",
+    "blockedTitle": "This visit cannot be signed yet",
+    "noBlockers": "Nothing is blocking the sign-off.",
+    "blocker": {
+      "session_not_draft": "This visit is already signed.",
+      "unconfirmed_facts_one": "{{count}} fact is not confirmed yet.",
+      "unconfirmed_facts_other": "{{count}} facts are not confirmed yet.",
+      "red_flag_unacknowledged_one": "{{count}} red flag is not acknowledged.",
+      "red_flag_unacknowledged_other": "{{count}} red flags are not acknowledged.",
+      "consent_missing": "Consent for audio and AI processing is not on record, and this visit includes AI-assisted content.",
+      "no_working_condition": "A working condition has not been chosen (or marked as not listed).",
+      "incomplete_medicine_one": "{{count}} medicine row has no frequency or duration.",
+      "incomplete_medicine_other": "{{count}} medicine rows have no frequency or duration."
+    },
+    "safetyTitle": "Safety checks are not configured",
+    "safetyBody": "The safety engine is not built yet, so no allergy, dose, duplicate or interaction check has been made on this prescription.",
+    "safetyAck": "Safety checks were not run",
+    "password": "Your password",
+    "passwordHint": "Enter your password again to sign.",
+    "button": "Sign visit",
+    "back": "Back to the consultation",
+    "signedTitle": "Visit signed",
+    "signedBody": "Version {{version}} is saved and locked.",
+    "hash": "Content hash",
+    "safetyFlag": "Recorded: Safety checks were not run.",
+    "alreadySigned": "This visit is signed (version {{version}}).",
+    "error": {
+      "SAFETY_ACK_REQUIRED": "Tick “Safety checks were not run” to sign.",
+      "INVALID_PASSWORD": "The password is not correct.",
+      "RATE_LIMITED": "Too many wrong passwords. Wait a few minutes and try again.",
+      "VISIT_SIGNED": "This visit is already signed.",
+      "UNKNOWN": "The visit could not be signed. Try again."
+    }
   }
 }
