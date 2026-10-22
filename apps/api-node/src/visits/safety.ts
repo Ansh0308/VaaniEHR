@@ -13,6 +13,11 @@ export interface SafetyResult {
   /** number of blocked (red) alerts that are still unresolved; always 0 while not configured */
   blocked: number;
   message: string;
+  /**
+   * The engine exists but failed to answer. Signing is refused (fail closed, PRD F6): an engine error is never read as
+   * "no alerts". Distinct from `configured: false`, where the doctor may acknowledge that no check was run.
+   */
+  error?: boolean;
 }
 export interface SafetyChecks {
   run(input: SafetyInput): Promise<SafetyResult>;

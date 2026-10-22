@@ -14,6 +14,7 @@ export type ErrorCode =
   | 'NOT_READY'
   | 'SIGN_BLOCKED'
   | 'SAFETY_ACK_REQUIRED'
+  | 'SAFETY_ERROR'
   | 'INVALID_PASSWORD'
   | 'VISIT_SIGNED'
   | 'INTERNAL';
@@ -54,6 +55,12 @@ export const errors = {
       'SAFETY_ACK_REQUIRED',
       'Safety checks were not run: acknowledge this to sign',
       400,
+    ),
+  safetyError: () =>
+    new AppError(
+      'SAFETY_ERROR',
+      'The safety checks failed to run, so this visit cannot be signed now. Try again later',
+      503,
     ),
   // 403, not 401: a wrong password at sign-off must not look like an expired session to the client
   invalidPassword: () => new AppError('INVALID_PASSWORD', 'The password is not correct', 403),

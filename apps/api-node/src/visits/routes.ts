@@ -11,6 +11,8 @@ import type { VisitVersion } from './repository.js';
 import {
   amendedMedicines,
   blockerView,
+  buildPreview,
+  previewView,
   checkSignPassword,
   evaluateDraft,
   hashContent,
@@ -57,6 +59,15 @@ const amendBody = signBody
   })
   .strict();
 type AmendBody = z.infer<typeof amendBody>;
+
+const previousVisitView = z.object({
+  sessionId: z.uuid(),
+  signedAt: z.string(),
+  currentVersion: z.number(),
+  medicineCount: z.number(),
+  factCount: z.number(),
+  safetyNotRun: z.boolean(),
+});
 
 const readiness = z.object({
   signed: z.boolean(),
@@ -146,7 +157,11 @@ export function visitRoutes(): RouteDef[] {
         try {
           flags = requireSafetyAcknowledgement(safety, ctx.body.safetyNotRunAcknowledged);
         } catch (err) {
-          await refuse('safety_acknowledgement');
+          await refuse(
+            (err as { code?: string }).code === 'SAFETY_ERROR'
+              ? 'safety_error'
+              : 'safety_acknowledgement',
+          );
           throw err;
         }
         try {
@@ -222,7 +237,11 @@ export function visitRoutes(): RouteDef[] {
         try {
           flags = requireSafetyAcknowledgement(safety, ctx.body.safetyNotRunAcknowledged);
         } catch (err) {
-          await refuse('safety_acknowledgement');
+          await refuse(
+            (err as { code?: string }).code === 'SAFETY_ERROR'
+              ? 'safety_error'
+              : 'safety_acknowledgement',
+          );
           throw err;
         }
         try {
@@ -314,6 +333,66 @@ export function visitRoutes(): RouteDef[] {
         );
         if (!v) throw errors.notFound('Version not found');
         return { data: toView(v) };
+      },
+    }),
+    permRoute<IdParams>('visit.read', {
+      method: 'get',
+      path: '/sessions/:id/sign-preview',
+      tag: 'Visit',
+      summary:
+        'Doctor: the draft as it would be signed, with the engine original beside the doctor final (facts, working condition, medicine rows)',
+      audit: [],
+      params: idParams,
+      response: previewView,
+      handler: async (ctx) => {
+        const session = await loadSession(ctx.db, ctx.auth, ctx.params.id);
+        if (!session) throw errors.notFound('Session not found');
+        return { data: await buildPreview(ctx.db, session) };
+      },
+    }),
+
+    permRoute<IdParams>('visit.read', {
+      method: 'get',
+      path: '/sessions/:id/previous-visits',
+      tag: 'Visit',
+      summary: "Doctor: this doctor's earlier signed visits for the same patient, newest first",
+      audit: [],
+      params: idParams,
+      response: z.object({ visits: z.array(previousVisitView) }),
+      handler: async (ctx) => {
+        const session = await loadSession(ctx.db, ctx.auth, ctx.params.id);
+        if (!session) throw errors.notFound('Session not found');
+        const r = await ctx.db.query<{
+          session_id: string;
+          signed_at: Date;
+          current_version: number;
+          medicine_count: number;
+          fact_count: number;
+          safety_not_run: boolean;
+        }>(
+          `SELECT v.session_id, v.signed_at, v.current_version,
+                  jsonb_array_length(w.content -> 'medicines')::int AS medicine_count,
+                  jsonb_array_length(w.content -> 'facts')::int AS fact_count,
+                  w.safety_not_run_acknowledged AS safety_not_run
+             FROM visit_record v
+             JOIN visit_record_version w ON w.visit_id = v.id AND w.version = v.current_version
+            WHERE v.clinic_id = $1 AND v.doctor_id = $2 AND v.patient_ref = $3 AND v.status = 'signed'
+              AND v.session_id <> $4
+            ORDER BY v.signed_at DESC LIMIT 20`,
+          [session.clinicId, ctx.auth.sub, session.patientId, session.id],
+        );
+        return {
+          data: {
+            visits: r.rows.map((x) => ({
+              sessionId: x.session_id,
+              signedAt: x.signed_at.toISOString(),
+              currentVersion: x.current_version,
+              medicineCount: x.medicine_count,
+              factCount: x.fact_count,
+              safetyNotRun: x.safety_not_run,
+            })),
+          },
+        };
       },
     }),
   ];

@@ -36,6 +36,7 @@ export const safetyView = z.object({
   configured: z.boolean(),
   blocked: z.number(),
   message: z.string(),
+  error: z.boolean().optional(),
 });
 
 /** sorted-key JSON, so the same content always hashes the same */
@@ -214,13 +215,24 @@ export async function runSafety(
   sessionId: string,
   medicines: SignedMedicine[],
 ): Promise<SafetyResult> {
-  return services.safety.run({ sessionId, medicines });
+  try {
+    return await services.safety.run({ sessionId, medicines });
+  } catch {
+    // an engine that throws is an ERROR state, never "no alerts" (fail closed)
+    return {
+      configured: true,
+      blocked: 0,
+      error: true,
+      message: 'The safety engine failed to answer.',
+    };
+  }
 }
 
 export function requireSafetyAcknowledgement(
   safety: SafetyResult,
   acknowledged: boolean,
 ): { safetyConfigured: boolean; safetyNotRunAcknowledged: boolean } {
+  if (safety.error) throw errors.safetyError();
   if (!safety.configured) {
     if (!acknowledged) throw errors.safetyAckRequired();
     return { safetyConfigured: false, safetyNotRunAcknowledged: true };
@@ -261,4 +273,183 @@ export async function amendedMedicines(db: Queryable, rows: RowInput[]): Promise
     });
   }
   return out;
+}
+
+// --- sign preview (PG-09) ----------------------------------------------------------------------------------------------
+// The draft beside what the engine proposed. Nothing is invented: where no engine proposal exists the row is
+// "doctor-entered" (a manual fact, a hand-typed or master medicine without a template, a "not listed" condition).
+const previewFact = z.object({
+  id: z.uuid(),
+  type: z.string(),
+  value: z.string(),
+  negated: z.boolean(),
+  uncertain: z.boolean(),
+  status: z.enum(['heard', 'confirmed', 'rejected', 'stale']),
+  /** 'extracted' = proposed by the engine; 'manual' = typed by the doctor (no engine version exists) */
+  source: z.enum(['extracted', 'manual']),
+  edited: z.boolean(),
+  /** the engine's own text/flags when the doctor changed them; null when unchanged or doctor-entered */
+  originalValue: z.string().nullable(),
+  originalNegated: z.boolean().nullable(),
+  originalUncertain: z.boolean().nullable(),
+  evidenceQuote: z.string().nullable(),
+  conceptConfirmed: z.boolean(),
+});
+const templateOriginal = z.object({
+  templateName: z.string(),
+  dose: z.string().nullable(),
+  frequency: z.string().nullable(),
+  duration: z.string().nullable(),
+  instructions: z.string().nullable(),
+});
+const previewMedicine = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  source: z.enum(['master', 'free_text']),
+  strength: z.string().nullable(),
+  doseForm: z.string().nullable(),
+  dose: z.string().nullable(),
+  frequency: z.string().nullable(),
+  duration: z.string().nullable(),
+  note: z.string().nullable(),
+  incomplete: z.boolean(),
+  /** the template's line for this medicine when the row came from a template; null = doctor-entered */
+  templateOriginal: templateOriginal.nullable(),
+});
+export const previewView = z.object({
+  facts: z.array(previewFact),
+  workingCondition: z
+    .object({
+      kind: z.enum(['pathway', 'not_listed']),
+      pathwayId: z.string().nullable(),
+      version: z.number().nullable(),
+      text: z.string().nullable(),
+      /** rank among the engine's candidates when the doctor picked one of them; null = not among them / not listed */
+      engineRank: z.number().nullable(),
+    })
+    .nullable(),
+  engineCandidates: z.array(
+    z.object({ pathwayId: z.string(), version: z.number(), rank: z.number() }),
+  ),
+  medicines: z.array(previewMedicine),
+});
+export type Preview = z.infer<typeof previewView>;
+
+export async function buildPreview(db: Queryable, session: Session): Promise<Preview> {
+  const f = await db.query<{
+    id: string;
+    type: string;
+    value: string;
+    negated: boolean;
+    uncertain: boolean;
+    status: 'heard' | 'confirmed' | 'rejected' | 'stale';
+    source: 'extracted' | 'manual';
+    edited: boolean;
+    original_value: string | null;
+    original_negated: boolean | null;
+    original_uncertain: boolean | null;
+    evidence_quote: string | null;
+    concept_status: string;
+  }>(
+    `SELECT f.id, f.type, f.value, f.negated, f.uncertain, f.status, f.source, f.edited, f.original_value,
+            f.original_negated, f.original_uncertain, f.evidence_quote, f.concept_status
+       FROM extracted_fact f LEFT JOIN transcript_segment s ON s.id = f.source_segment_id
+      WHERE f.session_id = $1
+      ORDER BY coalesce(s.seq, 1000000), f.span_start NULLS LAST, f.created_at`,
+    [session.id],
+  );
+  const cand = await db.query<{ pathway_id: string; pathway_version: number; rank: number }>(
+    `SELECT pathway_id, pathway_version, rank FROM candidate
+      WHERE session_id = $1 AND kind = 'derived' ORDER BY rank`,
+    [session.id],
+  );
+  const sel = await db.query<{
+    not_listed: boolean;
+    pathway_id: string | null;
+    pathway_version: number | null;
+    not_listed_text: string | null;
+  }>(
+    `SELECT not_listed, pathway_id, pathway_version, not_listed_text FROM candidate
+      WHERE session_id = $1 AND kind = 'selected' AND superseded_at IS NULL`,
+    [session.id],
+  );
+  const s = sel.rows[0];
+  const engineCandidates = cand.rows.map((c) => ({
+    pathwayId: c.pathway_id,
+    version: c.pathway_version,
+    rank: c.rank,
+  }));
+  const rows = await listRows(db, session.id);
+  const medicines = [];
+  for (const r of rows) {
+    let original: z.infer<typeof templateOriginal> | null = null;
+    if (r.fromTemplateId && r.medicineId) {
+      const t = await db.query<{
+        name: string;
+        dose: string | null;
+        frequency: string | null;
+        duration: string | null;
+        instructions: string | null;
+      }>(
+        `SELECT t.name, i.dose, i.frequency, i.duration, i.instructions
+           FROM med_template_item i JOIN med_template t ON t.id = i.template_id
+          WHERE i.template_id = $1 AND i.medicine_id = $2 ORDER BY i.position LIMIT 1`,
+        [r.fromTemplateId, r.medicineId],
+      );
+      const x = t.rows[0];
+      if (x) {
+        original = {
+          templateName: x.name,
+          dose: x.dose,
+          frequency: x.frequency,
+          duration: x.duration,
+          instructions: x.instructions,
+        };
+      }
+    }
+    medicines.push({
+      id: r.id,
+      name: r.name,
+      source: r.source,
+      strength: r.strength,
+      doseForm: r.doseForm,
+      dose: r.dose,
+      frequency: r.frequency,
+      duration: r.duration,
+      note: r.note,
+      incomplete: r.incomplete,
+      templateOriginal: original,
+    });
+  }
+  return {
+    facts: f.rows.map((x) => ({
+      id: x.id,
+      type: x.type,
+      value: x.value,
+      negated: x.negated,
+      uncertain: x.uncertain,
+      status: x.status,
+      source: x.source,
+      edited: x.edited,
+      originalValue: x.original_value,
+      originalNegated: x.original_negated,
+      originalUncertain: x.original_uncertain,
+      evidenceQuote: x.evidence_quote,
+      conceptConfirmed: x.concept_status === 'confirmed',
+    })),
+    workingCondition: s
+      ? {
+          kind: s.not_listed ? 'not_listed' : 'pathway',
+          pathwayId: s.pathway_id,
+          version: s.pathway_version,
+          text: s.not_listed_text,
+          engineRank:
+            engineCandidates.find(
+              (c) => c.pathwayId === s.pathway_id && c.version === s.pathway_version,
+            )?.rank ?? null,
+        }
+      : null,
+    engineCandidates,
+    medicines,
+  };
 }

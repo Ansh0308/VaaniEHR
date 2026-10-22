@@ -42,6 +42,8 @@ export const PRD_EXPECTED: Record<
   'GET /sessions/:id/visit': ['doctor'],
   'GET /sessions/:id/visit/versions': ['doctor'],
   'GET /sessions/:id/visit/versions/:version': ['doctor'],
+  'GET /sessions/:id/sign-preview': ['doctor'],
+  'GET /sessions/:id/previous-visits': ['doctor'],
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
   // pathway questions and candidate conditions: the session's own doctor only (ADR-D34)

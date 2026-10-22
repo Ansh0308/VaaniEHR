@@ -227,6 +227,10 @@ const fixture = (route: RouteDef): Call => {
     'GET /sessions/:id/visit/versions/:version': {
       path: `/sessions/${consentedSessionId}/visit/versions/1`,
     },
+    'GET /sessions/:id/sign-preview': { path: `/sessions/${consentedSessionId}/sign-preview` },
+    'GET /sessions/:id/previous-visits': {
+      path: `/sessions/${consentedSessionId}/previous-visits`,
+    },
     'GET /pathways': { path: '/pathways' },
     'GET /pathways/:id': { path: '/pathways/toy_condition_a' },
     'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },

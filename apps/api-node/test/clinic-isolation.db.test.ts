@@ -387,6 +387,18 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         (await call('get', `/sessions/${y.sessionId}/visit/versions/1`, x.tokens[role])).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  'GET /sessions/:id/sign-preview': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/sign-preview`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'GET /sessions/:id/previous-visits': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('get', `/sessions/${y.sessionId}/previous-visits`, x.tokens[role])).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   // ---- pathway questions and candidates (ADR-D34): the same, both ways
   'GET /sessions/:id/questions/next': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)

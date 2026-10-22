@@ -17,6 +17,7 @@ type Mutation =
   | 'no-consent-check'
   | 'no-safety-acknowledgement'
   | 'safety-skipped'
+  | 'safety-error-ignored'
   | 'no-password-check'
   | 'no-session-scoping'
   | 'no-app-lock'
@@ -87,6 +88,20 @@ async function build(mutation: Mutation) {
         ...real,
         // the safety interface is never asked
         runSafety: async () => ({ configured: false, blocked: 0, message: '' }),
+      };
+    });
+  }
+  if (mutation === 'safety-error-ignored') {
+    vi.doMock('../src/visits/service.js', async (original) => {
+      const real = await original<typeof import('../src/visits/service.js')>();
+      return {
+        ...real,
+        // an engine ERROR is read as "no alerts"
+        requireSafetyAcknowledgement: (safety: { error?: boolean }, ack: boolean) =>
+          (real.requireSafetyAcknowledgement as (...a: unknown[]) => unknown)(
+            { ...safety, error: false },
+            ack,
+          ),
       };
     });
   }
@@ -302,6 +317,25 @@ async function violations(
       h.services.safety = original;
     }
   }
+  // 6b) an engine that reports an ERROR must block signing (fail closed)
+  {
+    const s = await fresh();
+    const original = h.services.safety;
+    h.services.safety = {
+      run: async () => ({
+        configured: true,
+        blocked: 0,
+        error: true,
+        message: 'toy engine failed',
+      }),
+    };
+    try {
+      if ((await s.sign({ safetyNotRunAcknowledged: false })).status === 201)
+        found.push('signed while the safety engine reported an error');
+    } finally {
+      h.services.safety = original;
+    }
+  }
   // 7) a wrong password
   {
     const s = await fresh();
@@ -392,6 +426,7 @@ describe('each sign-off guard, when broken, is caught', () => {
     ['no-consent-check', 'signed AI content without consent'],
     ['no-safety-acknowledgement', 'signed without the safety acknowledgement'],
     ['safety-skipped', 'the safety interface was skipped'],
+    ['safety-error-ignored', 'signed while the safety engine reported an error'],
     ['no-password-check', 'signed with a wrong password'],
     ['no-session-scoping', 'another doctor could sign this visit'],
     ['no-app-lock', 'the API changed a signed prescription'],
