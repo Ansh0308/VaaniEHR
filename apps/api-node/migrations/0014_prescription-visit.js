@@ -105,7 +105,9 @@ export const up = (pgm) => {
     updated_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT prescription_item_master_has_medicine CHECK ((source = 'master') = (medicine_id IS NOT NULL))
   )`);
-  pgm.sql('CREATE INDEX ix_prescription_item_session ON prescription_item (clinic_id, session_id, position)');
+  pgm.sql(
+    'CREATE INDEX ix_prescription_item_session ON prescription_item (clinic_id, session_id, position)',
+  );
   pgm.sql(`CREATE FUNCTION prescription_item_guard() RETURNS trigger LANGUAGE plpgsql AS $$
   DECLARE sid uuid;
   BEGIN
