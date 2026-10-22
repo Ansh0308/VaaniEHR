@@ -1,8 +1,8 @@
-// PG-09 Sign-off (doctor) - MINIMAL page for Phase 8 Run 1. It shows what the SERVER says blocks signing, the "Safety checks
-// were not run" acknowledgement (the safety engine does not exist yet), and the password re-entry. The page never decides:
-// the sign button is always offered once a password is typed, and the server answers with the named blockers. The real
-// sign-off page (side-by-side diff, signed summary, amendments) is Phase 8 Run 2.
-import { FileCheck2 } from 'lucide-react';
+// PG-09 Sign-off (doctor): the checklist of what the SERVER says blocks signing (each with a link to fix it), the
+// AI-vs-final diff, the "Safety checks were not run" acknowledgement, password re-entry and a clear result. The submit button
+// stays disabled while a blocker, a safety-engine error or a missing acknowledgement exists, but the page never decides: the
+// server re-checks everything and its answer (a named blocker list, a safety error) is shown if the page was out of date.
+import { CircleCheck, FileCheck2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
@@ -11,11 +11,15 @@ import { errorText } from '../api/errorText';
 import {
   BLOCKER_CODES,
   type Blocker,
+  type BlockerCode,
+  type Preview,
   type SignReadiness,
   type VisitVersion,
 } from '../api/prescription';
+import { useDateText } from '../api/useDateText';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
+import { SignDiff } from '../components/clinical/SignDiff';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Field';
@@ -27,12 +31,38 @@ const isBlocker = (b: unknown): b is Blocker =>
   (BLOCKER_CODES as readonly string[]).includes((b as Blocker).code) &&
   typeof (b as Blocker).count === 'number';
 
+/** Where each blocker is fixed: the workspace section, the consent screen or the signed record. */
+export function fixLink(
+  code: BlockerCode,
+  sessionId: string,
+): { pathname: string; search?: string; hash?: string } {
+  const workspace = `/consult/${sessionId}`;
+  switch (code) {
+    case 'unconfirmed_facts':
+      return { pathname: workspace, hash: '#facts-region' };
+    case 'red_flag_unacknowledged':
+      return { pathname: workspace, hash: '#red-flag-region' };
+    case 'no_working_condition':
+      return { pathname: workspace, hash: '#candidates-region' };
+    case 'incomplete_medicine':
+      return { pathname: workspace, search: '?tab=prescription' };
+    case 'consent_missing':
+      return { pathname: `${workspace}/consent` };
+    case 'session_not_draft':
+      return { pathname: `${workspace}/record` };
+  }
+}
+
 export function SignPage() {
   const { t } = useTranslation(['consult', 'common']);
   const { sessionId = '' } = useParams();
   const { api } = useAuth();
   const readiness = useRequest(
     () => api.get<SignReadiness>(`/sessions/${sessionId}/sign-readiness`),
+    [api, sessionId],
+  );
+  const preview = useRequest(
+    () => api.get<Preview>(`/sessions/${sessionId}/sign-preview`),
     [api, sessionId],
   );
   const [password, setPassword] = useState('');
@@ -50,28 +80,32 @@ export function SignPage() {
         safetyNotRunAcknowledged: acknowledged,
       });
       setSigned(result);
-      setPassword('');
       readiness.reload();
     } catch (err) {
       if (err instanceof ApiError) {
         const list = (err.details?.['blockers'] as unknown[] | undefined) ?? [];
         setRefusal({ kind: err.code, blockers: list.filter(isBlocker) });
-        if (err.code === 'SIGN_BLOCKED') readiness.reload();
+        readiness.reload();
+        preview.reload();
       } else {
         setRefusal({ kind: 'UNKNOWN', blockers: [] });
       }
-      setPassword('');
     } finally {
+      setPassword('');
       setBusy(false);
     }
   }
 
-  const back = `/consult/${sessionId}`;
   const data = readiness.state.status === 'ready' ? readiness.state.data : null;
-  const shown = refusal?.kind === 'SIGN_BLOCKED' ? refusal.blockers : (data?.blockers ?? []);
+  const blockers = refusal?.kind === 'SIGN_BLOCKED' ? refusal.blockers : (data?.blockers ?? []);
+  const safetyError = data?.safety.error === true || refusal?.kind === 'SAFETY_ERROR';
+  const needsAck = data !== null && !data.safety.configured;
+  const canSubmit =
+    !!password && blockers.length === 0 && !safetyError && (!needsAck || acknowledged) && !busy;
+  const dateOf = useDateText();
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header>
         <h1 className="font-display text-3xl font-semibold text-ink">{t('consult:sign.title')}</h1>
         <p className="mt-1 text-base text-body">{t('consult:sign.intro')}</p>
@@ -90,51 +124,110 @@ export function SignPage() {
       ) : null}
 
       {signed ? (
-        <Banner kind="clear" live title={t('consult:sign.signedTitle')}>
-          <p>{t('consult:sign.signedBody', { version: signed.version })}</p>
+        <section
+          aria-label={t('consult:sign.resultRegion')}
+          className="flex flex-col gap-3 rounded-lg border border-clear-accent bg-clear-bg p-4 text-clear-fg"
+        >
+          <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
+            <CircleCheck aria-hidden="true" className="size-6" />
+            {t('consult:sign.signedTitle')}
+          </h2>
+          <p role="status">{t('consult:sign.signedBody', { version: signed.version })}</p>
+          <p className="text-sm">{dateOf(signed.signedAt)}</p>
           <p className="break-all text-xs">
             {t('consult:sign.hash')}: {signed.contentHash}
           </p>
-          {signed.safetyNotRunAcknowledged ? <p>{t('consult:sign.safetyFlag')}</p> : null}
-        </Banner>
+          {signed.safetyNotRunAcknowledged ? (
+            <p className="font-semibold">{t('consult:sign.safetyFlag')}</p>
+          ) : null}
+          <p>
+            <Link
+              to={`/consult/${sessionId}/record`}
+              className="inline-flex min-h-11 items-center text-base font-semibold underline"
+            >
+              {t('consult:sign.openRecord')}
+            </Link>
+          </p>
+        </section>
       ) : data?.signed ? (
-        <Banner kind="clear">
-          {t('consult:sign.alreadySigned', { version: data.currentVersion ?? 1 })}
+        <Banner
+          kind="clear"
+          title={t('consult:sign.alreadySigned', { version: data.currentVersion ?? 1 })}
+        >
+          <Link
+            to={`/consult/${sessionId}/record`}
+            className="inline-flex min-h-11 items-center text-base font-semibold underline"
+          >
+            {t('consult:sign.openRecord')}
+          </Link>
         </Banner>
       ) : null}
 
       {data && !data.signed && !signed ? (
         <>
-          {shown.length > 0 ? (
+          <section
+            aria-label={t('consult:sign.checklist')}
+            className="flex flex-col gap-3 rounded-lg border border-line bg-card p-4"
+          >
+            <h2 className="font-display text-xl font-semibold text-ink">
+              {t('consult:sign.checklist')}
+            </h2>
+            {blockers.length > 0 ? (
+              <Banner
+                kind="blocked"
+                live={refusal?.kind === 'SIGN_BLOCKED'}
+                title={t('consult:sign.blockedTitle')}
+              >
+                <ul className="flex flex-col gap-1">
+                  {blockers.map((b) => (
+                    <li key={b.code} className="flex flex-wrap items-center gap-x-3">
+                      <span>{t(`consult:sign.blocker.${b.code}`, { count: b.count })}</span>
+                      <Link
+                        to={fixLink(b.code, sessionId)}
+                        className="inline-flex min-h-11 items-center font-semibold underline"
+                      >
+                        {t('consult:sign.fix')}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Banner>
+            ) : (
+              <Banner kind="clear">{t('consult:sign.noBlockers')}</Banner>
+            )}
+            {safetyError ? (
+              <Banner kind="blocked" live title={t('consult:sign.safetyErrorTitle')}>
+                {t('consult:sign.safetyErrorBody')}
+              </Banner>
+            ) : !data.safety.configured ? (
+              <Banner kind="acknowledge" title={t('consult:sign.safetyTitle')}>
+                {t('consult:sign.safetyBody')}
+              </Banner>
+            ) : null}
+          </section>
+
+          {preview.state.status === 'ready' ? (
+            <SignDiff preview={preview.state.data} />
+          ) : preview.state.status === 'error' ? (
             <Banner
               kind="blocked"
-              live={refusal?.kind === 'SIGN_BLOCKED'}
-              title={t('consult:sign.blockedTitle')}
+              actions={<Button onClick={preview.reload}>{t('common:action.retry')}</Button>}
             >
-              <ul className="list-disc ps-5">
-                {shown.map((b) => (
-                  <li key={b.code}>{t(`consult:sign.blocker.${b.code}`, { count: b.count })}</li>
-                ))}
-              </ul>
+              {errorText(t, preview.state.error)}
             </Banner>
           ) : (
-            <Banner kind="clear">{t('consult:sign.noBlockers')}</Banner>
+            <Skeleton lines={4} label={t('consult:sign.loading')} />
           )}
 
-          {!data.safety.configured ? (
-            <Banner kind="acknowledge" title={t('consult:sign.safetyTitle')}>
-              {t('consult:sign.safetyBody')}
-            </Banner>
-          ) : null}
-
           <form
+            aria-label={t('consult:sign.formLabel')}
             className="flex flex-col gap-4 rounded-lg border border-line bg-card p-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (password) void sign();
+              if (canSubmit) void sign();
             }}
           >
-            {!data.safety.configured ? (
+            {needsAck ? (
               <label className="inline-flex min-h-11 items-center gap-2 text-base text-ink">
                 <input
                   type="checkbox"
@@ -160,16 +253,28 @@ export function SignPage() {
                 })}
               </Banner>
             ) : null}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="submit"
                 variant="primary"
                 icon={FileCheck2}
                 loading={busy}
-                disabled={!password}
+                disabled={!canSubmit}
+                aria-describedby="sign-why-disabled"
               >
                 {t('consult:sign.button')}
               </Button>
+              <p id="sign-why-disabled" className="text-xs text-body">
+                {blockers.length > 0
+                  ? t('consult:sign.whyBlocked')
+                  : safetyError
+                    ? t('consult:sign.whySafety')
+                    : needsAck && !acknowledged
+                      ? t('consult:sign.whyAck')
+                      : !password
+                        ? t('consult:sign.whyPassword')
+                        : ''}
+              </p>
             </div>
           </form>
         </>
@@ -177,7 +282,7 @@ export function SignPage() {
 
       <p>
         <Link
-          to={back}
+          to={`/consult/${sessionId}`}
           className="inline-flex min-h-11 items-center text-base font-semibold text-ink underline"
         >
           {t('consult:sign.back')}

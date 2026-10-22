@@ -86,6 +86,7 @@ export function FactsPanel(props: FactsPanelProps) {
 
   return (
     <section
+      id="facts-region"
       aria-label={t('consult:facts.region')}
       className="flex flex-col gap-4 rounded-lg border border-line bg-card p-4"
     >

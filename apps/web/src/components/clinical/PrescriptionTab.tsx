@@ -32,7 +32,7 @@ export interface PrescriptionTabProps {
   signHref: string;
 }
 
-interface Fields {
+export interface Fields {
   name: string;
   strength: string;
   doseForm: string;
@@ -41,7 +41,7 @@ interface Fields {
   duration: string;
   note: string;
 }
-const EMPTY: Fields = {
+export const EMPTY: Fields = {
   name: '',
   strength: '',
   doseForm: '',
@@ -50,9 +50,9 @@ const EMPTY: Fields = {
   duration: '',
   note: '',
 };
-const orNull = (v: string): string | null => (v.trim() ? v.trim() : null);
+export const orNull = (v: string): string | null => (v.trim() ? v.trim() : null);
 
-function FieldsForm({
+export function FieldsForm({
   value,
   onChange,
   showName,

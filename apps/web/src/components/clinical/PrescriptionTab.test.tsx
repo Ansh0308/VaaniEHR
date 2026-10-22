@@ -223,7 +223,7 @@ describe('Prescription tab', () => {
     expect(screen.queryByRole('button', { name: 'Add medicine' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Edit / })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open the signed record' }).getAttribute('href')).toBe(
-      `/consult/${IDS.session}/sign`,
+      `/consult/${IDS.session}/record`,
     );
   });
 

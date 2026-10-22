@@ -70,6 +70,7 @@ export function CandidatesPanel(props: CandidatesPanelProps) {
   const notActive = list?.notActive ?? props.record?.notActive ?? false;
   return (
     <section
+      id="candidates-region"
       aria-label={t('consult:pathway.candidates.region')}
       className="flex flex-col gap-4 rounded-lg border border-line bg-card p-4"
     >

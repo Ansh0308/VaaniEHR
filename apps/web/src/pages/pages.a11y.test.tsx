@@ -329,6 +329,56 @@ const CASES: Case[] = [
         path: `/consult/${IDS.session}/sign`,
         language,
         routes: {
+          'GET /sessions/:id/sign-preview': () => ({
+            data: {
+              facts: [
+                {
+                  id: 'f1',
+                  type: 'symptom',
+                  value: 'toy final words',
+                  negated: false,
+                  uncertain: false,
+                  status: 'confirmed',
+                  source: 'extracted',
+                  edited: true,
+                  originalValue: 'toy engine words',
+                  originalNegated: false,
+                  originalUncertain: false,
+                  evidenceQuote: 'toy quote',
+                  conceptConfirmed: false,
+                },
+              ],
+              workingCondition: {
+                kind: 'pathway',
+                pathwayId: 'toy_condition_a',
+                version: 1,
+                text: null,
+                engineRank: 1,
+              },
+              engineCandidates: [{ pathwayId: 'toy_condition_a', version: 1, rank: 1 }],
+              medicines: [
+                {
+                  id: 'm1',
+                  name: 'Drug-A (FAKE)',
+                  source: 'master',
+                  strength: '500 mg',
+                  doseForm: 'Tablet',
+                  dose: null,
+                  frequency: 'BD',
+                  duration: '3 days',
+                  note: null,
+                  incomplete: false,
+                  templateOriginal: {
+                    templateName: 'Toy template',
+                    dose: null,
+                    frequency: 'BD',
+                    duration: '7 days',
+                    instructions: null,
+                  },
+                },
+              ],
+            },
+          }),
           'GET /sessions/:id/sign-readiness': () => ({
             data: {
               signed: false,
@@ -344,6 +394,175 @@ const CASES: Case[] = [
         },
       });
       await screen.findByRole('button', { name: /Sign visit|મુલાકાત પર સહી કરો/ });
+    },
+  },
+  {
+    name: 'visit record (signed, two versions)',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}/record`,
+        language,
+        routes: {
+          'GET /sessions/:id/visit': () => ({
+            data: {
+              version: 2,
+              kind: 'amendment',
+              contentHash: 'b'.repeat(64),
+              safetyConfigured: false,
+              safetyNotRunAcknowledged: true,
+              reason: 'wrong duration typed',
+              signedBy: IDS.user('doctor'),
+              signedAt: '2026-10-22T11:30:00.000Z',
+              content: {
+                schema: 1,
+                sessionId: IDS.session,
+                signedAt: '2026-10-22T11:30:00.000Z',
+                facts: [
+                  {
+                    id: 'f1',
+                    type: 'symptom',
+                    value: 'toy final words',
+                    negated: false,
+                    uncertain: false,
+                    speaker: null,
+                    source: 'manual',
+                    sourceSegmentSeq: null,
+                    evidenceQuote: null,
+                    edited: false,
+                    originalValue: null,
+                    conceptId: null,
+                    conceptStatus: 'none',
+                  },
+                ],
+                workingCondition: { kind: 'not_listed', text: 'toy note' },
+                medicines: [
+                  {
+                    position: 0,
+                    medicineId: fakeMedicine().id,
+                    name: 'Drug-A (FAKE)',
+                    source: 'master',
+                    strength: '500 mg',
+                    doseForm: 'Tablet',
+                    dose: null,
+                    frequency: 'BD',
+                    duration: '5 days',
+                    note: null,
+                    masterSource: 'test fixture',
+                    masterSourcePage: 27,
+                  },
+                ],
+                consent: { audio: true, aiProcessing: true },
+                aiContentIncluded: true,
+                amendedFrom: 1,
+              },
+            },
+          }),
+          'GET /sessions/:id/visit/versions': () => ({
+            data: {
+              versions: [
+                {
+                  version: 1,
+                  kind: 'signed',
+                  contentHash: 'a'.repeat(64),
+                  safetyConfigured: false,
+                  safetyNotRunAcknowledged: true,
+                  reason: null,
+                  signedBy: IDS.user('doctor'),
+                  signedAt: '2026-10-22T10:00:00.000Z',
+                },
+                {
+                  version: 2,
+                  kind: 'amendment',
+                  contentHash: 'b'.repeat(64),
+                  safetyConfigured: false,
+                  safetyNotRunAcknowledged: true,
+                  reason: 'wrong duration typed',
+                  signedBy: IDS.user('doctor'),
+                  signedAt: '2026-10-22T11:30:00.000Z',
+                },
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findByRole('region', { name: /Version history|આવૃત્તિનો ઇતિહાસ/ });
+    },
+  },
+  {
+    name: 'amendment screen',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}/amend`,
+        language,
+        routes: {
+          'GET /sessions/:id/visit': () => ({
+            data: {
+              version: 2,
+              kind: 'amendment',
+              contentHash: 'b'.repeat(64),
+              safetyConfigured: false,
+              safetyNotRunAcknowledged: true,
+              reason: 'wrong duration typed',
+              signedBy: IDS.user('doctor'),
+              signedAt: '2026-10-22T11:30:00.000Z',
+              content: {
+                schema: 1,
+                sessionId: IDS.session,
+                signedAt: '2026-10-22T11:30:00.000Z',
+                facts: [
+                  {
+                    id: 'f1',
+                    type: 'symptom',
+                    value: 'toy final words',
+                    negated: false,
+                    uncertain: false,
+                    speaker: null,
+                    source: 'manual',
+                    sourceSegmentSeq: null,
+                    evidenceQuote: null,
+                    edited: false,
+                    originalValue: null,
+                    conceptId: null,
+                    conceptStatus: 'none',
+                  },
+                ],
+                workingCondition: { kind: 'not_listed', text: 'toy note' },
+                medicines: [
+                  {
+                    position: 0,
+                    medicineId: fakeMedicine().id,
+                    name: 'Drug-A (FAKE)',
+                    source: 'master',
+                    strength: '500 mg',
+                    doseForm: 'Tablet',
+                    dose: null,
+                    frequency: 'BD',
+                    duration: '5 days',
+                    note: null,
+                    masterSource: 'test fixture',
+                    masterSourcePage: 27,
+                  },
+                ],
+                consent: { audio: true, aiProcessing: true },
+                aiContentIncluded: true,
+                amendedFrom: 1,
+              },
+            },
+          }),
+          'GET /sessions/:id/sign-readiness': () => ({
+            data: {
+              signed: true,
+              blockers: [{ code: 'session_not_draft', count: 1 }],
+              medicineCount: 1,
+              safety: { configured: false, blocked: 0, message: 'x' },
+              currentVersion: 2,
+            },
+          }),
+        },
+      });
+      await screen.findByRole('region', { name: /Version being replaced|જે આવૃત્તિ બદલાય છે/ });
     },
   },
   {

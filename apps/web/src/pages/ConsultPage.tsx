@@ -4,7 +4,7 @@
 import { CircleAlert, CircleCheck, FileCheck2, LoaderCircle, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useAsrRecording } from '../asr/useAsrRecording';
 import { fromSaved, useTranscriptSave, type SavedTranscript } from '../asr/useTranscriptSave';
 import { errorText } from '../api/errorText';
@@ -14,6 +14,8 @@ import { useAuth } from '../auth/AuthContext';
 import { CandidatesPanel } from '../components/clinical/CandidatesPanel';
 import { FactsPanel, type ExtractBlock } from '../components/clinical/FactsPanel';
 import { PrescriptionTab } from '../components/clinical/PrescriptionTab';
+import { PreviousVisits } from '../components/clinical/PreviousVisits';
+import type { PreviousVisit } from '../api/prescription';
 import { QuestionPanel } from '../components/clinical/QuestionPanel';
 import { RedFlagBanner } from '../components/clinical/RedFlagBanner';
 import { RecordBar } from '../components/clinical/RecordBar';
@@ -73,6 +75,29 @@ export function ConsultPage() {
   });
   const [peek, setPeek] = useState<Fact | null>(null);
   const rx = usePrescription(sessionId);
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const previous = useRequest(
+    () => api.get<{ visits: PreviousVisit[] }>(`/sessions/${sessionId}/previous-visits`),
+    [api, sessionId],
+  );
+  // a "fix this" link from the sign page lands on its section: scroll to it and move focus there
+  useEffect(() => {
+    const id = location.hash.replace('#', '');
+    if (!id) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      const el = document.getElementById(id);
+      tries += 1;
+      if (el) {
+        el.scrollIntoView({ block: 'start' });
+        el.setAttribute('tabindex', '-1');
+        el.focus({ preventScroll: true });
+        clearInterval(timer);
+      } else if (tries > 20) clearInterval(timer);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [location.hash]);
   const templates = useRequest(() => api.get<TemplateList>('/templates', { limit: 100 }), [api]);
 
   // after a save the server may have marked facts stale (their words changed): read the list again
@@ -153,6 +178,9 @@ export function ConsultPage() {
 
   const consultPanel = (
     <>
+      <PreviousVisits
+        visits={previous.state.status === 'ready' ? previous.state.data.visits : null}
+      />
       {consent.state.status === 'loading' ? (
         <Skeleton lines={2} label={t('consult:status.connecting')} />
       ) : consent.state.status === 'error' ? (
@@ -289,15 +317,18 @@ export function ConsultPage() {
         {i18n.language === 'gu' ? <NeedsReview /> : null}
       </header>
 
-      <RedFlagBanner
-        next={aids.next}
-        busy={aids.busy}
-        onAcknowledge={(eventId) => void aids.act(eventId, 'acknowledged')}
-      />
+      <div id="red-flag-region">
+        <RedFlagBanner
+          next={aids.next}
+          busy={aids.busy}
+          onAcknowledge={(eventId) => void aids.act(eventId, 'acknowledged')}
+        />
+      </div>
 
       <Tabs
         label={t('consult:tabs.label')}
         keepMounted
+        defaultId={searchParams.get('tab') === 'prescription' ? 'prescription' : 'consult'}
         tabs={[
           {
             id: 'consult',
@@ -323,7 +354,7 @@ export function ConsultPage() {
                 onEdit={rx.edit}
                 onRemove={(id) => void rx.remove(id)}
                 onApplyTemplate={rx.applyTemplate}
-                signHref={`/consult/${sessionId}/sign`}
+                signHref={rx.locked ? `/consult/${sessionId}/record` : `/consult/${sessionId}/sign`}
               />
             ),
           },
