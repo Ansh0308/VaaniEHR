@@ -338,7 +338,8 @@
     "evidence": "Evidence",
     "template": "Template: {{name}}",
     "templateEmpty": "The template line has no dose, frequency or duration.",
-    "changedFields": "Changed from the template: {{fields}}"
+    "changedFields": "Changed from the template: {{fields}}",
+    "pathwayVersion": "{{id}} (version {{version}})"
   },
   "record": {
     "title": "Visit record",

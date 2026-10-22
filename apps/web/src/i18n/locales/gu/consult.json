@@ -338,7 +338,8 @@
     "evidence": "પુરાવો",
     "template": "ટેમ્પલેટ: {{name}}",
     "templateEmpty": "ટેમ્પલેટની લીટીમાં માત્રા, આવૃત્તિ કે સમયગાળો નથી.",
-    "changedFields": "ટેમ્પલેટથી બદલાયું: {{fields}}"
+    "changedFields": "ટેમ્પલેટથી બદલાયું: {{fields}}",
+    "pathwayVersion": "{{id}} (આવૃત્તિ {{version}})"
   },
   "record": {
     "title": "મુલાકાતનો રેકોર્ડ",

@@ -53,7 +53,7 @@ function FactRow({ f }: { f: PreviewFact }) {
   const label = t(`consult:facts.type.${f.type}`);
   const engine =
     f.source === 'manual' ? (
-      <p className="italic">{t('consult:diff.doctorEntered')}</p>
+      <p>{t('consult:diff.doctorEntered')}</p>
     ) : (
       <>
         <p>
@@ -141,7 +141,7 @@ function MedicineRow({ m }: { m: PreviewMedicine }) {
                 t('consult:diff.templateEmpty')}
             </p>
           ) : (
-            <p className="italic">{t('consult:diff.doctorEntered')}</p>
+            <p>{t('consult:diff.doctorEntered')}</p>
           )
         }
         right={
@@ -198,12 +198,12 @@ export function SignDiff({ preview }: { preview: Preview }) {
           rightLabel={t('consult:diff.final')}
           left={
             preview.engineCandidates.length === 0 ? (
-              <p className="italic">{t('consult:diff.noCandidates')}</p>
+              <p>{t('consult:diff.noCandidates')}</p>
             ) : (
               <ol className="list-decimal ps-5">
                 {preview.engineCandidates.map((c) => (
                   <li key={`${c.pathwayId}:${c.version}`}>
-                    {c.pathwayId} (v{c.version})
+                    {t('consult:diff.pathwayVersion', { id: c.pathwayId, version: c.version })}
                   </li>
                 ))}
               </ol>
@@ -219,7 +219,10 @@ export function SignDiff({ preview }: { preview: Preview }) {
               </p>
             ) : (
               <p>
-                {wc.pathwayId} (v{wc.version}){' '}
+                {t('consult:diff.pathwayVersion', {
+                  id: wc.pathwayId ?? '',
+                  version: wc.version ?? 0,
+                })}{' '}
                 <Badge>
                   {wc.engineRank !== null
                     ? t('consult:diff.pickedRank', { rank: wc.engineRank })
