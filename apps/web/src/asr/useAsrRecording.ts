@@ -1,5 +1,6 @@
 // React glue for AsrClient: state for the RecordBar and the (draft) transcript. Everything here lives in memory only.
 // Edits to a segment stay in memory in this run (saving comes with the transcript API); the original text is kept.
+import { ApiError } from '../api/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -64,8 +65,20 @@ export function useAsrRecording(sessionId: string, makeDeps?: () => AsrDeps) {
         makeDeps
           ? makeDeps()
           : {
-              getToken: async () =>
-                (await api.post<{ token: string }>(`/sessions/${sessionId}/asr-token`)).token,
+              getToken: async () => {
+                try {
+                  return (await api.post<{ token: string }>(`/sessions/${sessionId}/asr-token`))
+                    .token;
+                } catch (err) {
+                  // the service is down or unreachable (not a consent or sign-in problem): say so plainly
+                  if (err instanceof ApiError && (err.status === 0 || err.status >= 500)) {
+                    throw Object.assign(new Error('speech service unavailable'), {
+                      unavailable: true,
+                    });
+                  }
+                  throw err;
+                }
+              },
               openSocket: () => openBrowserSocket(sessionId),
               createCapture: createBrowserCapture,
             },

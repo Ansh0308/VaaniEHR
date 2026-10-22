@@ -36,7 +36,8 @@
     "not_configured": "The speech service is not set up on this server.",
     "engine": "The speech engine stopped. You can type notes and carry on.",
     "protocol": "Recording stopped because of a technical error.",
-    "connection_lost": "The connection was lost and could not be restored. Recording stopped."
+    "connection_lost": "The connection was lost and could not be restored. Recording stopped.",
+    "service_down": "The speech service could not be reached."
   },
   "level": {
     "label": "Microphone level",
@@ -144,7 +145,8 @@
         "load": "Concept suggestions could not be loaded.",
         "save": "The concept change could not be saved."
       }
-    }
+    },
+    "manualFallback": "You can still add facts by hand."
   },
   "pathway": {
     "aid": "Suggestions are aids; the doctor decides.",
@@ -404,5 +406,9 @@
     "title": "Previous visits",
     "empty": "No earlier signed visits for this patient.",
     "counts": "Version {{version}}, {{facts}} facts, {{medicines}} medicines"
+  },
+  "asrDown": {
+    "title": "Speech recognition is not available right now",
+    "body": "You can carry on without it: add facts by hand in the Facts section and use the Prescription tab as usual. Nothing already saved is lost. Try recording again later."
   }
 }

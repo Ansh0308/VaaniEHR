@@ -881,3 +881,57 @@ describe('concept links on the consult screen', () => {
     expect(app.callsTo('GET', `/sessions/${SESSION}/concept-suggestions`)).toHaveLength(0);
   });
 });
+
+describe('failure modes: nothing is silently skipped (Phase 8 Run 2)', () => {
+  const emptyFacts = {
+    'GET /sessions/:id/facts': () => ({
+      data: { facts: [], heardCount: 0, confirmedCount: 0, rejectedCount: 0, staleCount: 0 },
+    }),
+  } as Record<string, Handler>;
+
+  it('speech service unreachable at the token step: a plain message, and facts can still be added by hand', async () => {
+    const app = await open(consentWith(true, true), 'en', {
+      ...emptyFacts,
+      'POST /sessions/:id/asr-token': () => ({
+        status: 503,
+        error: { code: 'NOT_READY', message: 'x' },
+      }),
+      'POST /sessions/:id/facts': () => ({ status: 201, data: {} }),
+    });
+    await start();
+    const banner = await screen.findByText('Speech recognition is not available right now');
+    expect(banner).toBeTruthy();
+    expect(screen.getByText(/You can carry on without it/)).toBeTruthy();
+    expect(screen.getByText('The speech service could not be reached.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Add a fact by hand' }));
+    fireEvent.change(screen.getByLabelText('Fact'), { target: { value: 'typed by hand' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add fact' }));
+    await waitFor(() => expect(app.callsTo('POST', `/sessions/${SESSION}/facts`)).toHaveLength(1));
+    expect(app.callsTo('POST', `/sessions/${SESSION}/facts`)[0]?.body).toMatchObject({
+      value: 'typed by hand',
+    });
+  });
+
+  it('a consent problem at the token step is NOT reported as the service being down', async () => {
+    await open(consentWith(true, true), 'en', {
+      ...emptyFacts,
+      'POST /sessions/:id/asr-token': () => ({
+        status: 403,
+        error: { code: 'CONSENT_REQUIRED', message: 'x' },
+      }),
+    });
+    await start();
+    await screen.findByText(/could not be authorised/);
+    expect(screen.queryByText('Speech recognition is not available right now')).toBeNull();
+  });
+
+  it('the speech engine stopping mid-recording shows the same plain message', async () => {
+    await open(consentWith(true, true), 'en', emptyFacts);
+    await start();
+    await waitFor(() => expect(sockets.length).toBe(1));
+    sockets[0]?.server({ type: 'ready', engine: 'mock', sampleRate: 16000 });
+    await flush();
+    sockets[0]?.drop(1011);
+    expect(await screen.findByText('Speech recognition is not available right now')).toBeTruthy();
+  });
+});

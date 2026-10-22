@@ -211,6 +211,15 @@ export function ConsultPage() {
         />
       )}
 
+      {rec.error === 'service_down' ||
+      rec.error === 'not_configured' ||
+      rec.error === 'engine' ||
+      rec.error === 'connection_lost' ? (
+        <Banner kind="acknowledge" live title={t('consult:asrDown.title')}>
+          {t('consult:asrDown.body')}
+        </Banner>
+      ) : null}
+
       {rec.state === 'idle' && rec.lastRun && rec.lastRun.finals === 0 ? (
         <Banner kind="acknowledge" live>
           {t('consult:run.noSpeech', {

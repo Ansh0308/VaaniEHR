@@ -132,12 +132,15 @@ export function FactsPanel(props: FactsPanelProps) {
       ) : null}
       {mode === 'blocked' ? (
         <Banner kind="blocked" live>
-          {t('consult:facts.error.real_data_blocked')}
+          {t('consult:facts.error.real_data_blocked')} {t('consult:facts.manualFallback')}
         </Banner>
       ) : null}
       {props.error ? (
         <Banner kind="blocked" live>
           {t(`consult:facts.error.${props.error}`)}
+          {props.error !== 'save' && props.error !== 'consent' ? (
+            <span> {t('consult:facts.manualFallback')}</span>
+          ) : null}
         </Banner>
       ) : null}
 

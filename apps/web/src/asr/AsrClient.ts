@@ -19,6 +19,8 @@ export type AsrErrorKind =
   | 'idle_timeout'
   | 'token'
   | 'not_configured'
+  /** the speech service could not be reached to get a token (it is down or unreachable) */
+  | 'service_down'
   | 'engine'
   | 'protocol'
   | 'connection_lost';
@@ -210,7 +212,12 @@ export class AsrClient {
             else this.onClosed(event.code);
           };
         })
-        .catch(() => done({ code: -1, reason: 'token' }));
+        .catch((err: unknown) =>
+          done({
+            code: -1,
+            reason: (err as { unavailable?: boolean })?.unavailable ? 'unavailable' : 'token',
+          }),
+        );
     });
   }
 
@@ -258,7 +265,7 @@ export class AsrClient {
         if (reason === 'expired' || reason === 'already_used') return void this.reconnect('token');
         return this.fail('token');
       case -1:
-        return this.fail('token');
+        return this.fail(reason === 'unavailable' ? 'service_down' : 'token');
       default:
         return void this.reconnect('connection_lost');
     }
