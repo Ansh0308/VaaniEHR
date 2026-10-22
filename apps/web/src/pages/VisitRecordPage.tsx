@@ -182,12 +182,8 @@ function History_({
               {t('consult:sign.hash')}: {v.contentHash}
             </p>
             {v.version !== shown ? (
-              <Link
-                to={`/consult/${sessionId}/record?v=${v.version}`}
-                className={linkClass}
-                aria-label={t('consult:record.viewVersion', { version: v.version })}
-              >
-                {t('consult:record.view')}
+              <Link to={`/consult/${sessionId}/record?v=${v.version}`} className={linkClass}>
+                {t('consult:record.viewVersion', { version: v.version })}
               </Link>
             ) : (
               <p className="text-xs text-body">{t('consult:record.shownNow')}</p>

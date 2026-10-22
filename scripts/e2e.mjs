@@ -774,7 +774,7 @@ try {
     );
     await scan(page, 'en consultation (prescription tab)');
 
-    // first attempt: the heard fact is still unconfirmed, so the server refuses and names it
+    // first look at the sign page: the heard fact and the missing working condition are named, the button is off
     await page.getByRole('link', { name: 'Review and sign' }).click();
     await page.getByRole('heading', { name: 'Sign this visit', level: 1 }).waitFor();
     await page.getByText('1 fact is not confirmed yet.').waitFor();
@@ -782,19 +782,33 @@ try {
     await page
       .getByText('A working condition has not been chosen (or marked as not listed).')
       .waitFor();
-    await scan(page, 'en sign page (blocked)');
+    const diff = page.getByRole('region', { name: 'Engine proposal and final' });
+    await diff.getByText('Doctor-entered').first().waitFor();
+    check(
+      (await diff.innerText()).includes('Toy-Medicine (FAKE)') &&
+        (await diff.innerText()).includes('Not confirmed yet'),
+      'the sign page shows the AI-vs-final diff and the unconfirmed fact',
+    );
     await page.getByLabel('Safety checks were not run').check();
     await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
-    await page.getByRole('button', { name: 'Sign visit' }).click();
-    await page.getByText('This visit cannot be signed yet').waitFor();
+    check(
+      await page.getByRole('button', { name: 'Sign visit' }).isDisabled(),
+      'the sign button is off while blockers exist',
+    );
+    check(
+      (await page.getByRole('link', { name: 'Fix this' }).count()) === 2,
+      'each blocker has a link to fix it',
+    );
+    await scan(page, 'en sign page (blocked, diff)');
     check(
       (await appQuery('SELECT 1 FROM visit_record WHERE session_id = $1', [rxSession])).length ===
         0,
-      'a refused sign-off stored nothing',
+      'nothing was stored while blockers existed',
     );
 
-    // clear the blocker: confirm the fact, then sign
-    await page.getByRole('link', { name: 'Back to the consultation' }).click();
+    // fix the first blocker through its own link: it lands on the facts and confirms there
+    await page.getByRole('link', { name: 'Fix this' }).first().click();
+    await page.getByRole('region', { name: 'Facts from the transcript' }).waitFor();
     await page.getByRole('button', { name: /^Confirm 2 days toy/ }).click();
     await page
       .getByRole('group', { name: /2 days toy/ })
@@ -809,16 +823,21 @@ try {
     await page.getByRole('link', { name: 'Review and sign' }).click();
     await page.getByText('Nothing is blocking the sign-off.').waitFor();
 
-    // without the acknowledgement the server refuses, even though nothing else is open
-    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
-    await page.getByRole('button', { name: 'Sign visit' }).click();
-    await page
-      .getByRole('alert')
-      .getByText(/Safety checks were not run/)
-      .waitFor();
-    await page.getByLabel('Safety checks were not run').check();
-    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
-    await page.getByRole('button', { name: 'Sign visit' }).click();
+    // keyboard only: acknowledgement (Space), password, then the sign button (Enter)
+    check(
+      await page.getByRole('button', { name: 'Sign visit' }).isDisabled(),
+      'the sign button is off until the acknowledgement and the password are given',
+    );
+    await page.getByLabel('Safety checks were not run').focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type(credentials[EMAIL.doctor]);
+    await page.keyboard.press('Tab');
+    check(
+      (await page.evaluate(() => document.activeElement?.textContent ?? '')).includes('Sign visit'),
+      'the keyboard reaches the sign button after the password',
+    );
+    await page.keyboard.press('Enter');
     await page.getByText('Visit signed').waitFor();
     const signedRows = await appQuery(
       `SELECT v.status, w.version, w.safety_configured, w.safety_not_run_acknowledged, w.content_hash
@@ -840,8 +859,55 @@ try {
     );
     await scan(page, 'en sign page (signed)');
 
+    // the visit record (PG-10): read only, flag shown, history, an empty FHIR tab
+    await page.getByRole('link', { name: 'Open the visit record' }).click();
+    await page.getByRole('heading', { name: 'Visit record', level: 1 }).waitFor();
+    await page.getByText('Safety checks were not run', { exact: true }).first().waitFor();
+    check(
+      (await page.locator('input, textarea').count()) === 0,
+      'the visit record has no input fields',
+    );
+    await page.getByRole('tab', { name: 'FHIR' }).click();
+    await page.getByText('Coming in Phase 9. No FHIR bundle exists yet.').waitFor();
+    await page.getByRole('tab', { name: 'Record' }).click();
+    await scan(page, 'en visit record (version 1)');
+
+    // an amendment: reason required, medicine list only, the version being replaced and the changes are shown
+    await page.getByRole('link', { name: 'Amend this visit' }).click();
+    await page.getByRole('heading', { name: 'Amend the signed visit', level: 1 }).waitFor();
+    await page.getByRole('region', { name: 'Version being replaced' }).waitFor();
+    await page.getByRole('textbox', { name: /^Duration/ }).fill('3 days');
+    await page.getByText('Duration 5 days → 3 days', { exact: false }).waitFor();
+    check(
+      await page.getByRole('button', { name: 'Save amendment' }).isDisabled(),
+      'the amendment button is off without a reason',
+    );
+    await page.getByLabel(/^Reason for the amendment/).fill('shorter course after review');
+    await page.getByLabel('Safety checks were not run').check();
+    await page.getByLabel(/^Your password/).fill(credentials[EMAIL.doctor]);
+    await scan(page, 'en amendment screen');
+    await page.getByRole('button', { name: 'Save amendment' }).click();
+    await page.getByText('Amendment saved').waitFor();
+    await page.getByRole('link', { name: 'Open the visit record' }).click();
+    const history = page.getByRole('region', { name: 'Version history' });
+    await history.getByText('Version 2 (amendment) · Current').waitFor();
+    check(
+      (await history.innerText()).includes('shorter course after review') &&
+        (await history.innerText()).includes('Version 1 (signed)'),
+      'the history lists both versions with the amendment reason',
+    );
+    const versions = await appQuery(
+      'SELECT version, kind, reason FROM visit_record_version WHERE session_id = $1 ORDER BY version',
+      [rxSession],
+    );
+    check(
+      versions.length === 2 && versions[1].kind === 'amendment' && versions[0].reason === null,
+      'both versions are stored; version 1 is unchanged',
+    );
+    await scan(page, 'en visit record (two versions)');
+    await page.getByRole('link', { name: 'Back to the consultation' }).first().click();
+
     // the workspace is now locked
-    await page.getByRole('link', { name: 'Back to the consultation' }).click();
     await page.getByRole('tab', { name: 'Prescription' }).click();
     await page.getByText(/This visit is signed/).waitFor();
     check(
@@ -856,6 +922,18 @@ try {
       stored.every((key) => key === 'vaaniehr.language'),
       'signing wrote nothing but the language choice to browser storage',
     );
+    // the earlier session of the same patient lists this signed visit among the previous visits
+    await goInApp(page, '/doctor');
+    await page.getByRole('heading', { name: 'Doctor dashboard', level: 1 }).waitFor();
+    await goInApp(page, `/consult/${sessionId}`);
+    const earlier = page.getByRole('region', { name: 'Previous visits' });
+    await earlier.getByRole('link').first().waitFor();
+    check(
+      (await earlier.getByRole('link').first().getAttribute('href')) ===
+        `/consult/${rxSession}/record`,
+      'the workspace lists the signed visit under previous visits, linking to its record',
+    );
+    await scan(page, 'en consultation (previous visits)');
     await context.close();
   }
 
