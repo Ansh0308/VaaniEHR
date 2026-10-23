@@ -44,6 +44,10 @@ export const PRD_EXPECTED: Record<
   'GET /sessions/:id/visit/versions/:version': ['doctor'],
   'GET /sessions/:id/sign-preview': ['doctor'],
   'GET /sessions/:id/previous-visits': ['doctor'],
+  // FHIR bundles of a signed visit (F8): the doctor builds and exports; the admin reads the verdict and the errors (ADR-D40)
+  'GET /sessions/:id/fhir': ['doctor', 'admin'],
+  'POST /sessions/:id/fhir': ['doctor'],
+  'POST /sessions/:id/fhir/export': ['doctor'],
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
   // pathway questions and candidate conditions: the session's own doctor only (ADR-D34)

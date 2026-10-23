@@ -34,6 +34,8 @@ const rawSchema = z.object({
   // Phase 6A: pathway files. Only status "active" loads unless PATHWAYS_ALLOW_TEST=true (refused in production).
   // the owner's UNREVIEWED draft concept list (git-ignored); missing = the screen says "Concept list not loaded"
   CONCEPTS_FILE: z.string().min(1).optional(),
+  /** the HL7 FHIR validator running in server mode (scripts/fhir-validator-server.mjs); unset = bundles are stored as not validated */
+  FHIR_VALIDATOR_URL: z.string().url().optional(),
   PATHWAYS_DIR: z.string().min(1).optional(),
   PATHWAYS_ALLOW_TEST: z.enum(['true', 'false']).default('false'),
   PATHWAYS_SLOT_MAP: z.string().min(1).optional(),
@@ -61,6 +63,7 @@ export interface Config {
   lockoutMs: number;
   bcryptCost: number;
   concepts: { file: string };
+  fhir: { validatorUrl: string | undefined };
   pathways: {
     /** folder with *.pathway.json (default: data/pathways at the repository root) */
     dir: string;
@@ -151,6 +154,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     concepts: {
       file: v.CONCEPTS_FILE ?? resolve(process.cwd(), '../../data/concepts/concepts.json'),
     },
+    fhir: { validatorUrl: v.FHIR_VALIDATOR_URL },
     pathways: {
       dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../seed/pathways'),
       allowTest: v.PATHWAYS_ALLOW_TEST === 'true',

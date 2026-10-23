@@ -41,6 +41,11 @@ export const PERMISSIONS = {
   'visit.sign': ['doctor'],
   'visit.amend': ['doctor'],
 
+  // FHIR bundles of a signed visit (F8, Phase 9A): the doctor builds and exports; the admin sees verdicts and errors only
+  'fhir.read': ['doctor', 'admin'],
+  'fhir.generate': ['doctor'],
+  'fhir.export': ['doctor'],
+
   // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
   'pathway.read': ['doctor', 'admin'],
 

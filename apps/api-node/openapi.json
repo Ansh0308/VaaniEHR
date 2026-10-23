@@ -2898,7 +2898,9 @@
                 "VISIT_SIGNED",
                 "VISIT_SIGN_REFUSED",
                 "VISIT_AMENDED",
-                "VISIT_AMEND_REFUSED"
+                "VISIT_AMEND_REFUSED",
+                "FHIR_GENERATED",
+                "FHIR_EXPORTED"
               ]
             }
           },
@@ -3120,7 +3122,9 @@
                       "VISIT_SIGNED",
                       "VISIT_SIGN_REFUSED",
                       "VISIT_AMENDED",
-                      "VISIT_AMEND_REFUSED"
+                      "VISIT_AMEND_REFUSED",
+                      "FHIR_GENERATED",
+                      "FHIR_EXPORTED"
                     ]
                   },
                   "from": {
@@ -14622,6 +14626,631 @@
         "x-permission": "visit.read",
         "x-allowed-roles": [
           "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/fhir": {
+      "get": {
+        "tags": [
+          "FHIR"
+        ],
+        "summary": "Doctor and admin: the FHIR bundles of a signed visit version with the validator verdict (the bundle itself is for the doctor only)",
+        "operationId": "getSessionsIdFhir",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "currentVersion": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "versions": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "version": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "bundles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "op_consult",
+                                  "prescription"
+                                ]
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "valid",
+                                  "invalid",
+                                  "not_validated"
+                                ]
+                              },
+                              "errorCount": {
+                                "type": "number"
+                              },
+                              "warningCount": {
+                                "type": "number"
+                              },
+                              "infoCount": {
+                                "type": "number"
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "severity": {
+                                      "type": "string",
+                                      "enum": [
+                                        "fatal",
+                                        "error",
+                                        "warning",
+                                        "information"
+                                      ]
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "severity",
+                                    "path",
+                                    "message"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "validatorVersion": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "igVersion": {
+                                "type": "string"
+                              },
+                              "notValidatedReason": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "validatedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "bundle": {
+                                "nullable": true,
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "exportable": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "version",
+                              "status",
+                              "errorCount",
+                              "warningCount",
+                              "infoCount",
+                              "issues",
+                              "validatorVersion",
+                              "igVersion",
+                              "notValidatedReason",
+                              "validatedAt",
+                              "createdAt",
+                              "bundle",
+                              "exportable"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "currentVersion",
+                        "versions",
+                        "version",
+                        "bundles"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fhir.read",
+        "x-allowed-roles": [
+          "doctor",
+          "admin"
+        ]
+      },
+      "post": {
+        "tags": [
+          "FHIR"
+        ],
+        "summary": "Doctor: build and validate the FHIR bundles of the current signed version (existing verdicts are kept; revalidate only repeats a bundle that was not validated)",
+        "operationId": "postSessionsIdFhir",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "revalidate": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "currentVersion": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "versions": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "version": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "bundles": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "op_consult",
+                                  "prescription"
+                                ]
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "valid",
+                                  "invalid",
+                                  "not_validated"
+                                ]
+                              },
+                              "errorCount": {
+                                "type": "number"
+                              },
+                              "warningCount": {
+                                "type": "number"
+                              },
+                              "infoCount": {
+                                "type": "number"
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "severity": {
+                                      "type": "string",
+                                      "enum": [
+                                        "fatal",
+                                        "error",
+                                        "warning",
+                                        "information"
+                                      ]
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "severity",
+                                    "path",
+                                    "message"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "validatorVersion": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "igVersion": {
+                                "type": "string"
+                              },
+                              "notValidatedReason": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "validatedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "bundle": {
+                                "nullable": true,
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "exportable": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "version",
+                              "status",
+                              "errorCount",
+                              "warningCount",
+                              "infoCount",
+                              "issues",
+                              "validatorVersion",
+                              "igVersion",
+                              "notValidatedReason",
+                              "validatedAt",
+                              "createdAt",
+                              "bundle",
+                              "exportable"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "currentVersion",
+                        "versions",
+                        "version",
+                        "bundles"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fhir.generate",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FHIR_GENERATED"
+        ]
+      }
+    },
+    "/sessions/{id}/fhir/export": {
+      "post": {
+        "tags": [
+          "FHIR"
+        ],
+        "summary": "Doctor: take one bundle as a file. Refused (409) unless the validator called it valid: an invalid or not-validated bundle cannot be exported",
+        "operationId": "postSessionsIdFhirExport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "op_consult",
+                      "prescription"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "filename": {
+                          "type": "string"
+                        },
+                        "bundle": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "filename",
+                        "bundle"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "fhir.export",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "FHIR_EXPORTED"
         ]
       }
     }

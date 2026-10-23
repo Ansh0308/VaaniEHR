@@ -57,6 +57,8 @@ export const AUDIT_ACTIONS = [
   'VISIT_SIGN_REFUSED',
   'VISIT_AMENDED',
   'VISIT_AMEND_REFUSED',
+  'FHIR_GENERATED',
+  'FHIR_EXPORTED',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

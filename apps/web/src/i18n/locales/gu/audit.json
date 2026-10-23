@@ -99,6 +99,8 @@
     "VISIT_SIGNED": "મુલાકાત પર સહી કરી",
     "VISIT_SIGN_REFUSED": "સહી નકારાઈ",
     "VISIT_AMENDED": "સહી થયેલી મુલાકાતમાં સુધારો કર્યો",
-    "VISIT_AMEND_REFUSED": "સુધારો નકારાયો"
+    "VISIT_AMEND_REFUSED": "સુધારો નકારાયો",
+    "FHIR_GENERATED": "FHIR બંડલ બનાવ્યું અને ચકાસ્યું",
+    "FHIR_EXPORTED": "FHIR બંડલ નિકાસ કર્યું"
   }
 }

@@ -12,6 +12,7 @@ import { createNoticeStore } from './consent/notices.js';
 import { loadConceptCatalog } from './concepts/catalog.js';
 import { loadCatalog } from './pathways/catalog.js';
 import type { Services } from './services.js';
+import { createFhirValidator } from './fhir/validator.js';
 import { PgVisitRepository } from './visits/pgRepository.js';
 import { NotConfiguredSafetyChecks } from './visits/safety.js';
 
@@ -23,6 +24,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
   const concepts = loadConceptCatalog(config);
   const visits = new PgVisitRepository();
   const safety = new NotConfiguredSafetyChecks();
+  const fhirValidator = createFhirValidator(config.fhir.validatorUrl);
 
   if (config.authProvider === 'dev') {
     // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
@@ -42,6 +44,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       concepts,
       visits,
       safety,
+      fhirValidator,
     };
   }
   // Phase 12 stub: every call throws NOT_IMPLEMENTED. Password login does not exist in this mode.
@@ -59,5 +62,6 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     concepts,
     visits,
     safety,
+    fhirValidator,
   };
 }

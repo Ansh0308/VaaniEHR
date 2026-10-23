@@ -99,6 +99,8 @@
     "VISIT_SIGNED": "Visit signed",
     "VISIT_SIGN_REFUSED": "Sign-off refused",
     "VISIT_AMENDED": "Signed visit amended",
-    "VISIT_AMEND_REFUSED": "Amendment refused"
+    "VISIT_AMEND_REFUSED": "Amendment refused",
+    "FHIR_GENERATED": "FHIR bundle built and validated",
+    "FHIR_EXPORTED": "FHIR bundle exported"
   }
 }
