@@ -112,6 +112,15 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 | `nginxinc/nginx-unprivileged:1.30.5-alpine3.24@sha256:56b8272e43a0525f67aed68d1e0794a712d10e3e45a563e118e9a77c817e6f86` | apps/web/Dockerfile | nginx: BSD-2-Clause; Alpine base layers carry mixed licences (mostly MIT/BSD/GPL-family for system tools) - UNVERIFIED in detail |
 | `python:3.11.17-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89` | apps/asr-py/Dockerfile | CPython: PSF License; Debian base layers carry mixed licences - UNVERIFIED in detail |
 
+### FHIR validation tooling (Phase 9A, ADR-D40; downloaded by `scripts/fhir-fetch.mjs` into the git-ignored `data/fhir/`, not shipped, not an npm or PyPI dependency)
+
+| Artefact | Version and pin | Licence | Used for |
+|---|---|---|---|
+| ABDM FHIR Implementation Guide package `ndhm.in` | 6.5.0, SHA-256 `41fa99955adbd1983a235d7c7136b30f423ce34ff541d86b354d95b7704527d4` (https://nrces.in/ndhm/fhir/r4/package.tgz) | CC0-1.0 (its `package.json`) | the profiles the bundles are validated against |
+| HL7 FHIR validator `validator_cli.jar` | 7.0.3, SHA-256 `57aa43fb40cec5de41def81c927725fd85908eeb71509b7f9313e04d9b8ec79b` (hapifhir/org.hl7.fhir.core) | Apache-2.0 | validating bundles (Java 11+) |
+| HL7 packages it downloads on first run | `hl7.fhir.r4.core#4.0.1`, `hl7.terminology` and `hl7.fhir.uv.extensions` packages (the IG lists terminology.r4 6.0.2 and extensions.r4 5.1.0; the validator picked newer patch versions at run time) and its own helper packages, cached in `data/fhir/home/.fhir` | HL7 licences (CC0 / Creative Commons per package) - UNVERIFIED in detail | profile and terminology resolution |
+| `eclipse-temurin:17-jre@sha256:e04fa72be13b257a59fdec6dc14af78c8f80f035d3c1ed4e03e45552a231d4c8` | Temurin 17.0.20.1 | GPL-2.0 with Classpath Exception (OpenJDK); Ubuntu base layers carry mixed licences - UNVERIFIED in detail | runs the validator when the machine has no Java 11+ |
+
 ## 4. Installed agent skills (tooling only; not shipped)
 
 Source: `skills-lock.json`. Licence read from the installed skill files in `.agents/skills/` (git-ignored). UNVERIFIED means no licence was found locally; check the source repository.

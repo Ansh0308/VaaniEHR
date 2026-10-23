@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 8 done (Run 1 ADR-D38, Run 2 ADR-D39): prescription tab, server-side sign-off with named blockers, password re-entry, signed snapshot with hash, SafetyChecks placeholder with its not-configured and error states, immutability in the app and the database, amendments and history, the sign page with the AI-vs-final diff, the visit record page, previous visits, failure-mode messages, DEMO_SCRIPT.md. Still open: Phase 7 (suggestions, safety engine), Phase 9 (FHIR, ABHA), the real pathways and a clinician reviewer (OCI-019), OCI-016/020/021. Next: the owner says go.
+> **Resume status (one line, updated after every step):** Phase 9A done (ADR-D40): FHIR R4 document bundles (OPConsultRecord, PrescriptionRecord) built from a signed visit for the ABDM IG 6.5.0, validated with the HL7 validator 7.0.3 (golden bundles: 0 errors; broken ones caught), stored with the verdict, export only when valid, FHIR tab on the visit record, CI job fhir-validate. Gaps in docs/FHIR_GAPS.md. Still open: Phase 9B (ABHA, needs the ABDM sandbox), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019), SNOMED licence. Next: the owner says go.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
@@ -83,6 +83,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 - **Exit criteria:** end-to-end demo with the mock engine and toy pathway: consent -> record -> facts -> question -> select condition -> prescription -> sign; signing blocked by unresolved red alerts or unconfirmed facts; signed record cannot be edited except by logged amendment; keyboard-only run-through works.
 
 ## Phase 9 - FHIR builder, validator and ABHA sandbox (M6) (prompts 9.1, 9.2)
+- **Status (2026-10-23):** **9A done** (ADR-D40, docs/FHIR_MAPPING.md, docs/FHIR_GAPS.md): builder, validator script and server, golden and broken bundles, storage, routes, FHIR tab, CI job. **9B pending:** ABHA service and UI (needs the ABDM sandbox application).
 - **Goal:** every signed visit becomes a validated NRCeS-profile FHIR bundle; ABHA verification works against the sandbox.
 - **PRD references:** F8, F9, FR-F8-01...05, FR-F9-01...03, section 8.3, M-11, M-15.
 - **Deliverables:** FHIR builder, local copy of NRCeS IG package, validator in CI with golden examples, bundle storage with validation output, FHIR tab in the visit page, ABHA service (sandbox) with encryption helpers, ABHA UI, sandbox mock for offline development.

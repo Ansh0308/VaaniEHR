@@ -8,7 +8,9 @@ Things only the owner can arrange (people, approvals, licences, accounts). The a
 | --- | --- | --- | --- |
 | Clinician reviewer (a doctor who signs off clinical content) | Phase 3 (`reviewed_on` on medicine rows); hard block for Phase 6 | not started | - |
 | Ethics / faculty approval (acted consultations, audio recording, benchmark) | Phase 4 | not started | - |
-| SNOMED CT licence (MLDS, India national member) | Phase 9 (codes stay empty until then) | not started | - |
+| SNOMED CT licence (MLDS, India national member) | Phase 9 (codes stay empty until then). Phase 9A builds valid bundles WITHOUT it (text-only concepts, docs/FHIR_GAPS.md gap 4); the licence is needed for coded symptoms, conditions and medicines | not started | - |
+| FHIR validator and ABDM IG fetched locally (Phase 9A): `node scripts/fhir-fetch.mjs`, then `npm run fhir:check` (needs Docker, or Java 11+) | Phase 9A | done on the dev machine 2026-10-23 (about 300 MB of HL7 packages on first run). To see "Valid" in the app instead of "Not validated": run `npm run fhir:server` and put `FHIR_VALIDATOR_URL=http://localhost:8090` in `apps/api-node/.env` | 2026-10-23 |
+| HPR id and ABHA numbers (what the FHIR profiles ask for, docs/FHIR_GAPS.md gaps 1 and 2) | Phase 9B / 12 | not started: needs the ABDM sandbox application and the clinic's registry ids | - |
 | ABDM sandbox access | Phase 9 | not started | - |
 | Sarvam API key | Phase 4 | done (in apps/asr-py/.env) | 2026-10-17 |
 | LLM account + spend cap (provider is PRD-D4, still open) | Phase 5 | not started | - |
