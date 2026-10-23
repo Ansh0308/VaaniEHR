@@ -1,0 +1,400 @@
+{
+  "resourceType": "Bundle",
+  "id": "b5ab5e90-1701-549e-a085-9c686587f64c",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2026-10-22T11:40:00+05:30",
+    "profile": [
+      "https://nrces.in/ndhm/fhir/r4/StructureDefinition/DocumentBundle"
+    ]
+  },
+  "identifier": {
+    "system": "https://vaaniehr.invalid/fhir/id/bundle",
+    "value": "c4350ae4-fbe4-52ac-be48-806d2ac69ca4"
+  },
+  "type": "document",
+  "timestamp": "2026-10-22T11:40:00+05:30",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:08b8b81c-5980-55f4-9c25-6443d63d2d4e",
+      "resource": {
+        "resourceType": "Composition",
+        "id": "08b8b81c-5980-55f4-9c25-6443d63d2d4e",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/OPConsultRecord"
+          ],
+          "tag": [
+            {
+              "system": "https://vaaniehr.invalid/fhir/CodeSystem/record-flags",
+              "code": "safety-checks-not-run",
+              "display": "Safety checks were not run"
+            }
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Consultation record</p><p>Safety checks were not run when this version was signed (the doctor acknowledged this).</p><p>Amendment: version 2 replaces version 1.</p></div>"
+        },
+        "identifier": {
+          "system": "https://vaaniehr.invalid/fhir/id/composition",
+          "value": "417eea48-fd5a-55cb-9568-198fed1f3f29"
+        },
+        "status": "final",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371530004",
+              "display": "Clinical consultation report"
+            }
+          ],
+          "text": "Clinical consultation report"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "encounter": {
+          "reference": "urn:uuid:e8e40300-5ce4-5f97-a313-59f1e957424d"
+        },
+        "date": "2026-10-22T11:40:00+05:30",
+        "author": [
+          {
+            "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+          }
+        ],
+        "attester": [
+          {
+            "mode": "legal",
+            "time": "2026-10-22T11:40:00+05:30",
+            "party": {
+              "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+            }
+          }
+        ],
+        "title": "Consultation Report",
+        "relatesTo": [
+          {
+            "code": "replaces",
+            "targetIdentifier": {
+              "system": "https://vaaniehr.invalid/fhir/id/composition",
+              "value": "bcd2ff28-ace3-5839-ac47-a8a970d64d71"
+            }
+          }
+        ],
+        "section": [
+          {
+            "title": "Chief complaints",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "422843007",
+                  "display": "Chief complaint section"
+                }
+              ],
+              "text": "Chief complaint section"
+            },
+            "entry": [
+              {
+                "reference": "urn:uuid:11cbe86a-5347-5e06-9886-d8157fc2ff57"
+              }
+            ]
+          },
+          {
+            "title": "Medical history",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "371529009",
+                  "display": "History and physical report"
+                }
+              ],
+              "text": "History and physical report"
+            },
+            "entry": [
+              {
+                "reference": "urn:uuid:513c5553-ae2b-5366-a69f-7de1779c7d44"
+              },
+              {
+                "reference": "urn:uuid:567ea677-df11-5db0-9d4c-548053f8de49"
+              }
+            ]
+          },
+          {
+            "title": "Medications",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "721912009",
+                  "display": "Medication summary document"
+                }
+              ],
+              "text": "Medication summary document"
+            },
+            "entry": [
+              {
+                "reference": "urn:uuid:b545da34-b3f1-5752-8023-3299c3eebb42"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "6de85fef-d5d8-5e03-829a-3a21f1212304",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Practitioner"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Practitioner Dr Fake Doctor</p></div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "text": "VaaniEHR user id (not an HPR id or a licence number)"
+            },
+            "system": "https://vaaniehr.invalid/fhir/id/practitioner",
+            "value": "00000000-0000-4000-8000-0000000000d1"
+          }
+        ],
+        "name": [
+          {
+            "text": "Dr Fake Doctor"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "7f931cb4-7035-5f11-bd3c-92a49d4d6d0b",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Patient Fake Patient One</p></div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR",
+                  "display": "Medical record number"
+                }
+              ]
+            },
+            "system": "https://vaaniehr.invalid/fhir/id/patient",
+            "value": "00000000-0000-4000-8000-0000000000a1"
+          }
+        ],
+        "name": [
+          {
+            "text": "Fake Patient One"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+910000000001",
+            "use": "home"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1990-05-17"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:e8e40300-5ce4-5f97-a313-59f1e957424d",
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "e8e40300-5ce4-5f97-a313-59f1e957424d",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Encounter"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ambulatory consultation</p></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://vaaniehr.invalid/fhir/id/encounter",
+            "value": "00000000-0000-4000-8000-0000000005e2"
+          }
+        ],
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "AMB",
+          "display": "ambulatory"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "period": {
+          "start": "2026-10-22T09:30:00+05:30",
+          "end": "2026-10-22T09:55:00+05:30"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:11cbe86a-5347-5e06-9886-d8157fc2ff57",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "11cbe86a-5347-5e06-9886-d8157fc2ff57",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Condition"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Symptom: toy symptom one</p></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ]
+        },
+        "code": {
+          "text": "toy symptom one"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "recordedDate": "2026-10-22T11:40:00+05:30"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:513c5553-ae2b-5366-a69f-7de1779c7d44",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "513c5553-ae2b-5366-a69f-7de1779c7d44",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Condition"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Past condition: toy past condition</p></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ]
+        },
+        "code": {
+          "text": "toy past condition"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "recordedDate": "2026-10-22T11:40:00+05:30"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:567ea677-df11-5db0-9d4c-548053f8de49",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "567ea677-df11-5db0-9d4c-548053f8de49",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Condition"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Working condition chosen by the doctor</p></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "provisional",
+              "display": "Provisional"
+            }
+          ]
+        },
+        "code": {
+          "text": "Working condition (pathway toy_condition_a, version 1)"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "recordedDate": "2026-10-22T11:40:00+05:30"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b545da34-b3f1-5752-8023-3299c3eebb42",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "b545da34-b3f1-5752-8023-3299c3eebb42",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/MedicationRequest"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Prescribed: Drug-A (FAKE) 500 mg Tablet; 1 tablet, BD, 3 days</p></div>"
+        },
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "text": "Drug-A (FAKE) 500 mg Tablet"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "authoredOn": "2026-10-22T11:40:00+05:30",
+        "requester": {
+          "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+        },
+        "note": [
+          {
+            "text": "Medicine master source: fake list, page 26."
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "text": "1 tablet, BD, 3 days"
+          }
+        ]
+      }
+    }
+  ]
+}

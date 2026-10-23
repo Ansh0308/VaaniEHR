@@ -1,0 +1,219 @@
+{
+  "resourceType": "Bundle",
+  "id": "214d17ad-8f0d-52cc-927c-d4fe1d23a32e",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2026-10-22T11:40:00+05:30",
+    "profile": [
+      "https://nrces.in/ndhm/fhir/r4/StructureDefinition/DocumentBundle"
+    ]
+  },
+  "identifier": {
+    "system": "https://vaaniehr.invalid/fhir/id/bundle",
+    "value": "70d85228-8892-52a4-90bf-1f3dd44a0001"
+  },
+  "type": "document",
+  "timestamp": "2026-10-22T11:40:00+05:30",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:78bf45b1-fcee-5eda-a6fd-ed9f4ffd7cba",
+      "resource": {
+        "resourceType": "Composition",
+        "id": "78bf45b1-fcee-5eda-a6fd-ed9f4ffd7cba",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/PrescriptionRecord"
+          ],
+          "tag": [
+            {
+              "system": "https://vaaniehr.invalid/fhir/CodeSystem/record-flags",
+              "code": "safety-checks-not-run",
+              "display": "Safety checks were not run"
+            }
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Prescription record</p><p>Safety checks were not run when this version was signed (the doctor acknowledged this).</p><p>Amendment: version 2 replaces version 1.</p></div>"
+        },
+        "identifier": {
+          "system": "https://vaaniehr.invalid/fhir/id/composition",
+          "value": "b198a61e-fe54-5aa3-a3ec-d819fe4db115"
+        },
+        "status": "final",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "440545006",
+              "display": "Prescription record"
+            }
+          ],
+          "text": "Prescription record"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "date": "2026-10-22T11:40:00+05:30",
+        "author": [
+          {
+            "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+          }
+        ],
+        "attester": [
+          {
+            "mode": "legal",
+            "time": "2026-10-22T11:40:00+05:30",
+            "party": {
+              "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+            }
+          }
+        ],
+        "title": "Prescription",
+        "relatesTo": [
+          {
+            "code": "replaces",
+            "targetIdentifier": {
+              "system": "https://vaaniehr.invalid/fhir/id/composition",
+              "value": "d5506712-f954-57cf-bf41-e990ad57c44f"
+            }
+          }
+        ],
+        "section": [
+          {
+            "title": "Prescription",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "440545006",
+                  "display": "Prescription record"
+                }
+              ],
+              "text": "Prescription record"
+            },
+            "entry": [
+              {
+                "reference": "urn:uuid:b545da34-b3f1-5752-8023-3299c3eebb42",
+                "type": "MedicationRequest"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "6de85fef-d5d8-5e03-829a-3a21f1212304",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Practitioner"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Practitioner Dr Fake Doctor</p></div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "text": "VaaniEHR user id (not an HPR id or a licence number)"
+            },
+            "system": "https://vaaniehr.invalid/fhir/id/practitioner",
+            "value": "00000000-0000-4000-8000-0000000000d1"
+          }
+        ],
+        "name": [
+          {
+            "text": "Dr Fake Doctor"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "7f931cb4-7035-5f11-bd3c-92a49d4d6d0b",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Patient Fake Patient One</p></div>"
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR",
+                  "display": "Medical record number"
+                }
+              ]
+            },
+            "system": "https://vaaniehr.invalid/fhir/id/patient",
+            "value": "00000000-0000-4000-8000-0000000000a1"
+          }
+        ],
+        "name": [
+          {
+            "text": "Fake Patient One"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+910000000001",
+            "use": "home"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1990-05-17"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b545da34-b3f1-5752-8023-3299c3eebb42",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "b545da34-b3f1-5752-8023-3299c3eebb42",
+        "meta": {
+          "profile": [
+            "https://nrces.in/ndhm/fhir/r4/StructureDefinition/MedicationRequest"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Prescribed: Drug-A (FAKE) 500 mg Tablet; 1 tablet, BD, 3 days</p></div>"
+        },
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "text": "Drug-A (FAKE) 500 mg Tablet"
+        },
+        "subject": {
+          "reference": "urn:uuid:7f931cb4-7035-5f11-bd3c-92a49d4d6d0b"
+        },
+        "authoredOn": "2026-10-22T11:40:00+05:30",
+        "requester": {
+          "reference": "urn:uuid:6de85fef-d5d8-5e03-829a-3a21f1212304"
+        },
+        "note": [
+          {
+            "text": "Medicine master source: fake list, page 26."
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "text": "1 tablet, BD, 3 days"
+          }
+        ]
+      }
+    }
+  ]
+}

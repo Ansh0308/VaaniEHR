@@ -18,7 +18,8 @@
     "test:db": "vitest run --project db",
     "coverage": "vitest run --coverage",
     "openapi": "tsx src/openapi/generate.ts",
-    "openapi:check": "tsx src/openapi/generate.ts --check"
+    "openapi:check": "tsx src/openapi/generate.ts --check",
+    "fhir:golden": "tsx test/fhir/writeGolden.ts"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",
