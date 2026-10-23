@@ -8,5 +8,6 @@ const dir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'fixtures'
 mkdirSync(dir, { recursive: true });
 for (const f of [...goldenBundles(), ...brokenBundles()]) {
   writeFileSync(join(dir, `${f.name}.json`), `${JSON.stringify(f.bundle, null, 2)}\n`, 'utf8');
-  console.log(`wrote ${f.name}.json`);
+  process.stdout.write(`wrote ${f.name}.json
+`);
 }

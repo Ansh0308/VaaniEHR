@@ -13,3 +13,4 @@ skills-lock.json
 apps/asr-py
 *.md
 apps/api-node/openapi.json
+apps/api-node/fixtures/fhir/golden/
