@@ -144,10 +144,23 @@ describe('Visit record page', () => {
     expect(screen.getByText('Version 1 (signed)', { selector: 'span' })).toBeTruthy();
   });
 
-  it('has an empty FHIR tab that says when it arrives', async () => {
-    await openRecord();
+  it('has a FHIR tab that loads the bundles built from the signed version', async () => {
+    await openRecord(
+      recordRoutes({
+        'GET /sessions/:id/fhir': () => ({
+          data: { currentVersion: 2, versions: [], version: 2, bundles: [] },
+        }),
+        'POST /sessions/:id/fhir': () => ({
+          status: 201,
+          data: { currentVersion: 2, versions: [], version: 2, bundles: [] },
+        }),
+      }),
+    );
     fireEvent.click(await screen.findByRole('tab', { name: 'FHIR' }));
-    expect(await screen.findByText('Coming in Phase 9. No FHIR bundle exists yet.')).toBeTruthy();
+    expect(
+      await screen.findByText('No FHIR bundle has been built for this version yet.'),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Build and validate' })).toBeTruthy();
   });
 
   it('says plainly when the visit is not signed yet', async () => {

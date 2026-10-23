@@ -868,7 +868,16 @@ try {
       'the visit record has no input fields',
     );
     await page.getByRole('tab', { name: 'FHIR' }).click();
-    await page.getByText('Coming in Phase 9. No FHIR bundle exists yet.').waitFor();
+    // the FHIR tab builds the bundles once; the validator is not part of this stack, so the honest verdict is "not validated"
+    const fhirCard = page.getByRole('region', { name: 'Consultation record (OPConsultRecord)' });
+    await fhirCard.getByText('Not validated').waitFor();
+    check(
+      (await fhirCard.getByText(/FHIR validator is not configured/).count()) === 1 &&
+        (await fhirCard.getByRole('button', { name: 'Download JSON' }).isDisabled()) &&
+        (await fhirCard.getByLabel(/^FHIR JSON/).innerText()).includes('"resourceType": "Bundle"'),
+      'the FHIR tab shows the bundle, says it was not validated and keeps the download off',
+    );
+    await scan(page, 'en visit record (FHIR tab, not validated)');
     await page.getByRole('tab', { name: 'Record' }).click();
     await scan(page, 'en visit record (version 1)');
 

@@ -566,6 +566,143 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'visit record FHIR tab (valid and invalid bundle)',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}/record`,
+        language,
+        routes: {
+          'GET /sessions/:id/visit': () => ({
+            data: {
+              version: 2,
+              kind: 'amendment',
+              contentHash: 'b'.repeat(64),
+              safetyConfigured: false,
+              safetyNotRunAcknowledged: true,
+              reason: 'r',
+              signedBy: IDS.user('doctor'),
+              signedAt: '2026-10-22T11:30:00.000Z',
+              content: {
+                schema: 1,
+                sessionId: IDS.session,
+                signedAt: '2026-10-22T11:30:00.000Z',
+                facts: [],
+                workingCondition: null,
+                medicines: [],
+                consent: { audio: true, aiProcessing: true },
+                aiContentIncluded: false,
+                amendedFrom: 1,
+              },
+            },
+          }),
+          'GET /sessions/:id/visit/versions': () => ({ data: { versions: [] } }),
+          'GET /sessions/:id/fhir': () => ({
+            data: {
+              currentVersion: 2,
+              versions: [2],
+              version: 2,
+              bundles: [
+                {
+                  kind: 'op_consult',
+                  version: 2,
+                  status: 'valid',
+                  errorCount: 0,
+                  warningCount: 1,
+                  infoCount: 0,
+                  issues: [
+                    {
+                      severity: 'warning',
+                      path: 'Bundle.entry[1].resource.identifier[0]',
+                      message: 'No code provided',
+                    },
+                  ],
+                  validatorVersion: '7.0.3',
+                  igVersion: '6.5.0',
+                  notValidatedReason: null,
+                  validatedAt: '2026-10-23T10:00:00.000Z',
+                  createdAt: '2026-10-23T10:00:00.000Z',
+                  bundle: { resourceType: 'Bundle', type: 'document', entry: [] },
+                  exportable: true,
+                },
+                {
+                  kind: 'prescription',
+                  version: 2,
+                  status: 'invalid',
+                  errorCount: 1,
+                  warningCount: 1,
+                  infoCount: 0,
+                  issues: [
+                    {
+                      severity: 'warning',
+                      path: 'Bundle.entry[1].resource.identifier[0]',
+                      message: 'No code provided',
+                    },
+                    { severity: 'error', path: 'Bundle.entry[0]', message: 'a validator error' },
+                  ],
+                  validatorVersion: '7.0.3',
+                  igVersion: '6.5.0',
+                  notValidatedReason: null,
+                  validatedAt: '2026-10-23T10:00:00.000Z',
+                  createdAt: '2026-10-23T10:00:00.000Z',
+                  bundle: { resourceType: 'Bundle' },
+                  exportable: false,
+                },
+              ],
+            },
+          }),
+        },
+      });
+      fireEvent.click(await screen.findByRole('tab', { name: 'FHIR' }));
+      await screen.findByRole('region', { name: /Prescription record|પ્રિસ્ક્રિપ્શન રેકોર્ડ/ });
+    },
+  },
+  {
+    name: 'FHIR status (admin)',
+    show: async (language) => {
+      await renderApp({
+        role: 'admin',
+        path: `/admin/fhir/${IDS.session}`,
+        language,
+        routes: {
+          'GET /sessions/:id/fhir': () => ({
+            data: {
+              currentVersion: 2,
+              versions: [2],
+              version: 2,
+              bundles: [
+                {
+                  kind: 'op_consult',
+                  version: 2,
+                  status: 'invalid',
+                  errorCount: 1,
+                  warningCount: 1,
+                  infoCount: 0,
+                  issues: [
+                    {
+                      severity: 'warning',
+                      path: 'Bundle.entry[1].resource.identifier[0]',
+                      message: 'No code provided',
+                    },
+                    { severity: 'error', path: 'Bundle.entry[0]', message: 'a validator error' },
+                  ],
+                  validatorVersion: '7.0.3',
+                  igVersion: '6.5.0',
+                  notValidatedReason: null,
+                  validatedAt: '2026-10-23T10:00:00.000Z',
+                  createdAt: '2026-10-23T10:00:00.000Z',
+                  bundle: null,
+                  exportable: false,
+                },
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findByRole('region', { name: /Consultation record|પરામર્શ રેકોર્ડ/ });
+    },
+  },
+  {
     name: 'medicine master',
     show: async (language) => {
       await renderApp({

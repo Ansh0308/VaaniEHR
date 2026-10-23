@@ -13,6 +13,7 @@ import { PatientsPage } from './pages/PatientsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PathwaysPage } from './pages/PathwaysPage';
 import { AmendPage } from './pages/AmendPage';
+import { FhirStatusPage } from './pages/FhirStatusPage';
 import { SignPage } from './pages/SignPage';
 import { VisitRecordPage } from './pages/VisitRecordPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -67,6 +68,8 @@ export default function App() {
             <Route path="admin/medicines" element={<MedicinesPage />} />
           </Route>
           <Route element={<RequireRole roles={['doctor', 'admin']} />}>
+            <Route path="admin/fhir" element={<FhirStatusPage />} />
+            <Route path="admin/fhir/:sessionId" element={<FhirStatusPage />} />
             <Route path="admin/pathways" element={<PathwaysPage />} />
             <Route path="admin/templates" element={<TemplatesPage />} />
             <Route path="admin/templates/new" element={<TemplateBuilderPage key="new" />} />

@@ -9,6 +9,7 @@ import type { SignedVisit, VersionSummary } from '../api/prescription';
 import { useDateText } from '../api/useDateText';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
+import { FhirTab } from '../components/clinical/FhirTab';
 import { Badge } from '../components/ui/Badge';
 import { Banner } from '../components/ui/Banner';
 import { Skeleton } from '../components/ui/Feedback';
@@ -301,9 +302,11 @@ export function VisitRecordPage() {
                 id: 'fhir',
                 label: t('consult:record.tabFhir'),
                 panel: (
-                  <p className="rounded-md border border-dashed border-control p-4 text-base text-body">
-                    {t('consult:record.fhirSoon')}
-                  </p>
+                  <FhirTab
+                    sessionId={sessionId}
+                    version={v.version === currentVersion ? null : v.version}
+                    canBuild={v.version === currentVersion}
+                  />
                 ),
               },
             ]}

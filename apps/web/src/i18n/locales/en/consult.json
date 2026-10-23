@@ -357,7 +357,7 @@
     "tabsLabel": "Record sections",
     "tabRecord": "Record",
     "tabFhir": "FHIR",
-    "fhirSoon": "Coming in Phase 9. No FHIR bundle exists yet.",
+    "fhirSoon": "FHIR bundles are built from the signed version.",
     "facts": "Facts",
     "condition": "Working condition",
     "medicines": "Medicines",
@@ -411,5 +411,46 @@
   "asrDown": {
     "title": "Speech recognition is not available right now",
     "body": "You can carry on without it: add facts by hand in the Facts section and use the Prescription tab as usual. Nothing already saved is lost. Try recording again later."
+  },
+  "fhir": {
+    "intro": "FHIR R4 document bundles built from this signed version for the ABDM profiles (IG 6.5.0) and checked by the HL7 validator. A bundle that is invalid or was not validated cannot be downloaded; the signed visit itself is not affected.",
+    "building": "Building and validating the bundles. This can take a minute.",
+    "none": "No FHIR bundle has been built for this version yet.",
+    "build": "Build and validate",
+    "kind": {
+      "op_consult": "Consultation record (OPConsultRecord)",
+      "prescription": "Prescription record (PrescriptionRecord)"
+    },
+    "status": {
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "not_validated": "Not validated"
+    },
+    "counts": "{{errors}} errors, {{warnings}} warnings",
+    "validatedBy": "ABDM IG {{ig}}; validator {{validator}}",
+    "noValidator": "none",
+    "invalidBody": "The validator found errors in this bundle. The visit stays signed; the bundle cannot be downloaded until the cause is fixed.",
+    "notValidatedTitle": "This bundle was not checked",
+    "notValidatedBody": "It is shown, but it cannot be downloaded until the validator has said it is valid.",
+    "issues": "Validator messages",
+    "noIssues": "The validator reported no errors or warnings.",
+    "severity": {
+      "error": "Error",
+      "warning": "Warning",
+      "information": "Information"
+    },
+    "jsonLabel": "FHIR JSON: {{kind}}",
+    "download": "Download JSON",
+    "downloadOff": "Download is off: the validator has not called this bundle valid.",
+    "revalidate": "Validate again",
+    "exportFailed": "The file could not be downloaded.",
+    "buildFailed": "The bundles could not be built or checked. Nothing was retried."
+  },
+  "fhirStatus": {
+    "title": "FHIR validation status",
+    "intro": "The validator's verdict and its messages for a signed visit, found by its session code. No clinical content is shown here.",
+    "code": "Session code",
+    "codeInvalid": "A session code looks like 5eed0000-0000-4000-8000-0000000000a1.",
+    "show": "Show status"
   }
 }
