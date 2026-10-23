@@ -22,11 +22,11 @@ const major = (() => {
   const m = /version "(\d+)(?:\.(\d+))?/.exec(`${java.stderr}${java.stdout}`);
   return m ? (m[1] === '1' ? Number(m[2]) : Number(m[1])) : 0;
 })();
-const tail = (base) => [
+const tail = (base, validatorPort) => [
   '-jar',
   `${base}/validator/validator_cli-7.0.3.jar`,
   '-server',
-  port,
+  String(validatorPort),
   '-version',
   '4.0.1',
   '-ig',
@@ -34,12 +34,27 @@ const tail = (base) => [
 ];
 let child;
 if (major >= 11) {
-  child = spawn('java', [`-Duser.home=${join(FHIR_DIR, 'home')}`, ...tail(FHIR_DIR)], {
+  child = spawn('java', [`-Duser.home=${join(FHIR_DIR, 'home')}`, ...tail(FHIR_DIR, port)], {
     stdio: 'inherit',
   });
 } else {
+  // The validator listens on 127.0.0.1 INSIDE the container, which Docker cannot publish. So it runs on port+1 and a tiny
+  // Perl forwarder (scripts/fhir-forward.pl) in the same container listens on 0.0.0.0:<port> and passes connections on.
   const home = join(FHIR_DIR, 'home');
   mkdirSync(home, { recursive: true });
+  const inner = Number(port) + 1;
+  const command = [
+    'perl',
+    '/scripts/fhir-forward.pl',
+    port,
+    String(inner),
+    '&',
+    'exec',
+    'java',
+    ...tail('/fhir', inner),
+  ]
+    .map((x) => (x === '&' ? x : `'${x}'`))
+    .join(' ');
   child = spawn(
     'docker',
     [
@@ -51,9 +66,12 @@ if (major >= 11) {
       `${FHIR_DIR}:/fhir`,
       '-v',
       `${home}:/root`,
+      '-v',
+      `${join(FHIR_DIR, '..', '..', 'scripts')}:/scripts:ro`,
       VALIDATOR_IMAGE,
-      'java',
-      ...tail('/fhir'),
+      'sh',
+      '-c',
+      command,
     ],
     { stdio: 'inherit', env: { ...process.env, MSYS_NO_PATHCONV: '1' } },
   );
