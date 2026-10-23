@@ -63,7 +63,11 @@
     "prd:diff": "node scripts/py.mjs exec ../../scripts/prd_id_diff.py ../../DOCUMENTS/archive/VaaniEHR_PRD_v1.0.md ../../DOCUMENTS/VaaniEHR_PRD.md",
     "stack:up": "node scripts/stack.mjs up",
     "stack:down": "node scripts/stack.mjs down",
-    "stack:status": "node scripts/stack.mjs status"
+    "stack:status": "node scripts/stack.mjs status",
+    "fhir:fetch": "node scripts/fhir-fetch.mjs",
+    "fhir:validate": "node scripts/fhir-validate.mjs",
+    "fhir:check": "node scripts/fhir-golden-check.mjs",
+    "fhir:server": "node scripts/fhir-validator-server.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
