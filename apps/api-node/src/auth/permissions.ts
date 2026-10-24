@@ -50,6 +50,10 @@ export const PERMISSIONS = {
   'whatsapp.read': ['doctor'],
   'whatsapp.write': ['doctor'],
 
+  // ABHA verification, MOCK or SANDBOX only (F9, Phase 9B, ADR-D42): front-desk staff attest and run it, doctors and admins too
+  'abha.read': ['doctor', 'staff', 'admin'],
+  'abha.verify': ['doctor', 'staff', 'admin'],
+
   // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
   'pathway.read': ['doctor', 'admin'],
 

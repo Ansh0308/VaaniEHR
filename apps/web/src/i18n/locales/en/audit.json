@@ -110,6 +110,9 @@
     "WHATSAPP_STATUS_UPDATED": "WhatsApp delivery status updated",
     "WHATSAPP_STOP_RECEIVED": "Patient replied STOP on WhatsApp",
     "WHATSAPP_WEBHOOK_RECEIVED": "WhatsApp webhook received",
-    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp webhook rejected (bad signature)"
+    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp webhook rejected (bad signature)",
+    "ABHA_VERIFY_STARTED": "ABHA verification started (MOCK or SANDBOX)",
+    "ABHA_VERIFY_SUCCEEDED": "ABHA verification succeeded (MOCK or SANDBOX)",
+    "ABHA_VERIFY_FAILED": "ABHA verification failed (MOCK or SANDBOX)"
   }
 }

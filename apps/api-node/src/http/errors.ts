@@ -17,6 +17,13 @@ export type ErrorCode =
   | 'SAFETY_ERROR'
   | 'INVALID_PASSWORD'
   | 'VISIT_SIGNED'
+  | 'ABHA_IDENTITY_REJECTED'
+  | 'ABHA_OTP_WRONG'
+  | 'ABHA_OTP_EXPIRED'
+  | 'ABHA_RATE_LIMITED'
+  | 'ABHA_UNAVAILABLE'
+  | 'ABHA_NOT_FOUND'
+  | 'ABHA_FAILED'
   | 'INTERNAL';
 
 export class AppError extends Error {

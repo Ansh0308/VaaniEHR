@@ -2909,7 +2909,10 @@
                 "WHATSAPP_STATUS_UPDATED",
                 "WHATSAPP_STOP_RECEIVED",
                 "WHATSAPP_WEBHOOK_RECEIVED",
-                "WHATSAPP_WEBHOOK_REJECTED"
+                "WHATSAPP_WEBHOOK_REJECTED",
+                "ABHA_VERIFY_STARTED",
+                "ABHA_VERIFY_SUCCEEDED",
+                "ABHA_VERIFY_FAILED"
               ]
             }
           },
@@ -3142,7 +3145,10 @@
                       "WHATSAPP_STATUS_UPDATED",
                       "WHATSAPP_STOP_RECEIVED",
                       "WHATSAPP_WEBHOOK_RECEIVED",
-                      "WHATSAPP_WEBHOOK_REJECTED"
+                      "WHATSAPP_WEBHOOK_REJECTED",
+                      "ABHA_VERIFY_STARTED",
+                      "ABHA_VERIFY_SUCCEEDED",
+                      "ABHA_VERIFY_FAILED"
                     ]
                   },
                   "from": {
@@ -16182,6 +16188,496 @@
           "WHATSAPP_STATUS_UPDATED",
           "WHATSAPP_STOP_RECEIVED",
           "CONSENT_WITHDRAWN"
+        ]
+      }
+    },
+    "/abha/status/{patientId}": {
+      "get": {
+        "tags": [
+          "ABHA"
+        ],
+        "summary": "ABHA verification status of a patient of this clinic (MOCK or SANDBOX), with the mode and a notice",
+        "operationId": "getAbhaStatusPatientId",
+        "parameters": [
+          {
+            "name": "patientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "verified": {
+                          "type": "boolean"
+                        },
+                        "abhaAddress": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "verifiedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "verifiedMode": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "sandbox"
+                          ]
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "sandbox"
+                          ]
+                        },
+                        "notice": {
+                          "type": "string"
+                        },
+                        "mockIdentities": {
+                          "nullable": true,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "number": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string"
+                              },
+                              "outcome": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "number",
+                              "address",
+                              "outcome"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "patientId",
+                        "verified",
+                        "abhaAddress",
+                        "verifiedAt",
+                        "verifiedMode",
+                        "mode",
+                        "notice",
+                        "mockIdentities"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "abha.read",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin"
+        ]
+      }
+    },
+    "/abha/verify/start": {
+      "post": {
+        "tags": [
+          "ABHA"
+        ],
+        "summary": "Start an ABHA OTP check with a TEST identity (mock or sandbox). Refuses anything that is not an allowed test identity. Returns our own reference; the identity is never stored",
+        "operationId": "postAbhaVerifyStart",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "identity": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 100
+                  },
+                  "attested": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "patientId",
+                  "identity",
+                  "attested"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "txnId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "sandbox"
+                          ]
+                        },
+                        "notice": {
+                          "type": "string"
+                        },
+                        "expiresInSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "txnId",
+                        "mode",
+                        "notice",
+                        "expiresInSeconds"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "abha.verify",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ABHA_VERIFY_STARTED",
+          "ABHA_VERIFY_FAILED"
+        ]
+      }
+    },
+    "/abha/verify/otp": {
+      "post": {
+        "tags": [
+          "ABHA"
+        ],
+        "summary": "Check the OTP for a started ABHA verification (mock or sandbox). Three wrong tries lock it. Stores the ABHA address, the time, the mode and a salted hash of the number; never the number or the OTP",
+        "operationId": "postAbhaVerifyOtp",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "txnId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "txnId",
+                  "otp"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "verified": {
+                          "type": "boolean"
+                        },
+                        "abhaAddress": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "verifiedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "verifiedMode": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "sandbox"
+                          ]
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "sandbox"
+                          ]
+                        },
+                        "notice": {
+                          "type": "string"
+                        },
+                        "mockIdentities": {
+                          "nullable": true,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "number": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string"
+                              },
+                              "outcome": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "number",
+                              "address",
+                              "outcome"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "patientId",
+                        "verified",
+                        "abhaAddress",
+                        "verifiedAt",
+                        "verifiedMode",
+                        "mode",
+                        "notice",
+                        "mockIdentities"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "abha.verify",
+        "x-allowed-roles": [
+          "doctor",
+          "staff",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ABHA_VERIFY_SUCCEEDED",
+          "ABHA_VERIFY_FAILED"
         ]
       }
     }

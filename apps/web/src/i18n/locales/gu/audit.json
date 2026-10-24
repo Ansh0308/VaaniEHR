@@ -110,6 +110,9 @@
     "WHATSAPP_STATUS_UPDATED": "WhatsApp ડિલિવરી સ્થિતિ અપડેટ થઈ",
     "WHATSAPP_STOP_RECEIVED": "દર્દીએ WhatsApp પર STOP જવાબ આપ્યો",
     "WHATSAPP_WEBHOOK_RECEIVED": "WhatsApp વેબહૂક મળ્યો",
-    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp વેબહૂક નકાર્યો (ખોટી સહી)"
+    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp વેબહૂક નકાર્યો (ખોટી સહી)",
+    "ABHA_VERIFY_STARTED": "ABHA ચકાસણી શરૂ થઈ (MOCK અથવા SANDBOX)",
+    "ABHA_VERIFY_SUCCEEDED": "ABHA ચકાસણી સફળ થઈ (MOCK અથવા SANDBOX)",
+    "ABHA_VERIFY_FAILED": "ABHA ચકાસણી નિષ્ફળ (MOCK અથવા SANDBOX)"
   }
 }

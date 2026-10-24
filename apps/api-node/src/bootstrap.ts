@@ -12,6 +12,7 @@ import { createNoticeStore } from './consent/notices.js';
 import { loadConceptCatalog } from './concepts/catalog.js';
 import { loadCatalog } from './pathways/catalog.js';
 import type { Services } from './services.js';
+import { createAbha } from './abdm/provider.js';
 import { createWhatsApp } from './whatsapp/provider.js';
 import { createFhirValidator } from './fhir/validator.js';
 import { PgVisitRepository } from './visits/pgRepository.js';
@@ -34,6 +35,15 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     WHATSAPP_API_VERSION: config.whatsapp.apiVersion,
     WHATSAPP_TEST_ALLOWLIST: config.whatsapp.testAllowlist,
   });
+  const abha = createAbha({
+    ABDM_PROVIDER: config.abdm.provider,
+    ABDM_ENABLE_SANDBOX: config.abdm.enableSandbox,
+    ABDM_CLIENT_ID: config.abdm.clientId,
+    ABDM_CLIENT_SECRET: config.abdm.clientSecret,
+    ABDM_SESSION_URL: config.abdm.sessionUrl,
+    ABDM_CERT_URL: config.abdm.certUrl,
+    ABDM_ABHA_URL: config.abdm.abhaUrl,
+  });
 
   if (config.authProvider === 'dev') {
     // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
@@ -55,6 +65,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       safety,
       fhirValidator,
       whatsapp,
+      abha,
     };
   }
   // Phase 12 stub: every call throws NOT_IMPLEMENTED. Password login does not exist in this mode.
@@ -74,5 +85,6 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     safety,
     fhirValidator,
     whatsapp,
+    abha,
   };
 }

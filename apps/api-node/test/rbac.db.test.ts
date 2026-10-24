@@ -250,6 +250,15 @@ const fixture = (route: RouteDef): Call => {
       path: `/sessions/${consentedSessionId}/whatsapp/send`,
       body: {},
     },
+    'GET /abha/status/:patientId': { path: `/abha/status/${patientId}` },
+    'POST /abha/verify/start': {
+      path: '/abha/verify/start',
+      body: { patientId, identity: 'mock.success@mock.invalid', attested: true },
+    },
+    'POST /abha/verify/otp': {
+      path: '/abha/verify/otp',
+      body: { txnId: '00000000-0000-4000-8000-000000000000', otp: '000000' },
+    },
     'GET /webhooks/whatsapp': { path: '/webhooks/whatsapp' },
     'POST /webhooks/whatsapp': { path: '/webhooks/whatsapp', body: { entry: [] } },
     'GET /pathways': { path: '/pathways' },

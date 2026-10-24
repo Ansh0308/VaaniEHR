@@ -10,6 +10,7 @@ import type { NoticeStore } from './consent/notices.js';
 import type { VisitRepository } from './visits/repository.js';
 import type { SafetyChecks } from './visits/safety.js';
 import type { FhirValidator } from './fhir/validator.js';
+import type { AbhaProvider } from './abdm/provider.js';
 import type { WhatsAppProvider } from './whatsapp/provider.js';
 
 export interface Services {
@@ -40,4 +41,6 @@ export interface Services {
   fhirValidator: FhirValidator;
   /** sends the approved Gujarati summary: the mock by default, real WhatsApp only when every flag is set (ADR-D41) */
   whatsapp: WhatsAppProvider;
+  /** ABHA verification: the MOCK by default; the ABDM sandbox only when every flag and credential is set (ADR-D42) */
+  abha: AbhaProvider;
 }

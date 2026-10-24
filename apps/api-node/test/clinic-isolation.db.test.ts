@@ -453,6 +453,34 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         (await call('post', `/sessions/${y.sessionId}/whatsapp/send`, x.tokens[role], {})).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  // ---- ABHA verification (ADR-D42): another clinic's patient is 'not found'; an unknown or foreign transaction too
+  'GET /abha/status/:patientId': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect((await call('get', `/abha/status/${y.patientId}`, x.tokens[role])).status).toBe(404);
+  },
+  'POST /abha/verify/start': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', '/abha/verify/start', x.tokens[role], {
+            patientId: y.patientId,
+            identity: 'mock.success@mock.invalid',
+            attested: true,
+          })
+        ).status,
+      ).toBe(404);
+  },
+  'POST /abha/verify/otp': async (x) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', '/abha/verify/otp', x.tokens[role], {
+            txnId: randomUUID(),
+            otp: '123456',
+          })
+        ).status,
+      ).toBe(404);
+  },
   // ---- pathway questions and candidates (ADR-D34): the same, both ways
   'GET /sessions/:id/questions/next': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)

@@ -53,6 +53,10 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/whatsapp/summary': ['doctor'],
   'POST /sessions/:id/whatsapp/approve': ['doctor'],
   'POST /sessions/:id/whatsapp/send': ['doctor'],
+  // ABHA verification, MOCK or SANDBOX (F9, ADR-D42): staff attest and run it; doctors and admins too (errata: PRD says staff, admin)
+  'GET /abha/status/:patientId': ['doctor', 'staff', 'admin'],
+  'POST /abha/verify/start': ['doctor', 'staff', 'admin'],
+  'POST /abha/verify/otp': ['doctor', 'staff', 'admin'],
   'GET /webhooks/whatsapp': 'public',
   'POST /webhooks/whatsapp': 'public',
   'PUT /sessions/:id/transcript/segments': ['doctor'],

@@ -45,6 +45,14 @@ const rawSchema = z.object({
   WHATSAPP_TEST_ALLOWLIST: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  ABDM_PROVIDER: z.enum(['mock', 'sandbox']).default('mock'),
+  ABDM_ENABLE_SANDBOX: z.string().optional(),
+  ABDM_CLIENT_ID: z.string().optional(),
+  ABDM_CLIENT_SECRET: z.string().optional(),
+  ABDM_SESSION_URL: z.string().optional(),
+  ABDM_CERT_URL: z.string().optional(),
+  ABDM_ABHA_URL: z.string().optional(),
+  ABDM_SANDBOX_TEST_IDENTITIES: z.string().optional(),
   PATHWAYS_DIR: z.string().min(1).optional(),
   PATHWAYS_ALLOW_TEST: z.enum(['true', 'false']).default('false'),
   PATHWAYS_SLOT_MAP: z.string().min(1).optional(),
@@ -83,6 +91,17 @@ export interface Config {
     /** the Meta app secret: signs webhook payloads (X-Hub-Signature-256) */
     appSecret: string | undefined;
     verifyToken: string | undefined;
+  };
+  abdm: {
+    provider: 'mock' | 'sandbox';
+    enableSandbox: string | undefined;
+    clientId: string | undefined;
+    clientSecret: string | undefined;
+    sessionUrl: string | undefined;
+    certUrl: string | undefined;
+    abhaUrl: string | undefined;
+    /** comma-separated sandbox TEST ABHA numbers/addresses the owner got from ABDM; the only ones sandbox mode accepts */
+    sandboxTestIdentities: string | undefined;
   };
   pathways: {
     /** folder with *.pathway.json (default: data/pathways at the repository root) */
@@ -184,6 +203,16 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       testAllowlist: v.WHATSAPP_TEST_ALLOWLIST || undefined,
       appSecret: v.WHATSAPP_APP_SECRET || undefined,
       verifyToken: v.WHATSAPP_VERIFY_TOKEN || undefined,
+    },
+    abdm: {
+      provider: v.ABDM_PROVIDER,
+      enableSandbox: v.ABDM_ENABLE_SANDBOX,
+      clientId: v.ABDM_CLIENT_ID || undefined,
+      clientSecret: v.ABDM_CLIENT_SECRET || undefined,
+      sessionUrl: v.ABDM_SESSION_URL || undefined,
+      certUrl: v.ABDM_CERT_URL || undefined,
+      abhaUrl: v.ABDM_ABHA_URL || undefined,
+      sandboxTestIdentities: v.ABDM_SANDBOX_TEST_IDENTITIES || undefined,
     },
     pathways: {
       dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../seed/pathways'),
