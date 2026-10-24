@@ -12,6 +12,7 @@ import { createNoticeStore } from './consent/notices.js';
 import { loadConceptCatalog } from './concepts/catalog.js';
 import { loadCatalog } from './pathways/catalog.js';
 import type { Services } from './services.js';
+import { createWhatsApp } from './whatsapp/provider.js';
 import { createFhirValidator } from './fhir/validator.js';
 import { PgVisitRepository } from './visits/pgRepository.js';
 import { NotConfiguredSafetyChecks } from './visits/safety.js';
@@ -25,6 +26,14 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
   const visits = new PgVisitRepository();
   const safety = new NotConfiguredSafetyChecks();
   const fhirValidator = createFhirValidator(config.fhir.validatorUrl);
+  const whatsapp = createWhatsApp({
+    WHATSAPP_PROVIDER: config.whatsapp.provider,
+    WHATSAPP_ENABLE_REAL: config.whatsapp.enableReal,
+    WHATSAPP_ACCESS_TOKEN: config.whatsapp.accessToken,
+    WHATSAPP_PHONE_NUMBER_ID: config.whatsapp.phoneNumberId,
+    WHATSAPP_API_VERSION: config.whatsapp.apiVersion,
+    WHATSAPP_TEST_ALLOWLIST: config.whatsapp.testAllowlist,
+  });
 
   if (config.authProvider === 'dev') {
     // loadConfig guarantees devAuthSecret is present and strong when AUTH_PROVIDER=dev.
@@ -45,6 +54,7 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
       visits,
       safety,
       fhirValidator,
+      whatsapp,
     };
   }
   // Phase 12 stub: every call throws NOT_IMPLEMENTED. Password login does not exist in this mode.
@@ -63,5 +73,6 @@ export async function createServices(config: Config, pool: pg.Pool): Promise<Ser
     visits,
     safety,
     fhirValidator,
+    whatsapp,
   };
 }

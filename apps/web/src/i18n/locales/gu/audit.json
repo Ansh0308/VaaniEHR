@@ -101,6 +101,15 @@
     "VISIT_AMENDED": "સહી થયેલી મુલાકાતમાં સુધારો કર્યો",
     "VISIT_AMEND_REFUSED": "સુધારો નકારાયો",
     "FHIR_GENERATED": "FHIR બંડલ બનાવ્યું અને ચકાસ્યું",
-    "FHIR_EXPORTED": "FHIR બંડલ નિકાસ કર્યું"
+    "FHIR_EXPORTED": "FHIR બંડલ નિકાસ કર્યું",
+    "WHATSAPP_SUMMARY_DRAFTED": "WhatsApp સારાંશનો ડ્રાફ્ટ બન્યો",
+    "WHATSAPP_SUMMARY_REFUSED": "WhatsApp સારાંશ નકાર્યો (સહી થયેલી મુલાકાત સાથે મેળ ન ખાધો)",
+    "WHATSAPP_SUMMARY_APPROVED": "WhatsApp સારાંશ મંજૂર થયો",
+    "WHATSAPP_SENT": "WhatsApp સારાંશ મોકલાયો",
+    "WHATSAPP_SEND_FAILED": "WhatsApp સારાંશ મોકલી શકાયો નહીં",
+    "WHATSAPP_STATUS_UPDATED": "WhatsApp ડિલિવરી સ્થિતિ અપડેટ થઈ",
+    "WHATSAPP_STOP_RECEIVED": "દર્દીએ WhatsApp પર STOP જવાબ આપ્યો",
+    "WHATSAPP_WEBHOOK_RECEIVED": "WhatsApp વેબહૂક મળ્યો",
+    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp વેબહૂક નકાર્યો (ખોટી સહી)"
   }
 }

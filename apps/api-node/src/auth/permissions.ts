@@ -46,6 +46,10 @@ export const PERMISSIONS = {
   'fhir.generate': ['doctor'],
   'fhir.export': ['doctor'],
 
+  // WhatsApp summary of a signed visit (F10, Phase 10): the session's own doctor only
+  'whatsapp.read': ['doctor'],
+  'whatsapp.write': ['doctor'],
+
   // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
   'pathway.read': ['doctor', 'admin'],
 

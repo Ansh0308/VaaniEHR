@@ -101,6 +101,15 @@
     "VISIT_AMENDED": "Signed visit amended",
     "VISIT_AMEND_REFUSED": "Amendment refused",
     "FHIR_GENERATED": "FHIR bundle built and validated",
-    "FHIR_EXPORTED": "FHIR bundle exported"
+    "FHIR_EXPORTED": "FHIR bundle exported",
+    "WHATSAPP_SUMMARY_DRAFTED": "WhatsApp summary drafted",
+    "WHATSAPP_SUMMARY_REFUSED": "WhatsApp summary refused (did not match the signed visit)",
+    "WHATSAPP_SUMMARY_APPROVED": "WhatsApp summary approved",
+    "WHATSAPP_SENT": "WhatsApp summary sent",
+    "WHATSAPP_SEND_FAILED": "WhatsApp summary failed to send",
+    "WHATSAPP_STATUS_UPDATED": "WhatsApp delivery status updated",
+    "WHATSAPP_STOP_RECEIVED": "Patient replied STOP on WhatsApp",
+    "WHATSAPP_WEBHOOK_RECEIVED": "WhatsApp webhook received",
+    "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp webhook rejected (bad signature)"
   }
 }

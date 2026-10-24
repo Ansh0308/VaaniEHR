@@ -13,6 +13,7 @@ import { factRoutes } from '../facts/routes.js';
 import { pathwayRoutes } from '../pathways/routes.js';
 import { pathwayViewerRoutes } from '../pathways/viewerRoutes.js';
 import { medicineRoutes } from '../medicines/routes.js';
+import { whatsappRoutes } from '../whatsapp/routes.js';
 import { fhirRoutes } from '../fhir/routes.js';
 import { prescriptionRoutes } from '../prescription/routes.js';
 import { patientRoutes } from '../patients/routes.js';
@@ -43,5 +44,6 @@ export function allRoutes(config: Config): RouteDef[] {
     ...prescriptionRoutes(),
     ...visitRoutes(),
     ...fhirRoutes(),
+    ...whatsappRoutes(),
   ];
 }

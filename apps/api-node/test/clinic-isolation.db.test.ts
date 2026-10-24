@@ -422,6 +422,37 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         ).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  // ---- WhatsApp summary (ADR-D41): another clinic's session is 'not found' for the doctor; other roles are refused first
+  'GET /sessions/:id/whatsapp': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect((await call('get', `/sessions/${y.sessionId}/whatsapp`, x.tokens[role])).status).toBe(
+        role === 'doctor' ? 404 : 403,
+      );
+  },
+  'POST /sessions/:id/whatsapp/summary': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (
+          await call('post', `/sessions/${y.sessionId}/whatsapp/summary`, x.tokens[role], {
+            warningSigns: 'x',
+            followUp: 'x',
+          })
+        ).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/whatsapp/approve': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('post', `/sessions/${y.sessionId}/whatsapp/approve`, x.tokens[role], {}))
+          .status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
+  'POST /sessions/:id/whatsapp/send': async (x, y) => {
+    for (const role of ['admin', 'staff', 'doctor'] as const)
+      expect(
+        (await call('post', `/sessions/${y.sessionId}/whatsapp/send`, x.tokens[role], {})).status,
+      ).toBe(role === 'doctor' ? 404 : 403);
+  },
   // ---- pathway questions and candidates (ADR-D34): the same, both ways
   'GET /sessions/:id/questions/next': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)
@@ -693,6 +724,9 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
 
 /** Routes whose data is the caller's own user or global static text, so there is no other clinic's data to reach. */
 const NOT_CLINIC_SCOPED = [
+  // the Meta webhook: public, authenticated by its signature; it finds the clinic through the message log (ADR-D41)
+  'GET /webhooks/whatsapp',
+  'POST /webhooks/whatsapp',
   // the pathway viewer shows configuration files, the same for every clinic (ADR-D35)
   'GET /pathways',
   'GET /pathways/:id',

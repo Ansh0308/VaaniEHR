@@ -2900,7 +2900,16 @@
                 "VISIT_AMENDED",
                 "VISIT_AMEND_REFUSED",
                 "FHIR_GENERATED",
-                "FHIR_EXPORTED"
+                "FHIR_EXPORTED",
+                "WHATSAPP_SUMMARY_DRAFTED",
+                "WHATSAPP_SUMMARY_REFUSED",
+                "WHATSAPP_SUMMARY_APPROVED",
+                "WHATSAPP_SENT",
+                "WHATSAPP_SEND_FAILED",
+                "WHATSAPP_STATUS_UPDATED",
+                "WHATSAPP_STOP_RECEIVED",
+                "WHATSAPP_WEBHOOK_RECEIVED",
+                "WHATSAPP_WEBHOOK_REJECTED"
               ]
             }
           },
@@ -3124,7 +3133,16 @@
                       "VISIT_AMENDED",
                       "VISIT_AMEND_REFUSED",
                       "FHIR_GENERATED",
-                      "FHIR_EXPORTED"
+                      "FHIR_EXPORTED",
+                      "WHATSAPP_SUMMARY_DRAFTED",
+                      "WHATSAPP_SUMMARY_REFUSED",
+                      "WHATSAPP_SUMMARY_APPROVED",
+                      "WHATSAPP_SENT",
+                      "WHATSAPP_SEND_FAILED",
+                      "WHATSAPP_STATUS_UPDATED",
+                      "WHATSAPP_STOP_RECEIVED",
+                      "WHATSAPP_WEBHOOK_RECEIVED",
+                      "WHATSAPP_WEBHOOK_REJECTED"
                     ]
                   },
                   "from": {
@@ -15251,6 +15269,919 @@
         ],
         "x-audit-actions": [
           "FHIR_EXPORTED"
+        ]
+      }
+    },
+    "/sessions/{id}/whatsapp": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Doctor: the WhatsApp summary of the session's signed visit, the consent state and the send log",
+        "operationId": "getSessionsIdWhatsapp",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "signedVersion": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "safetyNotRun": {
+                          "type": "boolean"
+                        },
+                        "whatsappConsent": {
+                          "type": "boolean"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "meta"
+                          ]
+                        },
+                        "summary": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "needs_review",
+                                "approved"
+                              ]
+                            },
+                            "warningSigns": {
+                              "type": "string"
+                            },
+                            "followUp": {
+                              "type": "string"
+                            },
+                            "textGu": {
+                              "type": "string"
+                            },
+                            "textEn": {
+                              "type": "string"
+                            },
+                            "phraseTableVersion": {
+                              "type": "string"
+                            },
+                            "templateName": {
+                              "type": "string"
+                            },
+                            "needsGujaratiReview": {
+                              "type": "boolean"
+                            },
+                            "textHash": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "approvedAt": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "stale": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "version",
+                            "status",
+                            "warningSigns",
+                            "followUp",
+                            "textGu",
+                            "textEn",
+                            "phraseTableVersion",
+                            "templateName",
+                            "needsGujaratiReview",
+                            "textHash",
+                            "approvedAt",
+                            "stale"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "messages": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "summaryVersion": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "sent",
+                                  "failed",
+                                  "delivered",
+                                  "read"
+                                ]
+                              },
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "mock",
+                                  "meta"
+                                ]
+                              },
+                              "template": {
+                                "type": "string"
+                              },
+                              "recipientLast4": {
+                                "type": "string"
+                              },
+                              "errorMessage": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "sentAt": {
+                                "type": "string"
+                              },
+                              "deliveredAt": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summaryVersion",
+                              "status",
+                              "provider",
+                              "template",
+                              "recipientLast4",
+                              "errorMessage",
+                              "sentAt",
+                              "deliveredAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "signedVersion",
+                        "safetyNotRun",
+                        "whatsappConsent",
+                        "provider",
+                        "summary",
+                        "messages"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "whatsapp.read",
+        "x-allowed-roles": [
+          "doctor"
+        ]
+      }
+    },
+    "/sessions/{id}/whatsapp/summary": {
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Doctor: make or change the draft Gujarati summary from the signed record. Only the warning signs and the follow-up are typed by the doctor; everything else is copied from the snapshot. Refused if it does not match the snapshot",
+        "operationId": "postSessionsIdWhatsappSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "warningSigns": {
+                    "type": "string",
+                    "maxLength": 1200
+                  },
+                  "followUp": {
+                    "type": "string",
+                    "maxLength": 1200
+                  }
+                },
+                "required": [
+                  "warningSigns",
+                  "followUp"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "needs_review",
+                            "approved"
+                          ]
+                        },
+                        "warningSigns": {
+                          "type": "string"
+                        },
+                        "followUp": {
+                          "type": "string"
+                        },
+                        "textGu": {
+                          "type": "string"
+                        },
+                        "textEn": {
+                          "type": "string"
+                        },
+                        "phraseTableVersion": {
+                          "type": "string"
+                        },
+                        "templateName": {
+                          "type": "string"
+                        },
+                        "needsGujaratiReview": {
+                          "type": "boolean"
+                        },
+                        "textHash": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "approvedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "stale": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "version",
+                        "status",
+                        "warningSigns",
+                        "followUp",
+                        "textGu",
+                        "textEn",
+                        "phraseTableVersion",
+                        "templateName",
+                        "needsGujaratiReview",
+                        "textHash",
+                        "approvedAt",
+                        "stale"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "whatsapp.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "WHATSAPP_SUMMARY_DRAFTED",
+          "WHATSAPP_SUMMARY_REFUSED"
+        ]
+      }
+    },
+    "/sessions/{id}/whatsapp/approve": {
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Doctor: approve the draft summary. The exact Gujarati text and its variables are stored with a SHA-256 and can no longer change",
+        "operationId": "postSessionsIdWhatsappApprove",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "needs_review",
+                            "approved"
+                          ]
+                        },
+                        "warningSigns": {
+                          "type": "string"
+                        },
+                        "followUp": {
+                          "type": "string"
+                        },
+                        "textGu": {
+                          "type": "string"
+                        },
+                        "textEn": {
+                          "type": "string"
+                        },
+                        "phraseTableVersion": {
+                          "type": "string"
+                        },
+                        "templateName": {
+                          "type": "string"
+                        },
+                        "needsGujaratiReview": {
+                          "type": "boolean"
+                        },
+                        "textHash": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "approvedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "stale": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "version",
+                        "status",
+                        "warningSigns",
+                        "followUp",
+                        "textGu",
+                        "textEn",
+                        "phraseTableVersion",
+                        "templateName",
+                        "needsGujaratiReview",
+                        "textHash",
+                        "approvedAt",
+                        "stale"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "whatsapp.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "WHATSAPP_SUMMARY_APPROVED",
+          "WHATSAPP_SUMMARY_REFUSED"
+        ]
+      }
+    },
+    "/sessions/{id}/whatsapp/send": {
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Doctor: send the approved summary to the patient. Needs a signed visit, WhatsApp consent now, an approved summary whose hash still matches, and (for real WhatsApp) a number on the test allowlist. A failure is recorded and not retried",
+        "operationId": "postSessionsIdWhatsappSend",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "summaryVersion": {
+                          "type": "number"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "sent",
+                            "failed",
+                            "delivered",
+                            "read"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "mock",
+                            "meta"
+                          ]
+                        },
+                        "template": {
+                          "type": "string"
+                        },
+                        "recipientLast4": {
+                          "type": "string"
+                        },
+                        "errorMessage": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "sentAt": {
+                          "type": "string"
+                        },
+                        "deliveredAt": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "summaryVersion",
+                        "status",
+                        "provider",
+                        "template",
+                        "recipientLast4",
+                        "errorMessage",
+                        "sentAt",
+                        "deliveredAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "whatsapp.write",
+        "x-allowed-roles": [
+          "doctor"
+        ],
+        "x-audit-actions": [
+          "WHATSAPP_SENT",
+          "WHATSAPP_SEND_FAILED"
+        ]
+      }
+    },
+    "/webhooks/whatsapp": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Meta: webhook verification. Answers the hub.challenge only if the verify token matches",
+        "operationId": "getWebhooksWhatsapp",
+        "parameters": [
+          {
+            "name": "hub.mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hub.verify_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hub.challenge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plain text (the webhook verification answers the bare challenge value).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Meta: delivery statuses and replies. The X-Hub-Signature-256 header must match the raw body (HMAC-SHA256, app secret). A STOP reply withdraws the patient WhatsApp consent",
+        "operationId": "postWebhooksWhatsapp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "received": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "statusUpdates": {
+                          "type": "number"
+                        },
+                        "stopReplies": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "received",
+                        "statusUpdates",
+                        "stopReplies"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-audit-actions": [
+          "WHATSAPP_WEBHOOK_RECEIVED",
+          "WHATSAPP_WEBHOOK_REJECTED",
+          "WHATSAPP_STATUS_UPDATED",
+          "WHATSAPP_STOP_RECEIVED",
+          "CONSENT_WITHDRAWN"
         ]
       }
     }

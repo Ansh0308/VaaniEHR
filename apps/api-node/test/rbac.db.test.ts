@@ -78,7 +78,7 @@ beforeAll(async () => {
       [patientId, h.seed.users.find((u) => u.email === SEED_EMAIL.doctor1)?.id, clinicId],
     )
   ).rows[0]?.id as string;
-  for (const scope of ['audio', 'ai_processing']) {
+  for (const scope of ['audio', 'ai_processing', 'whatsapp']) {
     await h.db.owner.query(
       `INSERT INTO consent_event (session_id, clinic_id, scope, granted, notice_version, notice_language, source,
          recorded_by_user_id, recorded_by_role, ts)
@@ -237,6 +237,21 @@ const fixture = (route: RouteDef): Call => {
       path: `/sessions/${consentedSessionId}/fhir/export`,
       body: { kind: 'op_consult' },
     },
+    'GET /sessions/:id/whatsapp': { path: `/sessions/${consentedSessionId}/whatsapp` },
+    'POST /sessions/:id/whatsapp/summary': {
+      path: `/sessions/${consentedSessionId}/whatsapp/summary`,
+      body: { warningSigns: 'rbac fixture', followUp: 'rbac fixture' },
+    },
+    'POST /sessions/:id/whatsapp/approve': {
+      path: `/sessions/${consentedSessionId}/whatsapp/approve`,
+      body: {},
+    },
+    'POST /sessions/:id/whatsapp/send': {
+      path: `/sessions/${consentedSessionId}/whatsapp/send`,
+      body: {},
+    },
+    'GET /webhooks/whatsapp': { path: '/webhooks/whatsapp' },
+    'POST /webhooks/whatsapp': { path: '/webhooks/whatsapp', body: { entry: [] } },
     'GET /pathways': { path: '/pathways' },
     'GET /pathways/:id': { path: '/pathways/toy_condition_a' },
     'GET /sessions/:id/questions/next': { path: `/sessions/${consentedSessionId}/questions/next` },

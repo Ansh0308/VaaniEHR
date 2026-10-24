@@ -36,6 +36,15 @@ const rawSchema = z.object({
   CONCEPTS_FILE: z.string().min(1).optional(),
   /** the HL7 FHIR validator running in server mode (scripts/fhir-validator-server.mjs); unset = bundles are stored as not validated */
   FHIR_VALIDATOR_URL: z.string().url().optional(),
+  // WhatsApp (Phase 10): the mock is the default; real sending needs every flag and a test allowlist (ADR-D41)
+  WHATSAPP_PROVIDER: z.enum(['mock', 'meta']).default('mock'),
+  WHATSAPP_ENABLE_REAL: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_API_VERSION: z.string().optional(),
+  WHATSAPP_TEST_ALLOWLIST: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   PATHWAYS_DIR: z.string().min(1).optional(),
   PATHWAYS_ALLOW_TEST: z.enum(['true', 'false']).default('false'),
   PATHWAYS_SLOT_MAP: z.string().min(1).optional(),
@@ -64,6 +73,17 @@ export interface Config {
   bcryptCost: number;
   concepts: { file: string };
   fhir: { validatorUrl: string | undefined };
+  whatsapp: {
+    provider: 'mock' | 'meta';
+    enableReal: string | undefined;
+    accessToken: string | undefined;
+    phoneNumberId: string | undefined;
+    apiVersion: string | undefined;
+    testAllowlist: string | undefined;
+    /** the Meta app secret: signs webhook payloads (X-Hub-Signature-256) */
+    appSecret: string | undefined;
+    verifyToken: string | undefined;
+  };
   pathways: {
     /** folder with *.pathway.json (default: data/pathways at the repository root) */
     dir: string;
@@ -155,6 +175,16 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       file: v.CONCEPTS_FILE ?? resolve(process.cwd(), '../../data/concepts/concepts.json'),
     },
     fhir: { validatorUrl: v.FHIR_VALIDATOR_URL },
+    whatsapp: {
+      provider: v.WHATSAPP_PROVIDER,
+      enableReal: v.WHATSAPP_ENABLE_REAL,
+      accessToken: v.WHATSAPP_ACCESS_TOKEN || undefined,
+      phoneNumberId: v.WHATSAPP_PHONE_NUMBER_ID || undefined,
+      apiVersion: v.WHATSAPP_API_VERSION || undefined,
+      testAllowlist: v.WHATSAPP_TEST_ALLOWLIST || undefined,
+      appSecret: v.WHATSAPP_APP_SECRET || undefined,
+      verifyToken: v.WHATSAPP_VERIFY_TOKEN || undefined,
+    },
     pathways: {
       dir: v.PATHWAYS_DIR ?? resolve(process.cwd(), '../../seed/pathways'),
       allowTest: v.PATHWAYS_ALLOW_TEST === 'true',

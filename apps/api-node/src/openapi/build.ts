@@ -61,29 +61,34 @@ export function buildOpenApi(defs: readonly RouteDef[]): JsonObject {
 
     const dataSchema = def.response ? schemaOf(def.response, 'output') : {};
     const successResponse: JsonObject =
-      def.responseType === 'csv'
+      def.responseType === 'text'
         ? {
-            description:
-              'CSV file (RFC 4180). Text cells that could run as spreadsheet formulas are neutralised.',
-            headers: {
-              'Content-Disposition': { schema: { type: 'string' } },
-              'X-Exported-Rows': { schema: { type: 'integer' } },
-              'X-Export-Truncated': { schema: { type: 'boolean' } },
-            },
-            content: { 'text/csv': { schema: { type: 'string' } } },
+            description: 'Plain text (the webhook verification answers the bare challenge value).',
+            content: { 'text/plain': { schema: { type: 'string' } } },
           }
-        : {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['success', 'data'],
-                  properties: { success: { type: 'boolean', enum: [true] }, data: dataSchema },
+        : def.responseType === 'csv'
+          ? {
+              description:
+                'CSV file (RFC 4180). Text cells that could run as spreadsheet formulas are neutralised.',
+              headers: {
+                'Content-Disposition': { schema: { type: 'string' } },
+                'X-Exported-Rows': { schema: { type: 'integer' } },
+                'X-Export-Truncated': { schema: { type: 'boolean' } },
+              },
+              content: { 'text/csv': { schema: { type: 'string' } } },
+            }
+          : {
+              description: 'Success',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['success', 'data'],
+                    properties: { success: { type: 'boolean', enum: [true] }, data: dataSchema },
+                  },
                 },
               },
-            },
-          };
+            };
     const responses: JsonObject = { [String(def.successStatus)]: successResponse };
     if (def.body || def.query || def.params) responses['400'] = errorResponse('Validation error');
     if (def.access.kind !== 'public') responses['401'] = errorResponse('Not authenticated');

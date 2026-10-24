@@ -48,6 +48,13 @@ export const PRD_EXPECTED: Record<
   'GET /sessions/:id/fhir': ['doctor', 'admin'],
   'POST /sessions/:id/fhir': ['doctor'],
   'POST /sessions/:id/fhir/export': ['doctor'],
+  // WhatsApp summary of a signed visit (F10): the session's own doctor; the Meta webhook is public (signature-checked)
+  'GET /sessions/:id/whatsapp': ['doctor'],
+  'POST /sessions/:id/whatsapp/summary': ['doctor'],
+  'POST /sessions/:id/whatsapp/approve': ['doctor'],
+  'POST /sessions/:id/whatsapp/send': ['doctor'],
+  'GET /webhooks/whatsapp': 'public',
+  'POST /webhooks/whatsapp': 'public',
   'PUT /sessions/:id/transcript/segments': ['doctor'],
   'POST /sessions/:id/transcript/confirm': ['doctor'],
   // pathway questions and candidate conditions: the session's own doctor only (ADR-D34)

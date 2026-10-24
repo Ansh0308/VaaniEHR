@@ -199,6 +199,38 @@ export function consentRoutes(): RouteDef[] {
   ];
 }
 
+/**
+ * A patient's STOP reply on WhatsApp (Phase 10): withdraws the WhatsApp consent of EVERY session of this patient in this clinic
+ * that still has it. The event comes from the patient themselves (source 'patient', role 'patient'). Returns the session ids so
+ * the caller can audit each one. Kept in this file because only the consent routes write consent events (static rule).
+ */
+export async function withdrawWhatsAppForPatient(
+  db: import('../db/tx.js').Queryable,
+  patientId: string,
+  clinicId: string,
+): Promise<string[]> {
+  const open = await db.query<{ id: string; notice_version: string; notice_language: 'en' | 'gu' }>(
+    `SELECT s.id, last.notice_version, last.notice_language
+       FROM consultation_session s
+       JOIN LATERAL (SELECT granted, notice_version, notice_language FROM consent_event e
+                      WHERE e.session_id = s.id AND e.scope = 'whatsapp' ORDER BY e.seq DESC LIMIT 1) last ON true
+      WHERE s.clinicos_patient_id = $1 AND s.clinicos_clinic_id = $2 AND last.granted`,
+    [patientId, clinicId],
+  );
+  for (const row of open.rows) {
+    await insertEvent(
+      { db, auth: { sub: patientId, role: 'patient', clinicId } },
+      row.id,
+      'whatsapp',
+      false,
+      row.notice_version,
+      row.notice_language,
+      'patient',
+    );
+  }
+  return open.rows.map((r) => r.id);
+}
+
 async function insertEvent(
   ctx: {
     db: import('../db/tx.js').Queryable;

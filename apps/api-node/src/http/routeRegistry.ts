@@ -86,7 +86,7 @@ interface RouteBase<P, B, Q> {
   response?: ZodType;
   successStatus?: number;
   /** 'json' (default) uses the { success, data } envelope; 'csv' means the handler returns `raw` text/csv. */
-  responseType?: 'json' | 'csv';
+  responseType?: 'json' | 'csv' | 'text';
   /** Middleware that runs before authentication (e.g. the login rate limiter). */
   pre?: RequestHandler[];
   /**
@@ -109,7 +109,7 @@ export interface RouteDef {
   query?: ZodType;
   response?: ZodType;
   successStatus: number;
-  responseType: 'json' | 'csv';
+  responseType: 'json' | 'csv' | 'text';
   pre: RequestHandler[];
   lockedWhenSigned?: boolean;
   handler: (ctx: PublicContext<unknown, unknown, unknown>) => Promise<HandlerResult>;
@@ -270,7 +270,7 @@ export function mountRoutes(router: Router, defs: readonly RouteDef[], services:
           result = await run(services.pool, { n: 0 }, null);
         }
         if (result.raw) {
-          if (def.responseType !== 'csv')
+          if (def.responseType === 'json')
             throw new Error(`${def.path}: raw response on a JSON route`);
           // exports can hold audit data: never cached by browsers or proxies
           res.setHeader('Cache-Control', 'no-store');
