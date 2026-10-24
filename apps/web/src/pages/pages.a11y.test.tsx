@@ -994,6 +994,38 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'abha check',
+    show: async (language) => {
+      await renderApp({
+        role: 'staff',
+        path: `/patients/${IDS.patient}/abha`,
+        language,
+        routes: {
+          'GET /abha/status/:id': () => ({
+            data: {
+              patientId: IDS.patient,
+              verified: false,
+              abhaAddress: null,
+              verifiedAt: null,
+              verifiedMode: null,
+              mode: 'mock',
+              notice: 'MOCK',
+              mockOtp: '123456',
+              mockIdentities: [
+                {
+                  number: '91-0000-0000-0001',
+                  address: 'mock.success@mock.invalid',
+                  outcome: 'success',
+                },
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findByRole('checkbox');
+    },
+  },
+  {
     name: '403 page',
     show: async (language) => {
       await renderApp({ role: 'staff', path: '/doctor', language });

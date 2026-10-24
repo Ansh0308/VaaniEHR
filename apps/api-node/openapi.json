@@ -16265,6 +16265,10 @@
                         "notice": {
                           "type": "string"
                         },
+                        "mockOtp": {
+                          "nullable": true,
+                          "type": "string"
+                        },
                         "mockIdentities": {
                           "nullable": true,
                           "type": "array",
@@ -16298,6 +16302,7 @@
                         "verifiedMode",
                         "mode",
                         "notice",
+                        "mockOtp",
                         "mockIdentities"
                       ],
                       "additionalProperties": false
@@ -16591,6 +16596,10 @@
                         "notice": {
                           "type": "string"
                         },
+                        "mockOtp": {
+                          "nullable": true,
+                          "type": "string"
+                        },
                         "mockIdentities": {
                           "nullable": true,
                           "type": "array",
@@ -16624,6 +16633,7 @@
                         "verifiedMode",
                         "mode",
                         "notice",
+                        "mockOtp",
                         "mockIdentities"
                       ],
                       "additionalProperties": false

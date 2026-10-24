@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ageInYears, formatDate } from '../../api/format';
 import type { Patient } from '../../api/types';
+import { Link } from 'react-router-dom';
+import { AbhaBadge } from './AbhaBadge';
 import { AllergyList } from './AllergyList';
 
 export function PatientCard({
@@ -61,6 +63,15 @@ export function PatientCard({
             </dd>
           </div>
         </dl>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <AbhaBadge patientId={patient.id} />
+          <Link
+            to={`/patients/${patient.id}/abha`}
+            className="inline-flex min-h-11 items-center text-base font-semibold text-ink underline"
+          >
+            {t('patients:abha.open')}
+          </Link>
+        </div>
       </div>
       {children}
     </article>

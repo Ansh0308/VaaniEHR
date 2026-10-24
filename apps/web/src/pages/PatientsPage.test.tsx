@@ -51,8 +51,10 @@ describe('patient lookup', () => {
     type('00000-00001');
     await screen.findByRole('article');
     expect(view.callsTo('POST', '/patients/lookup')[0]?.body).toEqual({ phone: '0000000001' });
+    // (the ABHA status URL holds the patient's UUID, which the fake data builds from similar digits)
     for (const call of view.fetchMock.mock.calls)
-      expect(String(call[0])).not.toContain('0000000001');
+      if (!String(call[0]).includes('/abha/status/'))
+        expect(String(call[0])).not.toContain('0000000001');
   });
 
   it('does not search for fewer than ten digits, and explains on Find', async () => {

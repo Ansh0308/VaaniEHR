@@ -8,9 +8,10 @@ import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useAsrRecording } from '../asr/useAsrRecording';
 import { fromSaved, useTranscriptSave, type SavedTranscript } from '../asr/useTranscriptSave';
 import { errorText } from '../api/errorText';
-import type { ConsentState } from '../api/types';
+import type { ConsentState, Session } from '../api/types';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
+import { AbhaBadge } from '../components/clinical/AbhaBadge';
 import { CandidatesPanel } from '../components/clinical/CandidatesPanel';
 import { FactsPanel, type ExtractBlock } from '../components/clinical/FactsPanel';
 import { PrescriptionTab } from '../components/clinical/PrescriptionTab';
@@ -40,6 +41,11 @@ export function ConsultPage() {
   const { api } = useAuth();
   const consent = useRequest(
     () => api.get<ConsentState>(`/sessions/${sessionId}/consent`),
+    [api, sessionId],
+  );
+  // the patient behind the session, only to show the ABHA status badge; the page works without it
+  const sessionInfo = useRequest(
+    () => api.get<Session>(`/sessions/${sessionId}`),
     [api, sessionId],
   );
   const rec = useAsrRecording(sessionId);
@@ -324,6 +330,11 @@ export function ConsultPage() {
         <h1 className="font-display text-3xl font-semibold text-ink">{t('consult:title')}</h1>
         <p className="mt-1 text-base text-body">{t('consult:intro')}</p>
         {i18n.language === 'gu' ? <NeedsReview /> : null}
+        {sessionInfo.state.status === 'ready' ? (
+          <div className="mt-2">
+            <AbhaBadge patientId={sessionInfo.state.data.patientId} />
+          </div>
+        ) : null}
       </header>
 
       <div id="red-flag-region">

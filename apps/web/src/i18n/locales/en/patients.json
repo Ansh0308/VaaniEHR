@@ -66,5 +66,99 @@
     "hint": "The long code at the end of the consent link, for example 5eed0000-0000-4000-8000-000000000100.",
     "invalid": "That is not a valid session code.",
     "open": "Open consent page"
+  },
+  "abha": {
+    "title": "ABHA check",
+    "intro": "Check an ABHA with a one-time password (OTP). This is a test feature: it only works with test identities, never with real people.",
+    "loading": "Loading the ABHA status",
+    "back": "Back to patients",
+    "open": "Check ABHA",
+    "stepsLabel": "Steps of the ABHA check",
+    "steps": {
+      "enter": "Test ABHA",
+      "otp": "OTP",
+      "result": "Result"
+    },
+    "mode": {
+      "mock": "MOCK",
+      "sandbox": "SANDBOX"
+    },
+    "notice": {
+      "mock": "MOCK: a simulated check with fake identities. Nothing is sent to ABDM and this is not a real ABHA verification.",
+      "sandbox": "SANDBOX: the ABDM test environment, with test identities only. This is not a real person and not a real verification."
+    },
+    "badge": {
+      "verified": "ABHA checked ({{mode}})",
+      "notVerified": "ABHA not checked"
+    },
+    "alreadyTitle": "Already checked ({{mode}})",
+    "alreadyBody": "ABHA address {{address}}, checked {{when}}. You can check again.",
+    "enter": {
+      "title": "Enter a test ABHA",
+      "attest": "The patient has agreed to this ABHA check.",
+      "label": "Test ABHA number or address",
+      "hint": {
+        "mock": "Use one of the fake test identities below. Real ABHA numbers and Aadhaar numbers are refused.",
+        "sandbox": "Use a test identity from the ABDM sandbox. Real ABHA numbers and Aadhaar numbers are refused."
+      },
+      "mockList": "Fake test identities",
+      "gives": "gives: {{outcome}}",
+      "mockOtp": "The fake OTP is {{otp}}.",
+      "send": "Send OTP"
+    },
+    "otp": {
+      "title": "Enter the OTP",
+      "label": "6-digit OTP",
+      "hint": {
+        "mock": "In the mock, the fake OTP is shown in the list on the previous step.",
+        "sandbox": "The OTP is sent by ABDM to the test account."
+      },
+      "check": "Check OTP",
+      "startOver": "Start again"
+    },
+    "result": {
+      "title": "ABHA checked ({{mode}})",
+      "address": "ABHA address: {{address}}",
+      "stored": "Only the ABHA address, the time and a scrambled fingerprint of the number are kept. The number and the OTP are not stored.",
+      "again": "Check another"
+    },
+    "error": {
+      "rejected": {
+        "title": "This test ABHA is not allowed",
+        "body": "Only the listed test identities can be used. Real ABHA numbers and Aadhaar numbers are never accepted."
+      },
+      "wrong": {
+        "title": "The OTP is not correct",
+        "body": "Check the OTP and try again. Tries left: {{count}}."
+      },
+      "expired": {
+        "title": "The OTP has expired",
+        "body": "Start again to get a new OTP."
+      },
+      "limited": {
+        "title": "Too many tries",
+        "body": "Wait a few minutes, then start again."
+      },
+      "down": {
+        "title": "The ABHA service is not answering",
+        "body": "Try again in a few minutes. Nothing was saved."
+      },
+      "unknown": {
+        "title": "No ABHA account found",
+        "body": "Check the test identity and try again."
+      },
+      "failed": {
+        "title": "The ABHA check did not work",
+        "body": "Nothing was saved. Try again, or ask the owner to check the sandbox settings."
+      },
+      "finished": {
+        "title": "This check is already finished",
+        "body": "Start again."
+      },
+      "other": {
+        "title": "Something went wrong",
+        "body": "Nothing was saved. Try again."
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import { AbhaError, type AbhaFailure } from './errors.js';
 import {
   checkIdentity,
   MOCK_IDENTITIES,
+  MOCK_OTP,
   parseSandboxAllowlist,
   type IdentityVerdict,
 } from './identityGuard.js';
@@ -36,6 +37,8 @@ export const statusView = z.object({
   mode: z.enum(['mock', 'sandbox']),
   notice: z.string(),
   /** only in mock mode: the fake identities that can be used, so the demo is possible (never real people) */
+  /** only in mock mode: the fake OTP, so the demo can be followed (it opens nothing real) */
+  mockOtp: z.string().nullable(),
   mockIdentities: z
     .array(z.object({ number: z.string(), address: z.string(), outcome: z.string() }))
     .nullable(),
@@ -80,6 +83,7 @@ export async function readStatus(
     verifiedMode: row?.mode ?? null,
     mode,
     notice: NOTICE[mode],
+    mockOtp: mode === 'mock' ? MOCK_OTP : null,
     mockIdentities:
       mode === 'mock'
         ? Object.values(MOCK_IDENTITIES).map((m) => ({
