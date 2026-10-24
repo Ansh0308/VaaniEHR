@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vaanibench-gu/case/1",
+  "title": "VaaniBench-Gu case (schema version 1)",
+  "description": "One acted consultation. The checks in apps/asr-py/app/bench/dataset.py (npm run bench:validate) enforce this schema and a few rules JSON Schema cannot express: every evidence quote is copied verbatim from one segment, speaker ids exist, segment indexes run 0..n-1, fact types are the extraction fact types, and no phone number or e-mail address appears in any text.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "synthetic",
+    "acted",
+    "audio",
+    "speakers",
+    "language_tags",
+    "transcript",
+    "gold_facts"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{1,40}$" },
+    "synthetic": {
+      "type": "boolean",
+      "description": "true = made up for the code tests (not speech); such cases are never part of a result"
+    },
+    "acted": {
+      "type": "boolean",
+      "description": "true = actors playing a made-up consultation; real patients are never in the dataset"
+    },
+    "audio": {
+      "type": "object",
+      "required": ["file", "noise_level"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": ["string", "null"],
+          "description": "path relative to the dataset folder, or null for a text-only case"
+        },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "duration_s": { "type": ["number", "null"], "minimum": 0 },
+        "noise_level": { "enum": ["clean", "low", "medium", "high", "unknown"] }
+      }
+    },
+    "speakers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "role": { "enum": ["doctor", "patient", "attendant", "other"] },
+          "gender": { "enum": ["female", "male", "other", "unknown"] },
+          "actor_id": {
+            "type": ["string", "null"],
+            "description": "pseudonymous actor code (A01...), never a name"
+          }
+        }
+      }
+    },
+    "language_tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "enum": ["gu", "hi", "en"] }
+    },
+    "transcript": {
+      "type": "object",
+      "required": ["segments"],
+      "additionalProperties": false,
+      "properties": {
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["idx", "speaker", "text", "lang"],
+            "additionalProperties": false,
+            "properties": {
+              "idx": { "type": "integer", "minimum": 0 },
+              "speaker": { "type": "string" },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "verbatim, Gujarati script for Gujarati, Devanagari for Hindi, Latin for English words and drug names"
+              },
+              "lang": { "enum": ["gu", "hi", "en", "mixed"] },
+              "romanised": { "type": ["string", "null"] },
+              "start_ms": { "type": ["integer", "null"], "minimum": 0 },
+              "end_ms": { "type": ["integer", "null"], "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "gold_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "value", "negated", "uncertain", "evidence_quote"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "symptom",
+              "duration",
+              "severity",
+              "vital",
+              "allergy",
+              "past_condition",
+              "current_medicine",
+              "red_flag_mention"
+            ]
+          },
+          "value": { "type": "string" },
+          "negated": { "type": "boolean" },
+          "uncertain": { "type": "boolean" },
+          "evidence_quote": { "type": "string", "minLength": 1 },
+          "segment": { "type": ["integer", "null"], "minimum": 0 }
+        }
+      }
+    },
+    "medicine_mentions": {
+      "type": "array",
+      "description": "spoken medicine mentions and the generic they should normalise to (for M-02)",
+      "items": {
+        "type": "object",
+        "required": ["spoken", "generic"],
+        "additionalProperties": false,
+        "properties": {
+          "spoken": { "type": "string" },
+          "generic": { "type": "string" },
+          "segment": { "type": ["integer", "null"] }
+        }
+      }
+    },
+    "expected_questions": {
+      "type": "array",
+      "description": "the questions a good question engine asks, in order (slot names); empty = not annotated",
+      "items": {
+        "type": "object",
+        "required": ["slot"],
+        "additionalProperties": false,
+        "properties": { "slot": { "type": "string" }, "node": { "type": ["string", "null"] } }
+      }
+    },
+    "expected_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["condition", "rank"],
+        "additionalProperties": false,
+        "properties": {
+          "condition": { "type": "string" },
+          "rank": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "expected_prescription": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["medicine"],
+        "additionalProperties": false,
+        "properties": {
+          "medicine": { "type": "string" },
+          "dose": { "type": ["string", "null"] },
+          "frequency": { "type": ["string", "null"] },
+          "duration": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "condition_label": {
+      "type": ["string", "null"],
+      "description": "gold condition id; null when not annotated"
+    },
+    "out_of_scope": { "type": "boolean" },
+    "red_flag": {
+      "type": "boolean",
+      "description": "true = the case contains a red flag the engine must stop on (toy cases only until a clinician supplies the list)"
+    },
+    "pathway_set": {
+      "enum": ["toy", null],
+      "description": "'toy' = the question-engine comparison runs on the fake toy pathways (labelled as such everywhere)"
+    },
+    "oracle_slots": {
+      "type": "object",
+      "description": "toy question simulation only: slot -> the answer the simulated patient gives"
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotator": { "type": "string" },
+        "double_annotated": { "type": "boolean" },
+        "status": { "enum": ["draft", "reviewed"] },
+        "needs_native_review": { "type": "boolean" }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

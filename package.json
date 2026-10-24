@@ -67,7 +67,11 @@
     "fhir:fetch": "node scripts/fhir-fetch.mjs",
     "fhir:validate": "node scripts/fhir-validate.mjs",
     "fhir:check": "node scripts/fhir-golden-check.mjs",
-    "fhir:server": "node scripts/fhir-validator-server.mjs"
+    "fhir:server": "node scripts/fhir-validator-server.mjs",
+    "bench:validate": "node scripts/py.mjs exec -m app.bench.dataset",
+    "bench:convert": "node scripts/py.mjs exec -m app.bench.convert",
+    "bench:run": "node scripts/py.mjs exec -m app.bench.runner",
+    "bench:split": "node scripts/py.mjs exec -m app.bench.split"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

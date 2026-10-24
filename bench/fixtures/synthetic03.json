@@ -1,0 +1,79 @@
+{
+  "schema_version": "1",
+  "id": "synthetic03",
+  "synthetic": true,
+  "acted": true,
+  "audio": {
+    "file": null,
+    "sha256": null,
+    "duration_s": null,
+    "noise_level": "unknown"
+  },
+  "speakers": [
+    {
+      "id": "s1",
+      "role": "doctor",
+      "gender": "unknown",
+      "actor_id": null
+    },
+    {
+      "id": "s2",
+      "role": "patient",
+      "gender": "unknown",
+      "actor_id": null
+    }
+  ],
+  "language_tags": ["gu"],
+  "transcript": {
+    "segments": [
+      {
+        "idx": 0,
+        "speaker": "s1",
+        "text": "આ એક નકલી પરીક્ષણ વાક્ય છે.",
+        "lang": "gu"
+      },
+      {
+        "idx": 1,
+        "speaker": "s2",
+        "text": "મને નકલી લક્ષણ એક છે, ખાંસી નથી.",
+        "lang": "gu"
+      }
+    ]
+  },
+  "gold_facts": [
+    {
+      "type": "symptom",
+      "value": "fake symptom one",
+      "negated": false,
+      "uncertain": false,
+      "evidence_quote": "નકલી લક્ષણ એક",
+      "segment": 1
+    },
+    {
+      "type": "symptom",
+      "value": "cough",
+      "negated": true,
+      "uncertain": false,
+      "evidence_quote": "ખાંસી નથી",
+      "segment": 1
+    }
+  ],
+  "medicine_mentions": [],
+  "expected_questions": [],
+  "expected_candidates": [],
+  "expected_prescription": [],
+  "condition_label": "toy_condition_a",
+  "out_of_scope": false,
+  "red_flag": false,
+  "annotation": {
+    "annotator": "synthetic",
+    "double_annotated": false,
+    "status": "draft",
+    "needs_native_review": true
+  },
+  "notes": "SYNTHETIC fixture made up for the evaluation code. Not speech, not clinical guidance.",
+  "pathway_set": "toy",
+  "oracle_slots": {
+    "toy_symptom_1": true
+  }
+}
