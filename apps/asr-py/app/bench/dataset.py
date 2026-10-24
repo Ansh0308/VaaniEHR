@@ -52,6 +52,7 @@ ALLOWED = set(REQUIRED) | {
     "red_flag",
     "pathway_set",
     "oracle_slots",
+    "mock_output",
     "annotation",
     "notes",
 }
@@ -242,6 +243,8 @@ def _optional(d: dict, cid: str, r: Report) -> None:
         r.err(cid, "pathway_set must be 'toy' or null")
     if d.get("pathway_set") == "toy" and not isinstance(d.get("oracle_slots", {}), dict):
         r.err(cid, "oracle_slots must be an object")
+    if "mock_output" in d and not d.get("synthetic"):
+        r.err(cid, "mock_output (a canned model reply) is allowed only in synthetic cases")
     if d.get("condition_label") is not None and not _is_str(d["condition_label"]):
         r.err(cid, "condition_label must be text or null")
 

@@ -75,5 +75,25 @@
   "pathway_set": "toy",
   "oracle_slots": {
     "toy_symptom_1": true
+  },
+  "mock_output": {
+    "facts": [
+      {
+        "type": "symptom",
+        "value": "fake symptom one",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s2",
+        "evidence_quote": "નકલી લક્ષણ એક"
+      },
+      {
+        "type": "symptom",
+        "value": "cough",
+        "negated": true,
+        "uncertain": false,
+        "segment_id": "s2",
+        "evidence_quote": "ખાંસી નથી"
+      }
+    ]
   }
 }

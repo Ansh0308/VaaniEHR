@@ -62,13 +62,19 @@ def micro(counts: Iterable[ErrorCount]) -> ErrorCount:
 
 
 # ------------------------------------------------------------------ M-02 medicine names
+def _slug(text: str) -> str:
+    """Letters and digits only, lower-cased: 'Medicine-X (FAKE)' and 'medicine-x-fake' are the same name.
+    (There is no Python NLEM normaliser yet; this only removes spelling-of-punctuation differences.)"""
+    return "".join(ch for ch in normalise(text).casefold() if ch.isalnum())
+
+
 def medicine_accuracy(gold: Sequence[str], predicted: Sequence[str]) -> dict[str, float | int]:
     """gold = the generic each spoken mention should normalise to; predicted = the generics the system produced.
     A mention is correct when its generic is among the predictions (multiset: one prediction answers one mention)."""
-    pool = Counter(normalise(p).casefold() for p in predicted)
+    pool = Counter(_slug(p) for p in predicted)
     correct = 0
     for g in gold:
-        key = normalise(g).casefold()
+        key = _slug(g)
         if pool[key] > 0:
             pool[key] -= 1
             correct += 1

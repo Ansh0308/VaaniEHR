@@ -25,7 +25,8 @@ function simulate(c) {
   for (let i = 0; i < config.question_cap + 4; i += 1) {
     last = runEngine(loaded.pathways, { slots, asked, dismissed, snoozed: [] }, config);
     const top3 = last.candidates.slice(0, 3).map((x) => x.pathway_id);
-    if (toTop3 === null && c.condition_label && top3.includes(c.condition_label)) toTop3 = questions;
+    if (toTop3 === null && c.condition_label && top3.includes(c.condition_label))
+      toTop3 = questions;
     if (last.outcome === 'RED_FLAG') {
       stoppedOnRedFlag = true;
       break;
@@ -52,4 +53,13 @@ function simulate(c) {
   };
 }
 
-process.stdout.write(`${JSON.stringify({ engine: 'rules-only', pathways: 'toy', results: cases.map(simulate) })}\n`);
+const pathways = loaded.pathways.map((p) => ({ id: p.id, version: p.version }));
+const report = {
+  engine: 'rules-only',
+  pathways: 'toy',
+  pathway_versions: pathways,
+  config,
+  results: cases.map(simulate),
+};
+process.stdout.write(`${JSON.stringify(report)}
+`);

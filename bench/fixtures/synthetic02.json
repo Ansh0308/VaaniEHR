@@ -82,5 +82,25 @@
     "toy_symptom_1": true,
     "toy_choice_1": "x",
     "toy_redflag_1": true
+  },
+  "mock_output": {
+    "facts": [
+      {
+        "type": "symptom",
+        "value": "toy symptom one",
+        "negated": false,
+        "uncertain": true,
+        "segment_id": "s2",
+        "evidence_quote": "Maybe I have toy symptom one"
+      },
+      {
+        "type": "red_flag_mention",
+        "value": "toy red flag",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s3",
+        "evidence_quote": "toy red flag is present"
+      }
+    ]
   }
 }

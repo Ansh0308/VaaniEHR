@@ -183,6 +183,10 @@
       "enum": ["toy", null],
       "description": "'toy' = the question-engine comparison runs on the fake toy pathways (labelled as such everywhere)"
     },
+    "mock_output": {
+      "type": "object",
+      "description": "synthetic cases only: the canned reply the mock language model gives, so the runner can be exercised without a model"
+    },
     "oracle_slots": {
       "type": "object",
       "description": "toy question simulation only: slot -> the answer the simulated patient gives"

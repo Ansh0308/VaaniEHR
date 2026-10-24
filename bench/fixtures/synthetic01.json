@@ -123,5 +123,49 @@
     "toy_symptom_2": true,
     "toy_symptom_5": false,
     "toy_choice_1": "z"
+  },
+  "mock_output": {
+    "facts": [
+      {
+        "type": "symptom",
+        "value": "toy symptom one",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s2",
+        "evidence_quote": "toy symptom one"
+      },
+      {
+        "type": "duration",
+        "value": "2 days",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s2",
+        "evidence_quote": "since two days"
+      },
+      {
+        "type": "symptom",
+        "value": "toy symptom five",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s3",
+        "evidence_quote": "no toy symptom five"
+      },
+      {
+        "type": "current_medicine",
+        "value": "Medicine-X (FAKE)",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s4",
+        "evidence_quote": "Medicine-X (FAKE)"
+      },
+      {
+        "type": "symptom",
+        "value": "rash",
+        "negated": false,
+        "uncertain": false,
+        "segment_id": "s4",
+        "evidence_quote": "rash on the leg"
+      }
+    ]
   }
 }
