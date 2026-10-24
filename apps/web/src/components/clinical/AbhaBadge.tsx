@@ -13,7 +13,7 @@ export function ModeBadge({ mode, className }: { mode: AbhaMode; className?: str
     <span
       data-abha-mode={mode}
       className={cn(
-        'inline-flex items-center rounded-sm border-2 border-ink bg-card px-2.5 py-1 text-xs font-bold tracking-wide text-ink',
+        'inline-flex items-center rounded-sm border-2 border-ink bg-card px-2.5 py-1 text-xs font-bold text-ink',
         className,
       )}
     >
