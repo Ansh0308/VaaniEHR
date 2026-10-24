@@ -407,6 +407,43 @@ try {
     await page.getByText('Allergies saved').first().waitFor();
     await scan(page, 'en patients (with allergy)');
 
+    // ABHA check (Phase 9B): the whole MOCK flow with a fake identity; every stage says MOCK and is scanned
+    await page.getByRole('link', { name: 'Check ABHA' }).click();
+    await page.getByRole('heading', { name: 'ABHA check', level: 1 }).waitFor();
+    await page.locator('[data-abha-mode="mock"]').first().waitFor();
+    check(
+      (await page.locator('[data-abha-mode="mock"]').count()) > 0,
+      'the ABHA page is labelled MOCK',
+    );
+    await scan(page, 'en abha (enter)');
+    await page.getByRole('checkbox').check();
+    await page.getByLabel('Test ABHA number or address').fill('123456789012');
+    await page.getByRole('button', { name: 'Send OTP' }).click();
+    await page.getByText('This test ABHA is not allowed').waitFor();
+    await scan(page, 'en abha (identity refused)');
+    await page.getByLabel('Test ABHA number or address').fill('mock.success@mock.invalid');
+    await page.getByRole('button', { name: 'Send OTP' }).click();
+    await page.getByRole('heading', { name: 'Enter the OTP' }).waitFor();
+    await scan(page, 'en abha (otp)');
+    await page.getByLabel('6-digit OTP').fill('000000');
+    await page.getByRole('button', { name: 'Check OTP' }).click();
+    await page.getByText('The OTP is not correct').waitFor();
+    await page.getByLabel('6-digit OTP').fill('123456');
+    await page.getByRole('button', { name: 'Check OTP' }).click();
+    await page.getByRole('heading', { name: 'ABHA checked (MOCK)' }).waitFor();
+    await scan(page, 'en abha (result)');
+    const abhaRows = await appQuery(
+      "SELECT abha_address, mode, abha_number_hash FROM abha_link WHERE abha_address = 'mock.success@mock.invalid'",
+    );
+    check(
+      abhaRows.length === 1 &&
+        abhaRows[0].mode === 'mock' &&
+        /^[0-9a-f]{64}$/.test(abhaRows[0].abha_number_hash),
+      'the mock check is stored with the address, the mode and a hash only',
+    );
+    await page.getByRole('link', { name: 'Back to patients' }).first().click();
+    await page.getByRole('heading', { name: 'Patients', level: 1 }).waitFor();
+
     // a page for another role shows a clear 403 page (the API refuses the data too). A full page load would drop the
     // in-memory token on purpose, so move inside the app the way a pasted in-app link would.
     await page.evaluate(() => window.history.pushState({}, '', '/admin/audit'));
