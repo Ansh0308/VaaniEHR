@@ -10,6 +10,8 @@ import { useDateText } from '../api/useDateText';
 import { useRequest } from '../api/useRequest';
 import { useAuth } from '../auth/AuthContext';
 import { FhirTab } from '../components/clinical/FhirTab';
+import { WhatsAppLog } from '../components/clinical/WhatsAppLog';
+import type { WhatsAppState } from '../api/whatsapp';
 import { Badge } from '../components/ui/Badge';
 import { Banner } from '../components/ui/Banner';
 import { Skeleton } from '../components/ui/Feedback';
@@ -214,6 +216,10 @@ export function VisitRecordPage() {
     () => api.get<{ versions: VersionSummary[] }>(`/sessions/${sessionId}/visit/versions`),
     [api, sessionId],
   );
+  const wa = useRequest(
+    () => api.get<WhatsAppState>(`/sessions/${sessionId}/whatsapp`),
+    [api, sessionId],
+  );
   const notSigned =
     visit.state.status === 'error' &&
     visit.state.error instanceof ApiError &&
@@ -284,6 +290,9 @@ export function VisitRecordPage() {
                 <Pencil aria-hidden="true" className="me-2 size-4" />
                 {t('consult:record.amend')}
               </Link>
+              <Link to={`/consult/${sessionId}/summary`} className={linkClass}>
+                {t('consult:wa.openWa')}
+              </Link>
               <Link to={`/consult/${sessionId}`} className={linkClass}>
                 {t('consult:sign.back')}
               </Link>
@@ -311,6 +320,7 @@ export function VisitRecordPage() {
               },
             ]}
           />
+          {wa.state.status === 'ready' ? <WhatsAppLog messages={wa.state.data.messages} /> : null}
           {versions.length > 0 ? (
             <History_
               versions={versions}

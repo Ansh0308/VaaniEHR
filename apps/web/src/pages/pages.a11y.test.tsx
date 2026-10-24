@@ -703,6 +703,56 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'WhatsApp summary (approved, one message sent)',
+    show: async (language) => {
+      await renderApp({
+        role: 'doctor',
+        path: `/consult/${IDS.session}/summary`,
+        language,
+        routes: {
+          'GET /sessions/:id/whatsapp': () => ({
+            data: {
+              signedVersion: 1,
+              safetyNotRun: true,
+              whatsappConsent: true,
+              provider: 'mock',
+              summary: {
+                id: '5eed0000-0000-4000-8000-0000000007a1',
+                version: 1,
+                status: 'approved',
+                warningSigns: 'toy warning words',
+                followUp: 'toy follow-up words',
+                textGu: 'તમારી મુલાકાતનો સારાંશ\n\nદવાઓ: 1. Drug-A (FAKE) - દિવસમાં બે વાર, 5 days',
+                textEn:
+                  'Summary of your visit\n\nMedicines: 1. Drug-A (FAKE) - twice a day, 5 days',
+                phraseTableVersion: '0.1',
+                templateName: 'vaaniehr_visit_summary_gu',
+                needsGujaratiReview: true,
+                textHash: 'f'.repeat(64),
+                approvedAt: '2026-10-24T10:00:00.000Z',
+                stale: false,
+              },
+              messages: [
+                {
+                  id: '5eed0000-0000-4000-8000-0000000008a1',
+                  summaryVersion: 1,
+                  status: 'sent',
+                  provider: 'mock',
+                  template: 'vaaniehr_visit_summary_gu',
+                  recipientLast4: '0001',
+                  errorMessage: null,
+                  sentAt: '2026-10-24T10:01:00.000Z',
+                  deliveredAt: null,
+                },
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findByRole('region', { name: /WhatsApp messages|WhatsApp સંદેશા/ });
+    },
+  },
+  {
     name: 'medicine master',
     show: async (language) => {
       await renderApp({

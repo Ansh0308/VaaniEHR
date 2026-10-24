@@ -16,6 +16,7 @@ import { AmendPage } from './pages/AmendPage';
 import { FhirStatusPage } from './pages/FhirStatusPage';
 import { SignPage } from './pages/SignPage';
 import { VisitRecordPage } from './pages/VisitRecordPage';
+import { WhatsAppSummaryPage } from './pages/WhatsAppSummaryPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TemplateBuilderPage } from './pages/TemplateBuilderPage';
 import { TemplatesPage } from './pages/TemplatesPage';
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="consult/:sessionId/sign" element={<SignPage />} />
             <Route path="consult/:sessionId/record" element={<VisitRecordPage />} />
             <Route path="consult/:sessionId/amend" element={<AmendPage />} />
+            <Route path="consult/:sessionId/summary" element={<WhatsAppSummaryPage />} />
           </Route>
           <Route element={<RequireRole roles={['doctor', 'staff', 'admin']} />}>
             <Route path="consult/:sessionId/consent" element={<ConsentPage />} />

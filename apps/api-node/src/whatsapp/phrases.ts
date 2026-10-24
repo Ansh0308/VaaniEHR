@@ -57,6 +57,6 @@ export function allGujaratiPhrases(): string[] {
     ...Object.values(P).map((p) => p.gu),
     ...Object.values(FACT_LABEL).map((p) => p.gu),
     ...Object.values(FREQUENCY).map((p) => p.gu),
-    ...STOP_WORDS.filter((w) => /[^\u0000-\u007f]/.test(w)),
+    ...STOP_WORDS.filter((w) => /\P{ASCII}/u.test(w)),
   ];
 }

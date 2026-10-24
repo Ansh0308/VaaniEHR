@@ -914,6 +914,64 @@ try {
       'both versions are stored; version 1 is unchanged',
     );
     await scan(page, 'en visit record (two versions)');
+    // the WhatsApp summary (Phase 10): consent is recorded in the database here (the consent screen is covered above), then the
+    // doctor previews, approves and sends through the MOCK sender; nothing leaves the machine
+    await appQuery(
+      `INSERT INTO consent_event (session_id, clinic_id, scope, granted, notice_version, notice_language, source,
+         recorded_by_user_id, recorded_by_role, ts) VALUES ($1,$2,'whatsapp',true,'0.1','en','staff',$3,'staff',now())`,
+      [rxSession, base.clinic, staffUser.id],
+    );
+    await page.getByRole('link', { name: 'WhatsApp summary' }).click();
+    await page
+      .getByRole('heading', { name: 'WhatsApp summary for the patient', level: 1 })
+      .waitFor();
+    await page.getByText('Test mode: nothing is sent to WhatsApp').waitFor();
+    await page.getByLabel(/^Warning signs/).fill('toy warning words');
+    await page.getByLabel(/^Follow-up/).fill('toy follow-up words');
+    await scan(page, 'en whatsapp summary (before preview)');
+    await page.getByRole('button', { name: 'Preview summary' }).click();
+    await page.getByTestId('wa-gu').waitFor();
+    const gu = await page.getByTestId('wa-gu').innerText();
+    const en = await page.getByTestId('wa-en').innerText();
+    check(
+      gu.includes('Toy-Medicine (FAKE) 100 mg Tablet') &&
+        gu.includes('3 days') &&
+        gu.includes('toy warning words'),
+      'the Gujarati preview carries the amended medicine and the doctor-typed text verbatim',
+    );
+    check(
+      en.includes('twice a day') && (await page.getByText('Approximate').count()) >= 1,
+      'the English back-translation is shown and labelled approximate',
+    );
+    check(
+      (await page.getByText('Needs Gujarati review').count()) >= 1 &&
+        (await page.getByText(/Safety checks were not run on this signed record/).count()) === 1,
+      'the preview says it needs Gujarati review and the safety-not-run banner is shown',
+    );
+    await scan(page, 'en whatsapp summary (preview)');
+    await page.getByRole('button', { name: 'Approve and send' }).click();
+    const waLog = page.getByRole('region', { name: 'WhatsApp messages' });
+    await waLog.getByText(/number ending/).waitFor();
+    const waRows = await appQuery(
+      `SELECT s.status, s.version, s.text_hash, m.status AS message_status, m.provider
+         FROM whatsapp_summary s JOIN whatsapp_message m ON m.summary_id = s.id WHERE s.session_id = $1`,
+      [rxSession],
+    );
+    check(
+      waRows.length === 1 &&
+        waRows[0].status === 'approved' &&
+        waRows[0].version === 2 &&
+        /^[0-9a-f]{64}$/.test(waRows[0].text_hash) &&
+        waRows[0].message_status === 'sent' &&
+        waRows[0].provider === 'mock',
+      'the approved summary of version 2 is stored with its hash and the mock send is logged',
+    );
+    await scan(page, 'en whatsapp summary (sent)');
+    await page.getByRole('link', { name: 'Back to the visit record' }).click();
+    await page
+      .getByRole('region', { name: 'WhatsApp messages' })
+      .getByText(/number ending/)
+      .waitFor();
     await page.getByRole('link', { name: 'Back to the consultation' }).first().click();
 
     // the workspace is now locked
