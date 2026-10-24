@@ -1,4 +1,7 @@
 // The Gujarati summary, the mismatch detector and the providers (Phase 10 Run 1, ADR-D41). Fully fake data.
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { findMismatches } from '../../src/whatsapp/detector.js';
 import { FREQUENCY, P, TEMPLATE_BODY_GU, allGujaratiPhrases } from '../../src/whatsapp/phrases.js';
@@ -305,5 +308,30 @@ describe('the phrase table', () => {
     expect(list.length).toBeGreaterThan(20);
     expect(new Set(list).size).toBe(list.length);
     expect(list.every((p) => /[઀-૿]/.test(p))).toBe(true);
+  });
+});
+
+describe('docs/WHATSAPP_SUBMISSION.md', () => {
+  const doc = readFileSync(
+    join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      '..',
+      '..',
+      'docs',
+      'WHATSAPP_SUBMISSION.md',
+    ),
+    'utf8',
+  );
+  it('lists every unreviewed Gujarati phrase of the table, and nothing the table does not have', () => {
+    for (const phrase of allGujaratiPhrases()) expect(doc, phrase).toContain(`| ${phrase} |`);
+    const rows = doc.split(String.fromCharCode(10)).filter((l) => /^\| [઀-૿]/.test(l));
+    expect(rows).toHaveLength(allGujaratiPhrases().length);
+  });
+  it('shows the template body exactly as the code sends it, with the template name and language', () => {
+    expect(doc).toContain(TEMPLATE_BODY_GU);
+    expect(doc).toContain('vaaniehr_visit_summary_gu');
+    expect(doc).toContain('code `gu`');
   });
 });

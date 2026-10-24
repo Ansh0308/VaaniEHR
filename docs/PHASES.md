@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 9A done (ADR-D40): FHIR R4 document bundles (OPConsultRecord, PrescriptionRecord) built from a signed visit for the ABDM IG 6.5.0, validated with the HL7 validator 7.0.3 (golden bundles: 0 errors; broken ones caught), stored with the verdict, export only when valid, FHIR tab on the visit record, CI job fhir-validate. Gaps in docs/FHIR_GAPS.md. Still open: Phase 9B (ABHA, needs the ABDM sandbox), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019), SNOMED licence. Next: the owner says go.
+> **Resume status (one line, updated after every step):** Phase 10 Run 1 done (ADR-D41): Gujarati summary from the signed record only (fixed phrases and verbatim copies, no model), mismatch detector, approval page PG-11 with an approximate English back-translation, mock sender (real WhatsApp off, test allowlist), Meta webhook with signature and STOP, send log, docs/WHATSAPP_SUBMISSION.md. Still open: a Gujarati reviewer, the Meta account and template, Phase 9B (ABHA), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019). Next: the owner says go.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
@@ -90,6 +90,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 - **Exit criteria:** golden bundle(s) validate with 0 errors in CI; invalid bundle test shows errors surfaced without losing the signed record; ABHA flow demonstrated in sandbox (or against recorded fixtures if credentials are still pending, clearly labelled).
 
 ## Phase 10 - Gujarati WhatsApp summary (M7) (prompt 10.1)
+- **Status (2026-10-24):** **Run 1 done** (ADR-D41): summary generator, mismatch detector, approval page, mock sender, Meta client (never run against Meta), webhook, STOP, send log, WHATSAPP_SUBMISSION.md. **Pending:** a Gujarati review of the fixed phrases, the owner's Meta setup and template approval, a first real message to a test number.
 - **Goal:** after sign-off, the doctor approves a plain Gujarati summary that is sent to a test number.
 - **PRD references:** F10, FR-F10-01...04, Appendix B, M-16.
 - **Deliverables:** summary generator from the *signed* record only, doctor approval screen, WhatsApp Cloud API sender with approved template, delivery webhook, send log, STOP handling.
