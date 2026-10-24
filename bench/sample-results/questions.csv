@@ -1,0 +1,4 @@
+question_engine,status,pathways,n,top1,top3,median_questions_to_top3,red_flag_seeded,red_flag_recall
+rules-only,toy pathways only,toy,3,1.0,1.0,1,1,1.0
+llm-only,not built,toy,,,,,,
+hybrid,not built,toy,,,,,,

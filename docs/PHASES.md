@@ -1,6 +1,6 @@
 # PHASES.md - phase list and exit criteria
 
-> **Resume status (one line, updated after every step):** Phase 10 Run 1 done (ADR-D41): Gujarati summary from the signed record only (fixed phrases and verbatim copies, no model), mismatch detector, approval page PG-11 with an approximate English back-translation, mock sender (real WhatsApp off, test allowlist), Meta webhook with signature and STOP, send log, docs/WHATSAPP_SUBMISSION.md. Still open: a Gujarati reviewer, the Meta account and template, Phase 9B (ABHA), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019). Phase 9B (ABHA, mock-first, ADR-D42) done; the sandbox is unverified. Next: the owner says go.
+> **Resume status (one line, updated after every step):** Phase 10 Run 1 done (ADR-D41): Gujarati summary from the signed record only (fixed phrases and verbatim copies, no model), mismatch detector, approval page PG-11 with an approximate English back-translation, mock sender (real WhatsApp off, test allowlist), Meta webhook with signature and STOP, send log, docs/WHATSAPP_SUBMISSION.md. Still open: a Gujarati reviewer, the Meta account and template, Phase 9B (ABHA), Phase 7 (suggestions, safety engine), the real pathways and a clinician reviewer (OCI-019). Phase 9B (ABHA, mock-first, ADR-D42) done; the sandbox is unverified. Phase 11A (ADR-D43) done: dataset spec and validator, the 11 clips converted, metrics, cached batch runner, frozen split with the no-tuning refusal, result exports. Next: the owner says go.
 
 Copied from `DOCUMENTS/VaaniEHR_Phase_Plan_and_AI_Prompts.md` (v1.0, 14 Oct 2026; **not updated for PRD v1.1** - requirement IDs below are unchanged in v1.1 except as noted) §0.5 and the per-phase headers. The prompts themselves stay in that file (section and prompt numbers given below). **Where this plan conflicts with `DECISIONS.md` (ADR-D1..D11), the decisions win**; known conflicts are listed at the end. A phase is done only when its exit criteria are met and the owner has said so.
 
@@ -97,6 +97,7 @@ Working loop per phase (plan §0.2): new session per phase; read the plan first;
 - **Exit criteria:** summary cannot be generated or sent before sign-off or without whatsapp consent (tests); exact sent text stored; Gujarati reviewed by a Gujarati speaker before the template is submitted.
 
 ## Phase 11 - Evaluation console and benchmark (research core) (prompts 11.1, 11.2)
+- **Status (2026-10-24):** **11A done** (ADR-D43, docs/EVALUATION_PLAN.md, bench/): harness only. Still open: recordings (11 of 100), the second annotator, real pathways, the evaluation console UI, LLM-only and hybrid engines, user studies.
 - **Goal:** produce the numbers that make this a research project and the dataset you can publish.
 - **PRD references:** F12, sections 7.3 and 14, M-01...M-17.
 - **Deliverables:** recording and annotation protocol, consent/release forms, dataset format, evaluation console (PG-17), batch runner for pipelines, metrics computation, ablation tables, error browser, dataset card, doctor usability study kit (SUS/NASA-TLX), figure/table export for the paper.

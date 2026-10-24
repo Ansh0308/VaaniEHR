@@ -1,0 +1,10 @@
+case,synthetic,asr,variant,tp,fp,fn,f1,ungrounded,proposed,wer
+synthetic01,True,gold,plain,4,1,0,0.8889,1,5,
+synthetic02,True,gold,plain,2,0,0,1.0,0,2,
+synthetic03,True,gold,plain,2,0,0,1.0,0,2,
+synthetic01,True,gold,constrained,4,1,0,0.8889,1,5,
+synthetic02,True,gold,constrained,2,0,0,1.0,0,2,
+synthetic03,True,gold,constrained,2,0,0,1.0,0,2,
+synthetic01,True,gold,grounded,4,0,0,1.0,0,4,
+synthetic02,True,gold,grounded,2,0,0,1.0,0,2,
+synthetic03,True,gold,grounded,2,0,0,1.0,0,2,

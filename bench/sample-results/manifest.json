@@ -1,0 +1,74 @@
+{
+  "run_at": "2026-10-24T14:22:00+00:00",
+  "code_commit": "4dc063d7bade329ec28d4dd14b607e3fefeef5c7",
+  "split": "all",
+  "split_hash": "4f2d6a440b5490962f2cd490b3340fe82688cc5b1f5891d0fe722f1179591eeb",
+  "test_cases_evaluated": false,
+  "dataset_hash": "d36a303975fcf4817a435bd39692d77aa78c41a5558ca705c76f39e8d4aabfeb",
+  "cases": ["synthetic01", "synthetic02", "synthetic03"],
+  "synthetic_fixtures_included": true,
+  "asr_engines": {
+    "gold": "gold-transcript"
+  },
+  "llm": {
+    "provider": "mock",
+    "model": "nvidia/nemotron-3.5-super-vl:free"
+  },
+  "prompt_hashes": {
+    "plain": "3ee4207c79b8bba8b40acbeb40b7fba8e91e7574f9c74a60d1bd447492e1c3df",
+    "constrained": "033eef64eb61418cff89d1e0ed14aca4b07e2f4ab7aa3c8df3f05bc89a9806d9",
+    "grounded": "033eef64eb61418cff89d1e0ed14aca4b07e2f4ab7aa3c8df3f05bc89a9806d9"
+  },
+  "pathways": {
+    "set": "toy",
+    "versions": [
+      {
+        "id": "toy_condition_a",
+        "version": 1
+      },
+      {
+        "id": "toy_condition_b",
+        "version": 1
+      },
+      {
+        "id": "toy_condition_c",
+        "version": 1
+      }
+    ],
+    "question_engine_config": {
+      "question_cap": 8,
+      "abstain_threshold": 0.5,
+      "candidate_limit": 3,
+      "against_penalty": 0.5,
+      "red_flag_first": true
+    }
+  },
+  "question_engines": ["rules-only", "llm-only", "hybrid"],
+  "cache": {
+    "hits": 0,
+    "misses": 10
+  },
+  "not_cached_and_not_run": {
+    "asr": 0,
+    "extraction": 0
+  },
+  "skipped_no_audio": 0,
+  "tuning_state": {
+    "prompts": {
+      "plain": "3ee4207c79b8bba8b40acbeb40b7fba8e91e7574f9c74a60d1bd447492e1c3df",
+      "constrained": "033eef64eb61418cff89d1e0ed14aca4b07e2f4ab7aa3c8df3f05bc89a9806d9",
+      "grounded": "033eef64eb61418cff89d1e0ed14aca4b07e2f4ab7aa3c8df3f05bc89a9806d9"
+    },
+    "models": ["gold", "nvidia/nemotron-3.5-super-vl:free"],
+    "thresholds": {
+      "fact_overlap": 0.6,
+      "question_engine": {
+        "question_cap": 8,
+        "abstain_threshold": 0.5,
+        "candidate_limit": 3,
+        "against_penalty": 0.5,
+        "red_flag_first": true
+      }
+    }
+  }
+}

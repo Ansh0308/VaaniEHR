@@ -47,3 +47,6 @@ infra/pgdata/
 
 # Microsoft Office lock files (created while a .docx is open in Word)
 ~$*
+
+# Benchmark outputs (a small sample is tracked in bench/sample-results/)
+results/

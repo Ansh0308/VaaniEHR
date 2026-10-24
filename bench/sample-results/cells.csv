@@ -1,0 +1,4 @@
+asr,asr_version,variant,cases,fact_precision,fact_recall,fact_f1,negation_f1,hallucination_rate,wer,cer,medicine_accuracy
+gold,gold-transcript,plain,3,0.8889,1.0,0.9412,0.6667,0.1111,,,1.0
+gold,gold-transcript,constrained,3,0.8889,1.0,0.9412,0.6667,0.1111,,,1.0
+gold,gold-transcript,grounded,3,1.0,1.0,1.0,0.6667,0.0,,,1.0

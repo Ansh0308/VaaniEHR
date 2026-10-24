@@ -19,11 +19,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 from app.bench.dataset import DATA_ROOT, dataset_hash, load_cases
+from app.config import REPO_ROOT, load_settings
 from app.eval_extraction import OVERLAP
 from app.extraction.pipelines import prompt_hash_of
 
@@ -125,12 +127,26 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
     for name in ("freeze", "check"):
         p = sub.add_parser(name)
         p.add_argument("--cases", type=Path, default=DATA_ROOT / "cases")
-        p.add_argument("--models", default="mock-model,mock")
+        p.add_argument(
+            "--models",
+            default=None,
+            help="engines and models allowed in test runs (default: gold, mock, the configured LLM_MODEL)",
+        )
         p.add_argument("--split-file", "--out", dest="split_file", type=Path, default=SPLIT_FILE)
         p.add_argument("--test-fraction", type=float, default=0.3)
     args = ap.parse_args(argv)
+    load_settings()  # reads apps/asr-py/.env so LLM_MODEL is known
+    if not args.cases.is_absolute():
+        args.cases = REPO_ROOT / args.cases
+    if not args.split_file.is_absolute():
+        args.split_file = REPO_ROOT / args.split_file
     cases = load_cases(args.cases)
-    state = tuning_state([m for m in args.models.split(",") if m])
+    models = (
+        args.models.split(",")
+        if args.models
+        else ["gold", "mock", "mock-model", os.environ.get("LLM_MODEL", "")]
+    )
+    state = tuning_state([m for m in models if m])
     if args.command == "freeze":
         if args.split_file.exists():
             out(f"refused: {args.split_file} already exists. A frozen split is never overwritten.")

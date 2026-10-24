@@ -614,6 +614,23 @@ def parse(argv: list[str]) -> Options:
         help="allow uncached paid or hosted calls (existing caps still apply)",
     )
     a = ap.parse_args(argv)
+
+    def at_root(path: Path | None) -> Path | None:
+        # `npm run` starts Python inside apps/asr-py: relative paths mean "from the repository root"
+        return None if path is None or path.is_absolute() else REPO_ROOT / path
+
+    for name in (
+        "cases",
+        "split_file",
+        "cache_dir",
+        "out_dir",
+        "fhir_csv",
+        "time_csv",
+        "questionnaire_csv",
+    ):
+        value = getattr(a, name)
+        if value is not None and not value.is_absolute():
+            setattr(a, name, at_root(value))
     split = [x for x in a.asr.split(",") if x]
     return Options(
         cases_dir=a.cases,
