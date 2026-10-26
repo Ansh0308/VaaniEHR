@@ -18,6 +18,10 @@ const steps = [
     'guard: seed source rule (self-test)',
     () => run(node, ['--test', 'scripts/seed-sources.test.mjs']),
   ],
+  [
+    'guard: dependency audit gate (self-test)',
+    () => run(node, ['--test', 'scripts/audit-gate.test.mjs']),
+  ],
   ['guard: seed/ rows carry a source', () => run(node, ['scripts/check-seed-sources.mjs'])],
   [
     'guard: Settings-page licence list is up to date',
