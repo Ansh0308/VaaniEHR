@@ -16124,6 +16124,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Rate limited or account locked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         },
         "security": []
@@ -16176,6 +16186,16 @@
                       "additionalProperties": false
                     }
                   }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or account locked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }

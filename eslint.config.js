@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/.venv/**',
       '.agents/**',
+      'security/semgrep/**',
       '.claude/**',
       'DOCUMENTS/**',
       'docs/**',
