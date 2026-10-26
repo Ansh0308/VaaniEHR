@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { AppError, errors } from './errors.js';
 import { fail } from './respond.js';
-import { logger } from '../logger.js';
+import { logger, redactMessage } from '../logger.js';
 
 /** 404 for any unmatched route. */
 export function notFoundHandler(_req: Request, _res: Response, next: NextFunction): void {
@@ -33,7 +33,10 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   logger.error('unhandled_error', {
     requestId: req.id,
     name: err instanceof Error ? err.name : 'unknown',
-    message: err instanceof Error ? err.message : String(err),
+    detail: redactMessage(err instanceof Error ? err.message : String(err)),
+    ...(typeof (err as { code?: unknown })?.code === 'string'
+      ? { code: (err as { code: string }).code }
+      : {}),
   });
   fail(res, 500, 'INTERNAL', 'Internal server error');
 }

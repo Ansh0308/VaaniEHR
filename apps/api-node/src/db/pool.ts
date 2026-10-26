@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { logger } from '../logger.js';
+import { logger, redactMessage } from '../logger.js';
 
 import './types.js';
 
@@ -15,7 +15,7 @@ export function createPool(databaseUrl: string): pg.Pool {
     connectionTimeoutMillis: 3000,
   });
   pool.on('error', (err) => {
-    logger.error('pg_pool_error', { name: err.name, message: err.message });
+    logger.error('pg_pool_error', { name: err.name, detail: redactMessage(err.message) });
   });
   return pool;
 }
