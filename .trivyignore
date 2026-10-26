@@ -1,0 +1,3 @@
+# Accepted container findings (Phase 12B, ADR-D44). One identifier per line (CVE-..., AVD-DS-...), each with a comment that says
+# why it is accepted, who accepted it and when it must be looked at again. The scan only blocks HIGH and CRITICAL findings that
+# have a fix available (--ignore-unfixed), so this file should stay short. Empty means nothing is accepted.

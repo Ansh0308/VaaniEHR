@@ -1,0 +1,4 @@
+{
+  "_comment": "Accepted dependency risks (Phase 12B, ADR-D44). An entry lets a HIGH or CRITICAL finding pass until its expiry date; after that the audit fails again. Each entry needs: id (a GHSA, CVE or PYSEC id), package (optional), reason, owner, expires (YYYY-MM-DD). Moderate and low findings never fail the gate. Empty means every finding was fixed.",
+  "entries": []
+}

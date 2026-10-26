@@ -24,7 +24,7 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | @types/react-dom | 18.3.7 | dev | apps/web/package.json | MIT | Type declarations for react-dom 18. |
 | npm | @types/supertest | 7.2.1 | dev | apps/api-node/package.json | MIT | Type declarations for supertest. |
 | npm | @vitejs/plugin-react | 5.2.0 | dev | apps/web/package.json | MIT | Vite plugin for React (JSX transform, fast refresh). 5.x is the line that supports Vite 7. |
-| npm | @vitest/coverage-v8 | 4.1.11 | dev | apps/api-node/package.json | MIT | Coverage report for the Phase 2A auth, audit and consent modules (NFR-MAINT-01). Pinned to 4.1.11 to match vitest. |
+| npm | @vitest/coverage-v8 | 4.1.12 | dev | apps/api-node/package.json | MIT | Coverage report for the Phase 2A auth, audit and consent modules (NFR-MAINT-01). Pinned to 4.1.11 to match vitest. |
 | npm | axe-core | 4.14.0 | dev | apps/web/package.json | MPL-2.0 | Automated accessibility rules (WCAG) run against the real /design page and in jsdom tests (NFR-UX-01). MPL-2.0, dev only. |
 | npm | bcryptjs | 3.0.3 | runtime | apps/api-node/package.json | BSD-3-Clause | Password hashing for the standalone login (Phase 2A, NFR-SEC-01). Pure JavaScript (no native build on Windows or Node 20/24); same scheme and cost 12 as ClinicOS. 3.0.3. |
 | npm | cors | 2.8.6 | runtime | apps/api-node/package.json | MIT | Restricts browser origins for the HTTP API to CORS_ORIGIN (NFR-SEC-06). |
@@ -56,9 +56,9 @@ Licence classification is automatic and **not legal advice**: anything not marke
 | npm | typescript | 5.9.3 | dev | package.json | Apache-2.0 | Strict typing for api-node, web, rules (PRD §17). 5.9.3 because typescript-eslint 8.x does not yet support TypeScript 6.1+/7. |
 | npm | typescript-eslint | 8.71.2 | dev | package.json | MIT | TypeScript parser and rules for ESLint. |
 | npm | vite | 7.3.7 | dev | apps/web/package.json | MIT | Build tool and dev server for the web app (PRD §11). 7.x chosen as the conservative line (works on Node 20.19+); 8.x also supports it but is newer and pairs with plugin-react 6; revisit later. |
-| npm | vitest | 4.1.11 | dev | apps/web/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
-| npm | vitest | 4.1.11 | dev | apps/api-node/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
-| npm | vitest | 4.1.11 | dev | packages/rules/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
+| npm | vitest | 4.1.12 | dev | apps/web/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
+| npm | vitest | 4.1.12 | dev | apps/api-node/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
+| npm | vitest | 4.1.12 | dev | packages/rules/package.json | MIT | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
 | npm | zod | 4.6.7 | runtime | apps/api-node/package.json | MIT | Runtime validation of environment variables and request bodies (Phase 1.1 API conventions, NFR-SEC-01). |
 | pip | cryptography | 50.0.2 | runtime | apps/asr-py/requirements.txt | Apache-2.0 OR BSD-3-Clause | AES-256-GCM encryption of stored audio (NFR-SEC-03). Apache-2.0 or BSD. Owner approved 2026-10-17. |
 | pip | fastapi | 0.143.0 | runtime | apps/asr-py/requirements.txt | MIT | Python service framework named in the PRD stack (§11: asr-py). |
@@ -90,7 +90,7 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 | @tailwindcss/vite | 4.3.3 | Official Tailwind 4 integration for Vite (replaces the PostCSS + autoprefixer setup, so those two are no longer dependencies). |
 | eslint | 10.12.0 | Linting for all TypeScript/JavaScript (NFR-MAINT-01). v10 (supports Node 20.19+; v9 is flagged as unsupported by npm). |
 | typescript | 5.9.3 | Strict typing for api-node, web, rules (PRD §17). 5.9.3 because typescript-eslint 8.x does not yet support TypeScript 6.1+/7. |
-| vitest | 4.1.11 | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
+| vitest | 4.1.12 | Unit-test runner for all TypeScript packages (PRD NFR-MAINT-01). 4.x chosen: 5.x requires Node 22+, PRD targets Node 20. |
 
 ## 2. Licence review summary
 
@@ -111,6 +111,18 @@ Tailwind 4 (instead of 3.4: avoids 7 audit findings), ESLint 10 (v9 is unsupport
 | `node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20` | apps/api-node/Dockerfile, apps/web/Dockerfile | Node.js: MIT (plus bundled third-party licences); Debian base layers carry mixed licences - UNVERIFIED in detail |
 | `nginxinc/nginx-unprivileged:1.30.5-alpine3.24@sha256:56b8272e43a0525f67aed68d1e0794a712d10e3e45a563e118e9a77c817e6f86` | apps/web/Dockerfile | nginx: BSD-2-Clause; Alpine base layers carry mixed licences (mostly MIT/BSD/GPL-family for system tools) - UNVERIFIED in detail |
 | `python:3.11.17-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89` | apps/asr-py/Dockerfile | CPython: PSF License; Debian base layers carry mixed licences - UNVERIFIED in detail |
+
+### CI security tooling (Phase 12B, ADR-D44; installed only inside CI jobs, not shipped, not a project dependency)
+
+| Tool | Version and pin | Licence (checked 2026-10-26) | Used for |
+|---|---|---|---|
+| gitleaks | 8.30.1, release checksum pinned in `ci.yml` | MIT | secret scan of all commits (unchanged) |
+| pip-audit | 2.10.1 (`pip install pip-audit==2.10.1`) | Apache-2.0 | known vulnerabilities in the Python requirements (`scripts/audit-gate.mjs`) |
+| npm audit | the npm that ships with Node 20 | npm CLI: Artistic-2.0; advisories: GitHub Advisory Database (CC-BY-4.0) | known vulnerabilities in the npm packages (`scripts/audit-gate.mjs`) |
+| Semgrep (engine) | 1.180.0 (`pip install semgrep==1.180.0`) | LGPL-2.1 | SAST with this repository's own rules in `security/semgrep/` (blocking) |
+| Semgrep community rules (registry packs `p/typescript`, `p/javascript`, `p/python`, `p/owasp-top-ten`) | fetched at run time | Semgrep Rules License v1.0: free for internal use, NOT an open-source licence | information only, never fails the build; the owner decides whether to promote them (OWNER_ACTIONS) |
+| Bandit | 1.9.4 (`pip install bandit==1.9.4`) | Apache-2.0 | Python SAST (medium and high severity block) |
+| Trivy | 0.75.0, release checksum `c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f` | Apache-2.0 | image and Dockerfile scan (high and critical with a fix block); its vulnerability database is fetched at run time |
 
 ### FHIR validation tooling (Phase 9A, ADR-D40; downloaded by `scripts/fhir-fetch.mjs` into the git-ignored `data/fhir/`, not shipped, not an npm or PyPI dependency)
 
@@ -342,14 +354,14 @@ Not adopted yet: DDInter 2.0 (CC BY-NC-SA 4.0, non-commercial: licence check fir
 | @typescript-eslint/utils | 8.71.2 | MIT | dev | ok (permissive) |
 | @typescript-eslint/visitor-keys | 8.71.2 | MIT | dev | ok (permissive) |
 | @vitejs/plugin-react | 5.2.0 | MIT | dev | ok (permissive) |
-| @vitest/coverage-v8 | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/expect | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/mocker | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/pretty-format | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/runner | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/snapshot | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/spy | 4.1.11 | MIT | dev | ok (permissive) |
-| @vitest/utils | 4.1.11 | MIT | dev | ok (permissive) |
+| @vitest/coverage-v8 | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/expect | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/mocker | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/pretty-format | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/runner | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/snapshot | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/spy | 4.1.12 | MIT | dev | ok (permissive) |
+| @vitest/utils | 4.1.12 | MIT | dev | ok (permissive) |
 | accepts | 1.3.8 | MIT | runtime | ok (permissive) |
 | accepts | 1.3.8 | MIT | runtime | ok (permissive) |
 | accepts | 2.0.0 | MIT | runtime | ok (permissive) |
@@ -673,7 +685,7 @@ Not adopted yet: DDInter 2.0 (CC BY-NC-SA 4.0, non-commercial: licence check fir
 | use-sync-external-store | 1.7.0 | MIT | runtime | ok (permissive) |
 | vary | 1.1.2 | MIT | runtime | ok (permissive) |
 | vite | 7.3.7 | MIT | dev | ok (permissive) |
-| vitest | 4.1.11 | MIT | dev | ok (permissive) |
+| vitest | 4.1.12 | MIT | dev | ok (permissive) |
 | w3c-xmlserializer | 5.0.0 | MIT | dev | ok (permissive) |
 | webidl-conversions | 8.0.1 | BSD-2-Clause | dev | ok (permissive) |
 | whatwg-mimetype | 4.0.0 | MIT | dev | ok (permissive) |

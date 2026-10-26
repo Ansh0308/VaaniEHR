@@ -1,0 +1,46 @@
+rules:
+  - id: vaani-py-no-shell
+    languages: [python]
+    severity: ERROR
+    message: 'subprocess with shell=True and os.system run a command string through a shell (ASVS 1.2.5). Pass a list of arguments.'
+    pattern-either:
+      - pattern: 'subprocess.$F(..., shell=True, ...)'
+      - pattern: 'os.system(...)'
+
+  - id: vaani-py-no-eval
+    languages: [python]
+    severity: ERROR
+    message: 'eval() and exec() run text as code (ASVS 1.3.2).'
+    pattern-either:
+      - pattern: 'eval(...)'
+      - pattern: 'exec(...)'
+
+  - id: vaani-py-no-unsafe-load
+    languages: [python]
+    severity: ERROR
+    message: 'pickle and yaml.load can run code while loading (ASVS 1.3.2). Use json or yaml.safe_load.'
+    pattern-either:
+      - pattern: 'pickle.load(...)'
+      - pattern: 'pickle.loads(...)'
+      - pattern: 'yaml.load(...)'
+
+  - id: vaani-py-no-weak-hash
+    languages: [python]
+    severity: ERROR
+    message: 'MD5 and SHA-1 are not allowed for security purposes (ASVS 11.4.1).'
+    pattern-either:
+      - pattern: 'hashlib.md5(...)'
+      - pattern: 'hashlib.sha1(...)'
+
+  - id: vaani-py-tls-verify
+    languages: [python]
+    severity: ERROR
+    message: 'Never turn TLS verification off (ASVS 12.2.1).'
+    pattern-either:
+      - pattern: '$F(..., verify=False, ...)'
+
+  - id: vaani-py-no-plain-http
+    languages: [python]
+    severity: ERROR
+    message: 'Calls to other services must use https (ASVS 12.2.1); localhost is the only exception.'
+    pattern-regex: '(get|post|put|delete|patch|request|stream)\(\s*["'']http://(?!localhost|127\.0\.0\.1|\[::1\])'

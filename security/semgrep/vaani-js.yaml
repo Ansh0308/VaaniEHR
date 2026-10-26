@@ -1,0 +1,59 @@
+rules:
+  - id: vaani-no-eval
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'eval() and the Function constructor run text as code (ASVS 1.3.2). Parse data instead.'
+    pattern-either:
+      - pattern: 'eval(...)'
+      - pattern: 'new Function(...)'
+
+  - id: vaani-no-raw-html
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'Assigning to innerHTML or outerHTML renders text as markup (ASVS 1.2.1, 3.2.2). Use textContent or a React child.'
+    pattern-either:
+      - pattern: '$E.innerHTML = $V'
+      - pattern: '$E.outerHTML = $V'
+      - pattern: 'document.write(...)'
+
+  - id: vaani-jwt-verify-needs-options
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'jwtVerify needs an options object with an algorithm allowlist, issuer and audience (ASVS 9.1.2).'
+    pattern: 'jwtVerify($TOKEN, $KEY)'
+
+  - id: vaani-no-weak-hash
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'MD5 and SHA-1 are not allowed for security purposes (ASVS 11.4.1). Use SHA-256 or better.'
+    pattern-either:
+      - pattern: 'createHash("md5")'
+      - pattern: 'createHash("sha1")'
+
+  - id: vaani-no-shell-exec
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'Do not run a shell command string; pass fixed arguments to spawn/execFile (ASVS 1.2.5).'
+    pattern-either:
+      - pattern: 'exec($CMD, ...)'
+      - pattern: 'execSync($CMD, ...)'
+
+  - id: vaani-express-json-needs-limit
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: 'express.json() without a size limit (ASVS 5.2.1). Pass { limit: ... }.'
+    pattern: 'express.json()'
+
+  - id: vaani-cors-no-wildcard
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'CORS must name one fixed origin, not a wildcard or "reflect the request" (ASVS 3.4.2).'
+    pattern-either:
+      - pattern: 'cors({..., origin: "*", ...})'
+      - pattern: 'cors({..., origin: true, ...})'
+
+  - id: vaani-no-plain-http
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: 'Calls to other services must use https (ASVS 12.2.1). Local test servers on localhost are the only exception.'
+    pattern-regex: 'fetch\(\s*["''`]http://(?!localhost|127\.0\.0\.1|\[::1\])'

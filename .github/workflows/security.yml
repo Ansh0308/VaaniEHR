@@ -1,0 +1,98 @@
+name: Security
+
+# Phase 12B (ADR-D44). Secret scanning (gitleaks) stays in ci.yml. Here:
+#  - dependency-audit and sast run on every push and pull request (about 2 to 4 minutes each);
+#  - image-scan (Trivy) builds all three images, so it runs on main, every night and on demand, not on every pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: dependency audit (npm audit and pip-audit; fails on high/critical not in security/audit-allowlist.json)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci --ignore-scripts
+      - name: self-test of the gate
+        run: node --test scripts/audit-gate.test.mjs
+      # npm: every workspace, production and development packages, high and critical block
+      - run: node scripts/audit-gate.mjs npm
+      # pip-audit 2.10.1 (Apache-2.0) is installed on its own; it has no severity, so any known vulnerability blocks
+      - run: python -m pip install pip-audit==2.10.1
+      - run: node scripts/audit-gate.mjs pip python -r apps/asr-py/requirements.txt
+      - run: node scripts/audit-gate.mjs pip python -r apps/asr-py/requirements-dev.txt
+
+  sast:
+    name: SAST (semgrep with this repository's rules, bandit)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # semgrep 1.180.0 (engine: LGPL-2.1) and bandit 1.9.4 (Apache-2.0), exact versions, no telemetry
+      - run: python -m pip install semgrep==1.180.0 bandit==1.9.4
+      - name: the rules pass their own test cases
+        run: semgrep --test --metrics=off security/semgrep
+      - name: scan with the repository's rules (blocking)
+        run: >-
+          semgrep scan --metrics=off --error --config security/semgrep
+          --exclude node_modules --exclude dist --exclude '.venv' --exclude 'security/semgrep' --exclude '*.test.*'
+          --exclude 'tests' --exclude 'test'
+          apps packages scripts
+      - name: bandit on the Python service (medium and high severity, blocking)
+        run: bandit -r apps/asr-py/app -ll -q --exclude apps/asr-py/app/bench
+      # The Semgrep community rules (registry) are under the Semgrep Rules License v1.0: free for internal scanning, but not an
+      # open-source licence. They run for information only and never fail the build. Owner decision pending (OWNER_ACTIONS).
+      - name: community rules (information only)
+        continue-on-error: true
+        run: >-
+          semgrep scan --metrics=off --config p/typescript --config p/javascript --config p/python --config p/owasp-top-ten
+          --severity ERROR --exclude node_modules --exclude dist --exclude '.venv' apps packages scripts
+
+  image-scan:
+    name: container image scan (Trivy ${{ matrix.image }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api-node, web, asr-py]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/${{ matrix.image }}/Dockerfile -t vaaniehr/${{ matrix.image }}:scan .
+      # Official Trivy release (Apache-2.0), pinned and verified against its published SHA-256 (no third-party action)
+      - name: Install Trivy 0.75.0 (checksum verified)
+        run: |
+          curl -sSfL -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz
+          echo "c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f  trivy.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/trivy" && tar -xzf trivy.tar.gz -C "$RUNNER_TEMP/trivy" trivy
+          rm trivy.tar.gz
+      - name: HIGH and CRITICAL findings with a fix available block (accepted ones are in .trivyignore with a reason)
+        run: >-
+          "$RUNNER_TEMP/trivy/trivy" image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1
+          --ignorefile .trivyignore --no-progress vaaniehr/${{ matrix.image }}:scan
+      - name: Dockerfile and compose configuration (misconfiguration scan)
+        if: matrix.image == 'api-node'
+        run: >-
+          "$RUNNER_TEMP/trivy/trivy" config --severity HIGH,CRITICAL --exit-code 1 --ignorefile .trivyignore
+          --no-progress apps/api-node apps/web apps/asr-py infra
