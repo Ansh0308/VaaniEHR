@@ -171,8 +171,8 @@ export async function generateBundles(
       await db.query(
         `UPDATE fhir_bundle SET status = $3, error_count = $4, warning_count = $5, info_count = $6, issues = $7::jsonb,
                 validator_output = $8::jsonb, validator_version = $9, not_validated_reason = $10, validated_at = $11
-          WHERE session_id = $1 AND version = $2 AND kind = '${kind}'`,
-        [session.id, visit.version, ...verdictColumns(verdict)],
+          WHERE session_id = $1 AND version = $2 AND kind = $12`,
+        [session.id, visit.version, ...verdictColumns(verdict), kind],
       );
     } else {
       await db.query(

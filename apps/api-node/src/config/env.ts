@@ -27,6 +27,8 @@ const rawSchema = z.object({
   // Login hardening (Phase 2A). Defaults mirror ClinicOS: 10 requests per 15 min per IP, 5 failures lock an account.
   TRUST_PROXY: z.enum(['true', 'false']).default('false'),
   LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(10),
+  // Phase 12B: requests per minute per address for the public Meta webhook (the signature is still checked first)
+  WEBHOOK_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10000).default(300),
   LOGIN_RATE_WINDOW_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
   LOCKOUT_MAX_FAILURES: z.coerce.number().int().min(1).max(100).default(5),
   LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
@@ -76,6 +78,7 @@ export interface Config {
   trustProxy: boolean;
   loginRateLimitMax: number;
   loginRateWindowMs: number;
+  webhookRateLimitMax: number;
   lockoutMaxFailures: number;
   lockoutMs: number;
   bcryptCost: number;
@@ -187,6 +190,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     trustProxy: v.TRUST_PROXY === 'true',
     loginRateLimitMax: v.LOGIN_RATE_LIMIT_MAX,
     loginRateWindowMs: v.LOGIN_RATE_WINDOW_MINUTES * 60_000,
+    webhookRateLimitMax: v.WEBHOOK_RATE_LIMIT_MAX,
     lockoutMaxFailures: v.LOCKOUT_MAX_FAILURES,
     lockoutMs: v.LOCKOUT_MINUTES * 60_000,
     bcryptCost: v.BCRYPT_COST,

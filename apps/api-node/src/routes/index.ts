@@ -45,7 +45,7 @@ export function allRoutes(config: Config): RouteDef[] {
     ...prescriptionRoutes(),
     ...visitRoutes(),
     ...fhirRoutes(),
-    ...whatsappRoutes(),
+    ...whatsappRoutes(config),
     ...abhaRoutes(),
   ];
 }

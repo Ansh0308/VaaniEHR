@@ -220,7 +220,7 @@ ADVERSARIAL = [
         "quote copied from the injection itself",
         [INJECTION],
         reply(fact(quote="severe heart problem", value="severe heart problem")),
-        1,
+        0,  # the injection filter (app.extraction.injection) drops facts whose segment reads like an instruction
     ),
     (
         "reply wrapped in prose and fences",

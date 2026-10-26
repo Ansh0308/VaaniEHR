@@ -24,6 +24,7 @@ from typing import Literal
 from pydantic import ValidationError
 
 from app.extraction.grounding import find_quote
+from app.extraction.injection import looks_like_instruction
 from app.extraction.models import ExtractedFact, LlmOutput, PredictedFact
 from app.extraction.provider import LlmProvider, LlmResponse
 from app.extraction.text import escape_for_prompt, normalise, text_hash, unescape_from_model
@@ -88,6 +89,8 @@ class PipelineResult:
     predicted: list[PredictedFact] = field(default_factory=list)
     dropped_ungrounded: int = 0
     dropped_invalid: int = 0
+    #: facts dropped because their segment reads like an instruction to a model (app.extraction.injection)
+    dropped_injection: int = 0
     schema_failures: int = 0
     #: plain pipeline: replies from which no JSON object could be read at all
     invalid_json: int = 0
@@ -192,6 +195,11 @@ async def run_pipeline(
         match = find_quote(segment.text, fact.evidence_quote) if segment else None
         if segment is None or match is None:
             result.dropped_ungrounded += 1  # the hallucination count
+            continue
+        if looks_like_instruction(segment.text):
+            result.dropped_injection += (
+                1  # a fooled model must not turn an injected line into a fact
+            )
             continue
         if match.match_type == "exact":
             result.grounded_exact += 1

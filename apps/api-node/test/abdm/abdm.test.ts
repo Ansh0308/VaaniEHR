@@ -2,7 +2,7 @@
 // token cache, retry and error classification. Fake identities, a throw-away RSA key and a fake fetch only.
 import { constants, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { AbdmClient } from '../../src/abdm/client.js';
+import { AbdmClient, isSecureUrl } from '../../src/abdm/client.js';
 import { encryptForAbdm, parsePublicKey } from '../../src/abdm/encryption.js';
 import { AbhaError } from '../../src/abdm/errors.js';
 import {
@@ -223,5 +223,36 @@ describe('AbdmClient', () => {
       .join('');
     expect(sent).not.toContain('91000000000001');
     expect(sent).not.toContain('123456');
+  });
+});
+
+describe('https only (ASVS 12.2.1)', () => {
+  it('accepts https and local test servers, refuses plain http to other hosts', () => {
+    expect(isSecureUrl('https://sbx.example.invalid/x')).toBe(true);
+    expect(isSecureUrl('http://localhost:9000/x')).toBe(true);
+    expect(isSecureUrl('http://127.0.0.1:9000/x')).toBe(true);
+    expect(isSecureUrl('http://sbx.example.invalid/x')).toBe(false);
+    expect(isSecureUrl('ftp://sbx.example.invalid/x')).toBe(false);
+    expect(isSecureUrl('not a url')).toBe(false);
+  });
+  it('the client and the provider refuse a plain-http address instead of sending credentials over it', async () => {
+    expect(
+      () =>
+        new AbdmClient({
+          clientId: 'a',
+          clientSecret: 'b',
+          sessionUrl: 'http://evil.example.invalid/s',
+        }),
+    ).toThrow(AbhaError);
+    const p = createAbha({
+      ABDM_PROVIDER: 'sandbox',
+      ABDM_ENABLE_SANDBOX: 'true',
+      ABDM_CLIENT_ID: 'x',
+      ABDM_CLIENT_SECRET: 'y',
+      ABDM_ABHA_URL: 'http://evil.example.invalid/abha',
+    });
+    expect(await failure(p.startOtp({ kind: 'abha_number', value: M.ok.number }))).toBe(
+      'not_configured',
+    );
   });
 });

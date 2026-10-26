@@ -1,8 +1,10 @@
 // WhatsApp summary endpoints and the Meta webhook (Phase 10 Run 1, ADR-D41, FR-F10-01..04). The doctor drafts a Gujarati summary
 // from the SIGNED record, edits only the two free-text fields, approves the exact text, and sends it. Every gate is server
 // side: signed, WhatsApp consent, the mismatch check, approval and its hash. Audit rows hold ids, versions and counts only.
+import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { withdrawWhatsAppForPatient } from '../consent/routes.js';
+import type { Config } from '../config/env.js';
 import { errors } from '../http/errors.js';
 import { permRoute, publicRoute, type RouteDef } from '../http/routeRegistry.js';
 import { loadSession } from '../sessions/service.js';
@@ -50,7 +52,20 @@ const stateShape = z.object({
   messages: z.array(messageView),
 });
 
-export function whatsappRoutes(): RouteDef[] {
+export function whatsappRoutes(config: Config): RouteDef[] {
+  // the webhook is public: a limit per address keeps a flood from costing a signature check each time (ADR-D44)
+  const webhookLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: config.webhookRateLimitMax,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (_req, res) => {
+      res.status(429).json({
+        success: false,
+        error: { code: 'RATE_LIMITED', message: 'Too many requests. Try again later.' },
+      });
+    },
+  });
   return [
     permRoute<IdParams>('whatsapp.read', {
       method: 'get',
@@ -206,6 +221,7 @@ export function whatsappRoutes(): RouteDef[] {
     >({
       method: 'get',
       path: '/webhooks/whatsapp',
+      pre: [webhookLimiter],
       tag: 'WhatsApp',
       summary:
         'Meta: webhook verification. Answers the hub.challenge only if the verify token matches',
@@ -234,6 +250,7 @@ export function whatsappRoutes(): RouteDef[] {
     publicRoute<unknown, unknown>({
       method: 'post',
       path: '/webhooks/whatsapp',
+      pre: [webhookLimiter],
       tag: 'WhatsApp',
       summary:
         'Meta: delivery statuses and replies. The X-Hub-Signature-256 header must match the raw body (HMAC-SHA256, app secret). A STOP reply withdraws the patient WhatsApp consent',

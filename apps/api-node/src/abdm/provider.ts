@@ -62,14 +62,19 @@ export function createAbha(env: AbdmEnv, fetchImpl: typeof fetch = fetch): AbhaP
   if (!env.ABDM_CLIENT_ID || !env.ABDM_CLIENT_SECRET) {
     return new NotConfiguredAbha('The ABDM sandbox needs a client id and a client secret.');
   }
-  return new SandboxAbha(
-    new AbdmClient({
-      clientId: env.ABDM_CLIENT_ID,
-      clientSecret: env.ABDM_CLIENT_SECRET,
-      ...(env.ABDM_SESSION_URL ? { sessionUrl: env.ABDM_SESSION_URL } : {}),
-      ...(env.ABDM_CERT_URL ? { certUrl: env.ABDM_CERT_URL } : {}),
-      ...(env.ABDM_ABHA_URL ? { abhaUrl: env.ABDM_ABHA_URL } : {}),
-      fetchImpl,
-    }),
-  );
+  try {
+    return new SandboxAbha(
+      new AbdmClient({
+        clientId: env.ABDM_CLIENT_ID,
+        clientSecret: env.ABDM_CLIENT_SECRET,
+        ...(env.ABDM_SESSION_URL ? { sessionUrl: env.ABDM_SESSION_URL } : {}),
+        ...(env.ABDM_CERT_URL ? { certUrl: env.ABDM_CERT_URL } : {}),
+        ...(env.ABDM_ABHA_URL ? { abhaUrl: env.ABDM_ABHA_URL } : {}),
+        fetchImpl,
+      }),
+    );
+  } catch (err) {
+    if (err instanceof AbhaError) return new NotConfiguredAbha(err.message);
+    throw err;
+  }
 }

@@ -35,6 +35,19 @@ export const DEFAULTS = {
 const KEY_TTL_MS = 60 * 60_000;
 const TOKEN_MARGIN_MS = 30_000;
 
+/** https, or http to this machine only (local test servers). */
+export function isSecureUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return (
+      u.protocol === 'https:' ||
+      (u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export class AbdmClient {
   private token: { value: string; expiresAt: number } | null = null;
   private key: { value: KeyObject; fetchedAt: number } | null = null;
@@ -43,6 +56,12 @@ export class AbdmClient {
   private readonly now: () => number;
 
   constructor(private readonly cfg: AbdmClientConfig) {
+    // ASVS 12.2.1 (ADR-D44): sandbox credentials and identity values are never sent over plain http (local test servers excepted)
+    for (const url of [cfg.sessionUrl, cfg.certUrl, cfg.abhaUrl]) {
+      if (url !== undefined && !isSecureUrl(url)) {
+        throw new AbhaError('not_configured', 'ABDM addresses must start with https://.');
+      }
+    }
     this.f = cfg.fetchImpl ?? fetch;
     this.sleep = cfg.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
     this.now = cfg.now ?? (() => Date.now());

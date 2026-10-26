@@ -6,6 +6,7 @@ import type { AuthProvider } from './auth/types.js';
 import type { Config } from './config/env.js';
 import { errors } from './http/errors.js';
 import { errorHandler, notFoundHandler } from './http/errorHandler.js';
+import { rejectNul } from './http/noNul.js';
 import { requestId } from './http/requestId.js';
 import { ok } from './http/respond.js';
 import { mountRoutes } from './http/routeRegistry.js';
@@ -47,6 +48,8 @@ export function createApp(deps: AppDeps): Express {
       },
     }),
   );
+
+  app.use(rejectNul);
 
   // Liveness: the process is up. No dependencies are touched.
   app.get('/health', (_req, res) => {
