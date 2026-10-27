@@ -1,6 +1,6 @@
 // Dynamic regions and focus handling (Phase 12B Run 2, docs/A11Y_REPORT.md): what is announced, with which role, and where focus
 // goes. These are structural checks in jsdom; what a screen reader actually says is for the manual NVDA test (OWNER_ACTIONS).
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createRef, useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Banner } from './components/ui/Banner';
@@ -11,11 +11,15 @@ import { RedFlagBanner } from './components/clinical/RedFlagBanner';
 import { TranscriptPane } from './components/clinical/TranscriptPane';
 import type { NextQuestion } from './api/pathwayAids';
 import i18n from './i18n';
+import { cleanupApp, renderApp } from './test-utils/harness';
 
 beforeAll(async () => {
   await i18n.changeLanguage('en');
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  cleanupApp();
+});
 
 describe('banners', () => {
   it('a blocked banner that is live is an alert; other live banners are polite status; static banners say nothing', () => {
@@ -155,5 +159,24 @@ describe('dialogs', () => {
     });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+describe('moving between pages', () => {
+  it('sets the page title from the heading and moves focus to the main region after a route change, not on the first load', async () => {
+    await renderApp({
+      role: 'doctor',
+      path: '/settings',
+      routes: { 'GET /templates': () => ({ data: { items: [], total: 0 } }) },
+    });
+    await screen.findByRole('heading', { level: 1 });
+    await waitFor(() => expect(document.title).toMatch(/ - VaaniEHR$/));
+    expect(document.activeElement?.id).not.toBe('main'); // first load: nothing is stolen
+    fireEvent.click(
+      screen.getAllByRole('link', { name: 'Prescription templates' })[0] as HTMLElement,
+    );
+    await waitFor(() => expect(document.activeElement?.id).toBe('main'), { timeout: 2000 });
+    expect(document.title).not.toBe('VaaniEHR (research prototype)');
+    expect(document.title).toMatch(/ - VaaniEHR$/);
   });
 });

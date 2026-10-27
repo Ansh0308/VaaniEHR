@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle, PopStateEvent */
+/* global window, document, getComputedStyle, PopStateEvent, HTMLElement */
 // End-to-end test of Phase 2B in a real browser (system Chrome via playwright-core, no download), against the REAL
 // API and PostgreSQL, using FAKE seed data only.
 //
@@ -223,10 +223,12 @@ async function keyboardAudit(page, label) {
       const el = document.activeElement;
       if (!el || el === document.body) return null;
       const s = getComputedStyle(el);
-      const outline = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0;
+      const outline =
+        s.outlineStyle !== 'none' && (s.outlineStyle === 'auto' || parseFloat(s.outlineWidth) > 0);
+      const detail = `outline ${s.outlineStyle} ${s.outlineWidth}, focus-visible ${el.matches(':focus-visible')}, shadow ${s.boxShadow === 'none' ? 'none' : 'set'}`;
       const ring = s.boxShadow && s.boxShadow !== 'none';
       const key = `${el.tagName}#${el.id}.${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 24)}@${Math.round(el.getBoundingClientRect().x)},${Math.round(el.getBoundingClientRect().y)}`;
-      return { key, indicator: outline || ring, tag: el.tagName };
+      return { key: `${key} (${detail})`, indicator: outline || ring, tag: el.tagName };
     });
     if (!info) continue;
     if (seen.has(info.key) && seen.size >= result) break; // the cycle came round
@@ -1392,6 +1394,26 @@ try {
 
   // ------------------------------------------------ erasure request (PG-20): staff records it, an admin reviews and completes it
   {
+    const erasedPatient = (
+      await appQuery('SELECT clinicos_patient_id AS id FROM consultation_session WHERE id = $1', [
+        sessionId,
+      ])
+    )[0]?.id;
+    const snapshotOfPatient = () =>
+      appQuery(
+        `SELECT (SELECT count(*) FROM visit_record v JOIN consultation_session s ON s.id = v.session_id
+                  WHERE s.clinicos_patient_id = $1 AND v.status = 'signed')::int AS signed,
+                (SELECT count(*) FROM visit_record_version vv JOIN consultation_session s ON s.id = vv.session_id
+                  WHERE s.clinicos_patient_id = $1)::int AS versions,
+                (SELECT count(*) FROM transcript_segment t JOIN consultation_session s ON s.id = t.session_id
+                  WHERE s.clinicos_patient_id = $1 AND t.status <> 'confirmed')::int AS drafts,
+                (SELECT count(*) FROM audit_log WHERE action = 'ERASURE_COMPLETED')::int AS audited,
+                (SELECT count(*) FROM consent_event e JOIN consultation_session s ON s.id = e.session_id
+                  WHERE s.clinicos_patient_id = $1 AND e.granted = false)::int AS withdrawn,
+                (SELECT count(*) FROM patient_clinical_profile WHERE clinicos_patient_id = $1)::int AS profiles`,
+        [erasedPatient],
+      );
+    const before = (await snapshotOfPatient())[0];
     const staff = await newPage(browser);
     await signIn(staff.page, 'staff');
     await goInApp(staff.page, '/privacy/requests');
@@ -1426,19 +1448,15 @@ try {
     await dialog.getByRole('checkbox').check();
     await dialog.getByRole('button', { name: 'Complete request' }).click();
     await adminSide.page.getByText('The request was completed.').first().waitFor();
-    const left = await appQuery(
-      `SELECT (SELECT count(*) FROM visit_record WHERE session_id = $1 AND status = 'signed')::int AS signed,
-              (SELECT count(*) FROM transcript_segment WHERE session_id = $1)::int AS segments,
-              (SELECT count(*) FROM audit_log WHERE action = 'ERASURE_COMPLETED')::int AS audited,
-              (SELECT count(*) FROM consent_event WHERE session_id = $1 AND granted = false)::int AS withdrawn`,
-      [sessionId],
-    );
+    const after = (await snapshotOfPatient())[0];
     check(
-      left[0].signed === 1 &&
-        left[0].segments === 0 &&
-        left[0].audited === 1 &&
-        left[0].withdrawn > 0,
-      'the signed record stays, the transcript is gone, consent is withdrawn and the completion is audited',
+      after.signed === before.signed &&
+        after.versions === before.versions &&
+        after.drafts === 0 &&
+        after.audited === 1 &&
+        after.withdrawn >= before.withdrawn &&
+        after.profiles === 0,
+      `the signed records and versions stay, drafts and the allergy profile are gone, consent is withdrawn and the completion is audited (before ${JSON.stringify(before)}, after ${JSON.stringify(after)})`,
     );
     await scan(adminSide.page, 'en privacy requests (completed)');
     await adminSide.context.close();

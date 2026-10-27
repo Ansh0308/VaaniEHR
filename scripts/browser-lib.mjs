@@ -1,4 +1,4 @@
-/* global window, document */
+/* global window, document, getComputedStyle */
 // Helpers shared by the browser scripts (`npm run a11y`, `npm run e2e`): find a system Chrome (no browser download),
 // and scan a loaded page with axe-core (colour contrast included) plus the 44px touch-target check.
 import { spawn } from 'node:child_process';
@@ -54,14 +54,30 @@ export async function scanPage(page, label) {
     { timeout: 10000 },
   );
   await page.waitForTimeout(900); // JS-driven entrances (motion) are not in getAnimations()
+  // table rows fade in one after another (motion): measure only once the last one is fully visible
+  await page
+    .waitForFunction(
+      () =>
+        [...document.querySelectorAll('tbody tr')].every(
+          (r) => parseFloat(getComputedStyle(r).opacity) >= 0.999,
+        ),
+      undefined,
+      { timeout: 5000 },
+    )
+    .catch(() => undefined);
   if (!(await page.evaluate(() => typeof window.axe !== 'undefined'))) {
     await page.addScriptTag({ content: axeSource });
   }
   const violations = await page.evaluate(async (tags) => {
     const result = await window.axe.run(document, { runOnly: { type: 'tag', values: tags } });
-    return result.violations.map(
-      (v) => `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target.join(' ')}`,
-    );
+    return result.violations.map((v) => {
+      const data = v.nodes[0]?.any?.[0]?.data;
+      const detail =
+        v.id === 'color-contrast' && data
+          ? ` [${data.fgColor} on ${data.bgColor}, ratio ${data.contrastRatio}, needs ${data.expectedContrastRatio}]`
+          : '';
+      return `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target.join(' ')}${detail}`;
+    });
   }, AXE_TAGS);
   for (const v of violations) problems.push(`[${label}] axe: ${v}`);
 

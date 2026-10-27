@@ -37,6 +37,16 @@
     outline-offset: 2px;
   }
 
+  /* a date or time field has several parts inside it; Chrome does not report the field itself as keyboard-focused, so the ring follows
+     focus-within (found by the Phase 12B keyboard pass on the audit filters) */
+  input[type='date']:focus-within,
+  input[type='time']:focus-within,
+  input[type='datetime-local']:focus-within,
+  input[type='month']:focus-within {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
   button,
   a,
   input,

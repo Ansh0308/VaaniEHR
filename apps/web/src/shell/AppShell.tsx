@@ -2,9 +2,9 @@
 // Laptop (>= 1024px): fixed left column. Tablet and below: navigation opens in a drawer from the menu button.
 import { AudioWaveform, LogOut, Menu } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Button, IconButton } from '../components/ui/Button';
 import { Drawer } from '../components/ui/Overlay';
 import { PageTransition } from '../components/motion/motion';
@@ -71,6 +71,20 @@ export function AppShell() {
   const { t } = useTranslation('shell');
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  // single-page navigation (Phase 12B accessibility audit, WCAG 2.4.2 and 2.4.3): after every route change the page title follows
+  // the page's own heading, and focus moves to the main region so keyboard and screen-reader users start at the new content
+  // instead of on a link that is no longer there. Not on the first load.
+  const location = useLocation();
+  const firstLoad = useRef(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const heading = document.querySelector('main h1')?.textContent?.trim();
+      if (heading) document.title = `${heading} - VaaniEHR`;
+      if (!firstLoad.current) document.getElementById('main')?.focus({ preventScroll: true });
+      firstLoad.current = false;
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
   return (
     <div className="bg-aurora flex min-h-screen flex-col">
       <a
@@ -125,7 +139,7 @@ export function AppShell() {
         <aside className="hidden w-64 shrink-0 border-r border-line bg-card/70 p-3 lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)] lg:self-start">
           <NavList />
         </aside>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 md:p-6">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none md:p-6">
           <PageTransition>
             <Outlet />
           </PageTransition>
