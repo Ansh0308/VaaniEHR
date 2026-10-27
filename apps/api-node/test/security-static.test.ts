@@ -26,6 +26,8 @@ describe('SQL', () => {
   // The only expressions allowed inside a ${...} in a query string. Each is a constant, a whitelist lookup or a fixed choice.
   const ALLOWED = new Set([
     'APP_ROLE',
+    // privacy/service.ts listRequests: joined from fixed fragments that hold only $n placeholders
+    'where',
     'COLUMNS',
     'SELECT',
     'VISIBLE_SQL',

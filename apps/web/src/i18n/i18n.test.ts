@@ -18,6 +18,8 @@ import consentGu from './locales/gu/consent.json';
 import dashboardGu from './locales/gu/dashboard.json';
 import medicinesGu from './locales/gu/medicines.json';
 import patientsGu from './locales/gu/patients.json';
+import privacyEn from './locales/en/privacy.json';
+import privacyGu from './locales/gu/privacy.json';
 import pathwaysGu from './locales/gu/pathways.json';
 import settingsGu from './locales/gu/settings.json';
 import clinicalEn from './locales/en/clinical.json';
@@ -48,6 +50,7 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   medicines: { en: medicinesEn, gu: medicinesGu },
   templates: { en: templatesEn, gu: templatesGu },
   consult: { en: consultEn, gu: consultGu },
+  privacy: { en: privacyEn, gu: privacyGu },
 };
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {

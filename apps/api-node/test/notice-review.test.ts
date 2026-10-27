@@ -8,7 +8,7 @@ import { allGujaratiPhrases } from '../src/whatsapp/phrases.js';
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 const doc = read('../../../docs/NOTICE_REVIEW.md');
-const flat = doc.replaceAll('\|', '|').replaceAll(/\s+/g, ' ');
+const flat = doc.replaceAll(String.fromCharCode(92) + '|', '|').replaceAll(/\s+/g, ' ');
 const has = (text: string) => flat.includes(text.replaceAll(/\s+/g, ' '));
 
 describe('the Gujarati notice review checklist', () => {
