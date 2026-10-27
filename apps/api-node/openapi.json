@@ -2912,7 +2912,11 @@
                 "WHATSAPP_WEBHOOK_REJECTED",
                 "ABHA_VERIFY_STARTED",
                 "ABHA_VERIFY_SUCCEEDED",
-                "ABHA_VERIFY_FAILED"
+                "ABHA_VERIFY_FAILED",
+                "ERASURE_REQUESTED",
+                "ERASURE_IN_REVIEW",
+                "ERASURE_COMPLETED",
+                "ERASURE_REFUSED"
               ]
             }
           },
@@ -3148,7 +3152,11 @@
                       "WHATSAPP_WEBHOOK_REJECTED",
                       "ABHA_VERIFY_STARTED",
                       "ABHA_VERIFY_SUCCEEDED",
-                      "ABHA_VERIFY_FAILED"
+                      "ABHA_VERIFY_FAILED",
+                      "ERASURE_REQUESTED",
+                      "ERASURE_IN_REVIEW",
+                      "ERASURE_COMPLETED",
+                      "ERASURE_REFUSED"
                     ]
                   },
                   "from": {
@@ -16708,6 +16716,1069 @@
         "x-audit-actions": [
           "ABHA_VERIFY_SUCCEEDED",
           "ABHA_VERIFY_FAILED"
+        ]
+      }
+    },
+    "/privacy/requests": {
+      "post": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "Staff or admin: record an erasure request for a patient of this clinic (one open request per patient)",
+        "operationId": "postPrivacyRequests",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "channel": {
+                    "type": "string",
+                    "enum": [
+                      "in_person",
+                      "phone",
+                      "written"
+                    ]
+                  },
+                  "note": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "patientId",
+                  "channel"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "received",
+                            "in_review",
+                            "completed",
+                            "refused"
+                          ]
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "in_person",
+                            "phone",
+                            "written"
+                          ]
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "requestedByRole": {
+                          "type": "string"
+                        },
+                        "receivedAt": {
+                          "type": "string"
+                        },
+                        "reviewedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "decidedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "refusalReason": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "result": {
+                          "nullable": true,
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "patientId",
+                        "patientName",
+                        "status",
+                        "channel",
+                        "note",
+                        "requestedByRole",
+                        "receivedAt",
+                        "reviewedAt",
+                        "decidedAt",
+                        "refusalReason",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.request",
+        "x-allowed-roles": [
+          "staff",
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ERASURE_REQUESTED"
+        ]
+      },
+      "get": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "The erasure requests of this clinic, newest first (an admin sees all; staff see the ones they recorded)",
+        "operationId": "getPrivacyRequests",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "received",
+                "in_review",
+                "completed",
+                "refused"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "patientId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "patientName": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "received",
+                                  "in_review",
+                                  "completed",
+                                  "refused"
+                                ]
+                              },
+                              "channel": {
+                                "type": "string",
+                                "enum": [
+                                  "in_person",
+                                  "phone",
+                                  "written"
+                                ]
+                              },
+                              "note": {
+                                "type": "string"
+                              },
+                              "requestedByRole": {
+                                "type": "string"
+                              },
+                              "receivedAt": {
+                                "type": "string"
+                              },
+                              "reviewedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "decidedAt": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "refusalReason": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "result": {
+                                "nullable": true,
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "patientId",
+                              "patientName",
+                              "status",
+                              "channel",
+                              "note",
+                              "requestedByRole",
+                              "receivedAt",
+                              "reviewedAt",
+                              "decidedAt",
+                              "refusalReason",
+                              "result"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.read",
+        "x-allowed-roles": [
+          "staff",
+          "admin"
+        ]
+      }
+    },
+    "/privacy/requests/{id}/impact": {
+      "get": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "Admin: what completing this request would remove and what stays, as counts (nothing is changed)",
+        "operationId": "getPrivacyRequestsIdImpact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.manage",
+        "x-allowed-roles": [
+          "admin"
+        ]
+      }
+    },
+    "/privacy/requests/{id}/review": {
+      "post": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "Admin: take a received request into review",
+        "operationId": "postPrivacyRequestsIdReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "received",
+                            "in_review",
+                            "completed",
+                            "refused"
+                          ]
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "in_person",
+                            "phone",
+                            "written"
+                          ]
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "requestedByRole": {
+                          "type": "string"
+                        },
+                        "receivedAt": {
+                          "type": "string"
+                        },
+                        "reviewedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "decidedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "refusalReason": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "result": {
+                          "nullable": true,
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "patientId",
+                        "patientName",
+                        "status",
+                        "channel",
+                        "note",
+                        "requestedByRole",
+                        "receivedAt",
+                        "reviewedAt",
+                        "decidedAt",
+                        "refusalReason",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.manage",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ERASURE_IN_REVIEW"
+        ]
+      }
+    },
+    "/privacy/requests/{id}/refuse": {
+      "post": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "Admin: refuse a request, with a reason that is kept on the request (not in the audit log)",
+        "operationId": "postPrivacyRequestsIdRefuse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "received",
+                            "in_review",
+                            "completed",
+                            "refused"
+                          ]
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "in_person",
+                            "phone",
+                            "written"
+                          ]
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "requestedByRole": {
+                          "type": "string"
+                        },
+                        "receivedAt": {
+                          "type": "string"
+                        },
+                        "reviewedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "decidedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "refusalReason": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "result": {
+                          "nullable": true,
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "patientId",
+                        "patientName",
+                        "status",
+                        "channel",
+                        "note",
+                        "requestedByRole",
+                        "receivedAt",
+                        "reviewedAt",
+                        "decidedAt",
+                        "refusalReason",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.manage",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ERASURE_REFUSED"
+        ]
+      }
+    },
+    "/privacy/requests/{id}/complete": {
+      "post": {
+        "tags": [
+          "Privacy"
+        ],
+        "summary": "Admin: complete a request in review. Removes everything about the patient that is not part of a signed visit record (audio is deleted by the speech service at its next purge run); the signed record and the audit log stay",
+        "operationId": "postPrivacyRequestsIdComplete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "confirm"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "patientName": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "received",
+                            "in_review",
+                            "completed",
+                            "refused"
+                          ]
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "in_person",
+                            "phone",
+                            "written"
+                          ]
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "requestedByRole": {
+                          "type": "string"
+                        },
+                        "receivedAt": {
+                          "type": "string"
+                        },
+                        "reviewedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "decidedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "refusalReason": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "result": {
+                          "nullable": true,
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "patientId",
+                        "patientName",
+                        "status",
+                        "channel",
+                        "note",
+                        "requestedByRole",
+                        "receivedAt",
+                        "reviewedAt",
+                        "decidedAt",
+                        "refusalReason",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "privacy.manage",
+        "x-allowed-roles": [
+          "admin"
+        ],
+        "x-audit-actions": [
+          "ERASURE_COMPLETED",
+          "CONSENT_WITHDRAWN",
+          "TRANSCRIPT_DRAFT_DELETED",
+          "PATHWAY_DATA_DELETED"
         ]
       }
     }

@@ -453,6 +453,70 @@ const ISOLATION: Record<string, (x: World, y: World) => Promise<void>> = {
         (await call('post', `/sessions/${y.sessionId}/whatsapp/send`, x.tokens[role], {})).status,
       ).toBe(role === 'doctor' ? 404 : 403);
   },
+  // ---- erasure requests (ADR-D45): another clinic's patient and request are 'not found', the queue never shows them
+  'POST /privacy/requests': async (x, y) => {
+    for (const role of ['admin', 'staff'] as const)
+      expect(
+        (
+          await call('post', '/privacy/requests', x.tokens[role], {
+            patientId: y.patientId,
+            channel: 'phone',
+            note: '',
+          })
+        ).status,
+      ).toBe(404);
+  },
+  'GET /privacy/requests': async (x, y) => {
+    await h.db.owner.query(
+      `INSERT INTO erasure_request (clinic_id, patient_id, channel, requested_by, requested_by_role)
+       VALUES ($1,$2,'phone',$3,'admin')`,
+      [y.clinicId, y.patientId, y.userIds[0]],
+    );
+    for (const role of ['admin', 'staff'] as const) {
+      const res = await call('get', '/privacy/requests', x.tokens[role]);
+      expect(res.status).toBe(200);
+      expect(JSON.stringify(res.body.data.items)).not.toContain(y.patientId);
+    }
+  },
+  'GET /privacy/requests/:id/impact': async (x, y) => {
+    const id = (
+      await one('SELECT id FROM erasure_request WHERE clinic_id = $1 LIMIT 1', [y.clinicId])
+    )?.id;
+    expect((await call('get', `/privacy/requests/${id}/impact`, x.tokens.admin)).status).toBe(404);
+  },
+  'POST /privacy/requests/:id/review': async (x, y) => {
+    const id = (
+      await one('SELECT id FROM erasure_request WHERE clinic_id = $1 LIMIT 1', [y.clinicId])
+    )?.id;
+    expect((await call('post', `/privacy/requests/${id}/review`, x.tokens.admin, {})).status).toBe(
+      404,
+    );
+  },
+  'POST /privacy/requests/:id/refuse': async (x, y) => {
+    const id = (
+      await one('SELECT id FROM erasure_request WHERE clinic_id = $1 LIMIT 1', [y.clinicId])
+    )?.id;
+    expect(
+      (
+        await call('post', `/privacy/requests/${id}/refuse`, x.tokens.admin, {
+          reason: 'other clinic',
+        })
+      ).status,
+    ).toBe(404);
+  },
+  'POST /privacy/requests/:id/complete': async (x, y) => {
+    const id = (
+      await one('SELECT id FROM erasure_request WHERE clinic_id = $1 LIMIT 1', [y.clinicId])
+    )?.id;
+    expect(
+      (await call('post', `/privacy/requests/${id}/complete`, x.tokens.admin, { confirm: true }))
+        .status,
+    ).toBe(404);
+    // and nothing of the other clinic's patient was touched
+    expect((await one('SELECT status FROM erasure_request WHERE id = $1', [id]))?.status).toBe(
+      'received',
+    );
+  },
   // ---- ABHA verification (ADR-D42): another clinic's patient is 'not found'; an unknown or foreign transaction too
   'GET /abha/status/:patientId': async (x, y) => {
     for (const role of ['admin', 'staff', 'doctor'] as const)

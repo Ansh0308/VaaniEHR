@@ -113,6 +113,10 @@
     "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp વેબહૂક નકાર્યો (ખોટી સહી)",
     "ABHA_VERIFY_STARTED": "ABHA ચકાસણી શરૂ થઈ (MOCK અથવા SANDBOX)",
     "ABHA_VERIFY_SUCCEEDED": "ABHA ચકાસણી સફળ થઈ (MOCK અથવા SANDBOX)",
-    "ABHA_VERIFY_FAILED": "ABHA ચકાસણી નિષ્ફળ (MOCK અથવા SANDBOX)"
+    "ABHA_VERIFY_FAILED": "ABHA ચકાસણી નિષ્ફળ (MOCK અથવા SANDBOX)",
+    "ERASURE_REQUESTED": "ભૂંસવાની વિનંતી નોંધાઈ",
+    "ERASURE_IN_REVIEW": "ભૂંસવાની વિનંતી સમીક્ષામાં લેવાઈ",
+    "ERASURE_COMPLETED": "ભૂંસવાની વિનંતી પૂર્ણ (સહી થયેલા રેકોર્ડ અને ઓડિટ લૉગ સચવાયા)",
+    "ERASURE_REFUSED": "ભૂંસવાની વિનંતી નકારાઈ"
   }
 }

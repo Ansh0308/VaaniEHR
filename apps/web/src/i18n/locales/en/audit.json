@@ -113,6 +113,10 @@
     "WHATSAPP_WEBHOOK_REJECTED": "WhatsApp webhook rejected (bad signature)",
     "ABHA_VERIFY_STARTED": "ABHA verification started (MOCK or SANDBOX)",
     "ABHA_VERIFY_SUCCEEDED": "ABHA verification succeeded (MOCK or SANDBOX)",
-    "ABHA_VERIFY_FAILED": "ABHA verification failed (MOCK or SANDBOX)"
+    "ABHA_VERIFY_FAILED": "ABHA verification failed (MOCK or SANDBOX)",
+    "ERASURE_REQUESTED": "Erasure request recorded",
+    "ERASURE_IN_REVIEW": "Erasure request taken into review",
+    "ERASURE_COMPLETED": "Erasure request completed (signed records and the audit log kept)",
+    "ERASURE_REFUSED": "Erasure request refused"
   }
 }

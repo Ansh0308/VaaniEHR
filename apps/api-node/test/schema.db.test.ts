@@ -119,9 +119,10 @@ describe('runtime role vaani_app: least privilege', () => {
     },
   );
 
-  it('no table grants DELETE or TRUNCATE to the app role', async () => {
+  it('no table grants DELETE or TRUNCATE to the app role, except the one an erasure empties (migration 0019)', async () => {
+    const ERASURE_DELETE = new Set(['patient_clinical_profile']);
     for (const table of TABLES) {
-      expect(await priv(table, 'DELETE'), `${table} DELETE`).toBe(false);
+      expect(await priv(table, 'DELETE'), `${table} DELETE`).toBe(ERASURE_DELETE.has(table));
       expect(await priv(table, 'TRUNCATE'), `${table} TRUNCATE`).toBe(false);
     }
   });

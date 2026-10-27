@@ -250,6 +250,26 @@ const fixture = (route: RouteDef): Call => {
       path: `/sessions/${consentedSessionId}/whatsapp/send`,
       body: {},
     },
+    'POST /privacy/requests': {
+      path: '/privacy/requests',
+      body: { patientId, channel: 'phone', note: '' },
+    },
+    'GET /privacy/requests': { path: '/privacy/requests' },
+    'GET /privacy/requests/:id/impact': {
+      path: '/privacy/requests/00000000-0000-4000-8000-000000000000/impact',
+    },
+    'POST /privacy/requests/:id/review': {
+      path: '/privacy/requests/00000000-0000-4000-8000-000000000000/review',
+      body: {},
+    },
+    'POST /privacy/requests/:id/refuse': {
+      path: '/privacy/requests/00000000-0000-4000-8000-000000000000/refuse',
+      body: { reason: 'fixture reason' },
+    },
+    'POST /privacy/requests/:id/complete': {
+      path: '/privacy/requests/00000000-0000-4000-8000-000000000000/complete',
+      body: { confirm: true },
+    },
     'GET /abha/status/:patientId': { path: `/abha/status/${patientId}` },
     'POST /abha/verify/start': {
       path: '/abha/verify/start',

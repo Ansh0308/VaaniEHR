@@ -71,6 +71,10 @@ export const AUDIT_ACTIONS = [
   'ABHA_VERIFY_STARTED',
   'ABHA_VERIFY_SUCCEEDED',
   'ABHA_VERIFY_FAILED',
+  'ERASURE_REQUESTED',
+  'ERASURE_IN_REVIEW',
+  'ERASURE_COMPLETED',
+  'ERASURE_REFUSED',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

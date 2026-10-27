@@ -231,6 +231,43 @@ export async function withdrawWhatsAppForPatient(
   return open.rows.map((r) => r.id);
 }
 
+/**
+ * An erasure request is completed (Phase 12B, ADR-D45): EVERY scope still granted in EVERY session of this patient in this clinic is
+ * withdrawn, by the admin who completes the request on the patient's behalf (source 'patient' = the data subject asked). The
+ * speech service then deletes the audio at its next purge run (it asks api-node for the consent state first). Kept in this file
+ * because only the consent routes write consent events (static rule). Returns what was withdrawn so the caller can audit it.
+ */
+export async function withdrawEverythingForPatient(
+  db: import('../db/tx.js').Queryable,
+  patientId: string,
+  clinicId: string,
+  actor: { sub: string; role: string },
+): Promise<{ sessionId: string; scopes: ConsentScope[] }[]> {
+  const sessions = await db.query<{ id: string }>(
+    'SELECT id FROM consultation_session WHERE clinicos_patient_id = $1 AND clinicos_clinic_id = $2',
+    [patientId, clinicId],
+  );
+  const out: { sessionId: string; scopes: ConsentScope[] }[] = [];
+  for (const row of sessions.rows) {
+    const current = await getEffectiveConsent(db, row.id);
+    const scopes = CONSENT_SCOPES.filter((s) => current.scopes[s].granted);
+    for (const scope of scopes) {
+      const last = current.scopes[scope];
+      await insertEvent(
+        { db, auth: { sub: actor.sub, role: actor.role, clinicId } },
+        row.id,
+        scope,
+        false,
+        last.noticeVersion as string,
+        last.noticeLanguage as 'en' | 'gu',
+        'patient',
+      );
+    }
+    if (scopes.length > 0) out.push({ sessionId: row.id, scopes });
+  }
+  return out;
+}
+
 async function insertEvent(
   ctx: {
     db: import('../db/tx.js').Queryable;

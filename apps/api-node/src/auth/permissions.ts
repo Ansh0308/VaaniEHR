@@ -54,6 +54,11 @@ export const PERMISSIONS = {
   'abha.read': ['doctor', 'staff', 'admin'],
   'abha.verify': ['doctor', 'staff', 'admin'],
 
+  // erasure requests (PG-20, Phase 12B Run 2): staff and admin record and follow them, only an admin decides
+  'privacy.request': ['staff', 'admin'],
+  'privacy.read': ['staff', 'admin'],
+  'privacy.manage': ['admin'],
+
   // pathway viewer (PG-14, Phase 6B): read-only for doctors and admins
   'pathway.read': ['doctor', 'admin'],
 

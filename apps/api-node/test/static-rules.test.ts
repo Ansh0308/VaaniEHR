@@ -82,6 +82,14 @@ describe('single audit writer', () => {
   it('only the consent-withdrawal function sets the signed-content flag (migration 0015)', () => {
     expect(filesContaining(/vaani\.withdrawal/)).toEqual(['transcripts/routes.ts']);
   });
+  it('only the erasure service sets the erasure flag and deletes the derived tables (migration 0019)', () => {
+    expect(filesContaining(/vaani\.erasure/)).toEqual(['privacy/service.ts']);
+    expect(
+      filesContaining(
+        /DELETE\s+FROM\s+(fhir_bundle|whatsapp_summary|whatsapp_message|abha_link|abha_txn|patient_clinical_profile)/i,
+      ),
+    ).toEqual(['privacy/service.ts']);
+  });
 });
 
 describe('no personal data in logs or audit', () => {

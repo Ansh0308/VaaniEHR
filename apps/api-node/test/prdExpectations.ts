@@ -53,6 +53,13 @@ export const PRD_EXPECTED: Record<
   'POST /sessions/:id/whatsapp/summary': ['doctor'],
   'POST /sessions/:id/whatsapp/approve': ['doctor'],
   'POST /sessions/:id/whatsapp/send': ['doctor'],
+  // erasure requests (PG-20, ADR-D45): staff and admin record and follow them; only an admin decides
+  'POST /privacy/requests': ['staff', 'admin'],
+  'GET /privacy/requests': ['staff', 'admin'],
+  'GET /privacy/requests/:id/impact': ['admin'],
+  'POST /privacy/requests/:id/review': ['admin'],
+  'POST /privacy/requests/:id/refuse': ['admin'],
+  'POST /privacy/requests/:id/complete': ['admin'],
   // ABHA verification, MOCK or SANDBOX (F9, ADR-D42): staff attest and run it; doctors and admins too (errata: PRD says staff, admin)
   'GET /abha/status/:patientId': ['doctor', 'staff', 'admin'],
   'POST /abha/verify/start': ['doctor', 'staff', 'admin'],
