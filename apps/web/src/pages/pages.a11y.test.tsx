@@ -1026,6 +1026,59 @@ const CASES: Case[] = [
     },
   },
   {
+    name: 'privacy requests (admin queue)',
+    show: async (language) => {
+      const item = (status: string, over: Record<string, unknown> = {}) => ({
+        id: IDS.session,
+        patientId: IDS.patient,
+        patientName: 'Fake Patient',
+        status,
+        channel: 'phone',
+        note: '',
+        requestedByRole: 'staff',
+        receivedAt: '2026-10-27T09:00:00.000Z',
+        reviewedAt: null,
+        decidedAt: null,
+        refusalReason: null,
+        result: null,
+        ...over,
+      });
+      await renderApp({
+        role: 'admin',
+        path: '/privacy/requests',
+        language,
+        routes: {
+          'GET /privacy/requests': () => ({
+            data: {
+              items: [
+                item('in_review'),
+                item('completed', {
+                  id: IDS.patient,
+                  decidedAt: '2026-10-27T10:00:00.000Z',
+                  result: { sessions: 2, signedVisitsKept: 1 },
+                }),
+                item('refused', { id: IDS.clinic, refusalReason: 'toy reason' }),
+              ],
+            },
+          }),
+        },
+      });
+      await screen.findAllByRole('row');
+    },
+  },
+  {
+    name: 'privacy requests (staff form)',
+    show: async (language) => {
+      await renderApp({
+        role: 'staff',
+        path: '/privacy/requests',
+        language,
+        routes: { 'GET /privacy/requests': () => ({ data: { items: [] } }) },
+      });
+      await screen.findByRole('table', { name: /.+/ });
+    },
+  },
+  {
     name: '403 page',
     show: async (language) => {
       await renderApp({ role: 'staff', path: '/doctor', language });

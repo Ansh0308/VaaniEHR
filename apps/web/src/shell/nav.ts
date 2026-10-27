@@ -9,6 +9,7 @@ import {
   ScrollText,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   Stethoscope,
   Users,
   type LucideIcon,
@@ -90,6 +91,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: FlaskConical,
     pg: 'PG-17',
     roles: ['researcher', 'admin'],
+  },
+  {
+    to: '/privacy/requests',
+    labelKey: 'shell:nav.items.privacy',
+    icon: ShieldCheck,
+    pg: 'PG-20',
+    roles: ['staff', 'admin'],
   },
   {
     to: '/settings',

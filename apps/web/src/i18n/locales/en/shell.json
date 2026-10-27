@@ -18,7 +18,8 @@
       "safety": "Safety rules",
       "settings": "Settings",
       "templates": "Prescription templates",
-      "visits": "Visit records"
+      "visits": "Visit records",
+      "privacy": "Data erasure requests"
     }
   },
   "notFound": {

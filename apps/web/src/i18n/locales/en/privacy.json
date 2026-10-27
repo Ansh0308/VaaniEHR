@@ -1,0 +1,118 @@
+{
+  "title": "Data erasure requests",
+  "intro": "Record a request from a patient to have their data removed, and follow it until an admin completes or refuses it. Every step is written to the audit log.",
+  "rules": {
+    "title": "What completing a request does",
+    "removes": "Removed: audio recordings (the speech service deletes the files at its next clean-up, within the hour), transcripts and drafts, suggested questions and shortlists, WhatsApp summaries and send records, FHIR exports, ABHA data, and allergy notes typed by staff. For a visit that was never signed, all of its working data goes too.",
+    "keeps": "Kept: signed visit records and the facts and medicines they rest on, the consent history, and the audit log. The patient's name and phone number belong to ClinicOS and are not changed here.",
+    "open": "To be confirmed: whether a signed clinical record must be kept after an erasure request is not decided here. It is a question for my guide / institution / a clinician (open item OCI-016). Until it is answered, the safer rule applies: signed records stay and everything else goes."
+  },
+  "form": {
+    "title": "Record a request",
+    "phone": "Patient phone number",
+    "phoneHint": "10 digits. Find the patient first.",
+    "find": "Find patient",
+    "found": "Patient: {{name}}",
+    "unnamed": "(no name on record)",
+    "notFound": "No patient with this number in this clinic.",
+    "channel": "How was the request made",
+    "channelChoose": "Choose",
+    "channels": {
+      "in_person": "In person",
+      "phone": "By phone",
+      "written": "In writing"
+    },
+    "note": "Note (optional)",
+    "noteHint": "Who asked and when, in a few words. Do not write health details.",
+    "submit": "Record request",
+    "recorded": "The request was recorded.",
+    "errorSummary": "The request cannot be recorded yet",
+    "errors": {
+      "phone": "Enter a 10-digit phone number.",
+      "patient": "Find the patient first.",
+      "channel": "Choose how the request was made."
+    }
+  },
+  "queue": {
+    "title": "Requests",
+    "caption": "Erasure requests, newest first",
+    "filter": "Show",
+    "all": "All requests",
+    "empty": "No requests.",
+    "loading": "Loading requests",
+    "columns": {
+      "patient": "Patient",
+      "received": "Received",
+      "channel": "How",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "received": "Received",
+      "in_review": "In review",
+      "completed": "Completed",
+      "refused": "Refused"
+    },
+    "ownOnly": "You see the requests you recorded. An admin sees all of them.",
+    "refusedBecause": "Reason: {{reason}}",
+    "completedOn": "Completed {{when}}"
+  },
+  "actions": {
+    "review": "Start review",
+    "impact": "Show what would happen",
+    "complete": "Complete the request",
+    "refuse": "Refuse the request"
+  },
+  "impact": {
+    "title": "What would happen",
+    "intro": "These are counts for {{name}}. Nothing has been changed yet.",
+    "labels": {
+      "sessions": "Visits (sessions) found",
+      "signedVisitsKept": "Signed visit records kept",
+      "audioRecordingsToDelete": "Audio recordings to delete",
+      "transcriptSegmentsToRemove": "Transcript lines to remove",
+      "factsToRemove": "Facts to remove",
+      "prescriptionRowsToRemove": "Prescription rows to remove (unsigned visits)",
+      "derivedExportsToRemove": "WhatsApp and FHIR copies to remove",
+      "abhaRowsToRemove": "ABHA records to remove",
+      "clinicalProfileRowsToRemove": "Allergy profile to remove"
+    }
+  },
+  "complete": {
+    "title": "Complete this request",
+    "body": "This removes the data listed above for {{name}}. Signed visit records and the audit log stay. This cannot be undone.",
+    "confirm": "I understand that this cannot be undone.",
+    "submit": "Complete request",
+    "done": "The request was completed. The audio files are deleted at the next clean-up run."
+  },
+  "refuse": {
+    "title": "Refuse this request",
+    "body": "Write why the request is refused. The reason is kept on the request, not in the audit log.",
+    "reason": "Reason",
+    "submit": "Refuse request",
+    "tooShort": "Write a reason of at least 3 characters.",
+    "done": "The request was refused."
+  },
+  "result": {
+    "title": "What was done",
+    "labels": {
+      "sessions": "Visits (sessions)",
+      "signedVisitsKept": "Signed visit records kept",
+      "consentWithdrawals": "Consent withdrawals recorded",
+      "transcriptSegmentsRemoved": "Transcript lines removed",
+      "factsRemoved": "Facts removed",
+      "questionsRemoved": "Suggested questions removed",
+      "candidatesRemoved": "Shortlist rows removed",
+      "prescriptionRowsRemoved": "Prescription rows removed",
+      "derivedExportsRemoved": "WhatsApp and FHIR copies removed",
+      "abhaRowsRemoved": "ABHA records removed",
+      "clinicalProfileRowsRemoved": "Allergy profiles removed",
+      "audioRecordingsPendingDeletion": "Audio recordings waiting for the clean-up run"
+    }
+  },
+  "errors": {
+    "conflict": "This request cannot be changed in its current state. Reload the list.",
+    "open": "There is already an open request for this patient.",
+    "other": "That did not work. Nothing was changed. Try again."
+  }
+}
