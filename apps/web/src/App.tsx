@@ -7,10 +7,11 @@ import { ConsentPage } from './pages/ConsentPage';
 import { ConsultPage } from './pages/ConsultPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DesignPage } from './pages/DesignPage';
-import { ForbiddenPage, NotFoundPage, ServerErrorPage } from './pages/ErrorPages';
+import { ForbiddenPage, NotFoundPage, ServerErrorPage, StandaloneMain } from './pages/ErrorPages';
 import { LoginPage } from './pages/LoginPage';
 import { MedicinesPage } from './pages/MedicinesPage';
 import { PatientsPage } from './pages/PatientsPage';
+import { PrivacyRequestsPage } from './pages/PrivacyRequestsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PathwaysPage } from './pages/PathwaysPage';
 import { AmendPage } from './pages/AmendPage';
@@ -38,9 +39,30 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/404" element={<NotFoundPage />} />
-      <Route path="/403" element={<ForbiddenPage />} />
-      <Route path="/500" element={<ServerErrorPage />} />
+      <Route
+        path="/404"
+        element={
+          <StandaloneMain>
+            <NotFoundPage />
+          </StandaloneMain>
+        }
+      />
+      <Route
+        path="/403"
+        element={
+          <StandaloneMain>
+            <ForbiddenPage />
+          </StandaloneMain>
+        }
+      />
+      <Route
+        path="/500"
+        element={
+          <StandaloneMain>
+            <ServerErrorPage />
+          </StandaloneMain>
+        }
+      />
       {/* the design-system specimen shows no data, so it can be opened without signing in */}
       <Route element={<ShellOrPublic />}>
         <Route path="/design" element={<DesignPage />} />
@@ -48,6 +70,9 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<Home />} />
+          <Route element={<RequireRole roles={['staff', 'admin']} />}>
+            <Route path="privacy/requests" element={<PrivacyRequestsPage />} />
+          </Route>
           <Route element={<RequireRole roles={['doctor']} />}>
             <Route path="doctor" element={<DashboardPage />} />
           </Route>

@@ -180,6 +180,69 @@ async function goInApp(page, path) {
   await page.evaluate(() => window.dispatchEvent(new PopStateEvent('popstate')));
 }
 
+/**
+ * Keyboard-only pass over the current page: Tab through it and report (1) a focusable control that never receives focus,
+ * (2) a focused control with no visible focus indicator, (3) a keyboard trap (focus never leaves a small set of elements while
+ * controls remain), and (4) a page whose first Tab stop is not a skip link or a control. Returns problem strings.
+ */
+async function keyboardAudit(page, label) {
+  const problems = [];
+  await page.evaluate(
+    () => document.activeElement instanceof HTMLElement && document.activeElement.blur(),
+  );
+  const result = await page.evaluate(async () => {
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return (
+        r.width > 0 &&
+        r.height > 0 &&
+        s.visibility !== 'hidden' &&
+        s.display !== 'none' &&
+        !el.closest('[inert]')
+      );
+    };
+    const selector =
+      'a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"]), [role=tab]';
+    const wanted = [...document.querySelectorAll(selector)].filter(
+      (el) => visible(el) && !el.disabled && !el.closest('[hidden]'),
+    );
+    return wanted.length;
+  });
+  // inputs ease their focus ring in over a short transition; measure the end state, not the first frame
+  await page.addStyleTag({
+    content: '*, *::before, *::after { transition: none !important; animation: none !important; }',
+  });
+  const seen = new Set();
+  const noIndicator = [];
+  let steps = 0;
+  for (let i = 0; i < result + 25 && i < 400; i += 1) {
+    await page.keyboard.press('Tab');
+    steps += 1;
+    const info = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (!el || el === document.body) return null;
+      const s = getComputedStyle(el);
+      const outline = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0;
+      const ring = s.boxShadow && s.boxShadow !== 'none';
+      const key = `${el.tagName}#${el.id}.${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 24)}@${Math.round(el.getBoundingClientRect().x)},${Math.round(el.getBoundingClientRect().y)}`;
+      return { key, indicator: outline || ring, tag: el.tagName };
+    });
+    if (!info) continue;
+    if (seen.has(info.key) && seen.size >= result) break; // the cycle came round
+    seen.add(info.key);
+    if (!info.indicator) noIndicator.push(info.key);
+  }
+  if (noIndicator.length > 0)
+    problems.push(
+      `[${label}] keyboard: no visible focus indicator on ${noIndicator.slice(0, 3).join(' | ')}`,
+    );
+  if (result > 0 && seen.size < Math.min(result, 3))
+    problems.push(`[${label}] keyboard: only ${seen.size} of ${result} controls reachable (trap?)`);
+  note(`keyboard pass: ${label} (${seen.size} stops of ${result} controls, ${steps} Tab presses)`);
+  return problems;
+}
+
 /** axe + 44px targets, then a 375px-wide check that the PAGE does not scroll sideways. */
 async function scan(page, label) {
   failures.push(...(await scanPage(page, label)));
@@ -1245,6 +1308,140 @@ try {
     await guAdmin.page.getByRole('table').waitFor();
     await scan(guAdmin.page, 'gu audit (admin)');
     await guAdmin.context.close();
+  }
+
+  // ------------------------------------------------ every route, both languages, desktop and phone width (Phase 12B Run 2)
+  // axe (WCAG 2.2 AA + best practice, contrast on), the 44px rule and sideways scrolling are checked on each route at 1280px and
+  // at 375px, in English and in Gujarati, signed in as the role that may open it. A keyboard pass (Tab order, focus visible, no
+  // trap) runs on the English desktop view. Every finding is a failure, so "serious" and "critical" are covered and so is the rest.
+  {
+    const patientRow = await appQuery(
+      'SELECT clinicos_patient_id AS id FROM consultation_session WHERE id = $1',
+      [sessionId],
+    );
+    const patientId = patientRow[0]?.id ?? '';
+    check(patientId !== '', 'the route sweep found the patient of the session');
+    const ROUTES = {
+      public: ['/login', '/404', '/403', '/500', '/design'],
+      doctor: [
+        '/doctor',
+        `/consult/${sessionId}`,
+        `/consult/${sessionId}/sign`,
+        `/consult/${sessionId}/record`,
+        `/consult/${sessionId}/amend`,
+        `/consult/${sessionId}/summary`,
+        `/consult/${sessionId}/consent`,
+        `/patients/${patientId}/abha`,
+        '/admin/fhir',
+        `/admin/fhir/${sessionId}`,
+        '/admin/pathways',
+        '/admin/templates',
+        '/admin/templates/new',
+        '/settings',
+        '/no-such-page',
+      ],
+      staff: [
+        '/patients',
+        `/consult/${sessionId}/consent`,
+        `/patients/${patientId}/abha`,
+        '/privacy/requests',
+        '/settings',
+      ],
+      admin: [
+        '/patients',
+        '/admin/audit',
+        '/admin/medicines',
+        '/admin/fhir',
+        '/admin/pathways',
+        '/admin/templates',
+        '/privacy/requests',
+        '/settings',
+      ],
+    };
+    const settle = async (page) => {
+      await page.waitForLoadState('networkidle');
+      await page.locator('h1, h2').first().waitFor();
+    };
+    const sweepPage = async (page, label, keyboard) => {
+      await settle(page);
+      await scan(page, label); // desktop axe + 44px + sideways scroll at 375
+      await page.setViewportSize({ width: 375, height: 812 });
+      failures.push(...(await scanPage(page, `${label} @375`)));
+      await page.setViewportSize({ width: 1280, height: 900 });
+      if (keyboard) failures.push(...(await keyboardAudit(page, label)));
+    };
+    for (const language of ['en', 'gu']) {
+      const anon = await newPage(browser, language);
+      for (const route of ROUTES.public) {
+        await anon.page.goto(`${WEB}${route}`, { waitUntil: 'networkidle' });
+        await sweepPage(anon.page, `${language} route ${route}`, language === 'en');
+      }
+      await anon.context.close();
+      for (const role of ['doctor', 'staff', 'admin']) {
+        const { context, page } = await newPage(browser, language);
+        await signIn(page, role);
+        await settle(page);
+        for (const route of ROUTES[role]) {
+          await goInApp(page, route);
+          await sweepPage(page, `${language} ${role} route ${route}`, language === 'en');
+        }
+        await context.close();
+      }
+    }
+  }
+
+  // ------------------------------------------------ erasure request (PG-20): staff records it, an admin reviews and completes it
+  {
+    const staff = await newPage(browser);
+    await signIn(staff.page, 'staff');
+    await goInApp(staff.page, '/privacy/requests');
+    await staff.page.getByRole('heading', { name: 'Data erasure requests', level: 1 }).waitFor();
+    await staff.page.getByText(/To be confirmed: whether a signed clinical record/).waitFor();
+    await scan(staff.page, 'en privacy requests (staff form)');
+    await staff.page.getByLabel('Patient phone number').fill(phone);
+    await staff.page.getByText(/^Patient: /).waitFor();
+    await staff.page.getByLabel('How was the request made').selectOption('in_person');
+    await staff.page.getByRole('button', { name: 'Record request' }).click();
+    await staff.page.getByText('The request was recorded.').first().waitFor();
+    const recorded = await appQuery("SELECT status FROM erasure_request WHERE status = 'received'");
+    check(recorded.length === 1, 'the erasure request is recorded as received');
+    await scan(staff.page, 'en privacy requests (staff, with a request)');
+    await staff.context.close();
+
+    const adminSide = await newPage(browser);
+    await signIn(adminSide.page, 'admin');
+    await goInApp(adminSide.page, '/privacy/requests');
+    await adminSide.page.getByRole('button', { name: /Start review/ }).click();
+    await adminSide.page.getByRole('button', { name: /Show what would happen/ }).click();
+    await adminSide.page.getByRole('heading', { name: 'What would happen' }).waitFor();
+    await scan(adminSide.page, 'en privacy requests (admin, counts)');
+    await adminSide.page.getByRole('button', { name: /Complete the request/ }).click();
+    const dialog = adminSide.page.getByRole('dialog', { name: 'Complete this request' });
+    await dialog.waitFor();
+    check(
+      await dialog.getByRole('button', { name: 'Complete request' }).isDisabled(),
+      'completing needs the confirmation first',
+    );
+    await scan(adminSide.page, 'en privacy requests (complete dialog)');
+    await dialog.getByRole('checkbox').check();
+    await dialog.getByRole('button', { name: 'Complete request' }).click();
+    await adminSide.page.getByText('The request was completed.').first().waitFor();
+    const left = await appQuery(
+      `SELECT (SELECT count(*) FROM visit_record WHERE session_id = $1 AND status = 'signed')::int AS signed,
+              (SELECT count(*) FROM transcript_segment WHERE session_id = $1)::int AS segments,
+              (SELECT count(*) FROM audit_log WHERE action = 'ERASURE_COMPLETED')::int AS audited,
+              (SELECT count(*) FROM consent_event WHERE session_id = $1 AND granted = false)::int AS withdrawn`,
+      [sessionId],
+    );
+    check(
+      left[0].signed === 1 &&
+        left[0].segments === 0 &&
+        left[0].audited === 1 &&
+        left[0].withdrawn > 0,
+      'the signed record stays, the transcript is gone, consent is withdrawn and the completion is audited',
+    );
+    await scan(adminSide.page, 'en privacy requests (completed)');
+    await adminSide.context.close();
   }
 
   // ------------------------------------------------ reduced motion

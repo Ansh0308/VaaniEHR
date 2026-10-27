@@ -21,6 +21,18 @@ function HomeLink() {
   );
 }
 
+/**
+ * The error pages that are routes of their own (/403, /404, /500) have no shell around them, so they get the one main landmark
+ * themselves (found by the Phase 12B route sweep: axe landmark-one-main and region). Inside the app the shell already has it.
+ */
+export function StandaloneMain({ children }: { children: ReactNode }) {
+  return (
+    <main id="main" tabIndex={-1} className="min-h-screen">
+      {children}
+    </main>
+  );
+}
+
 function ErrorLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="mx-auto max-w-2xl p-4">
