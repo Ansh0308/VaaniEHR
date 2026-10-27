@@ -53,6 +53,25 @@ def test_retention_date_is_set_from_the_configured_days(store):
     assert datetime.fromisoformat(asset.retention_until) == datetime(2027, 1, 15, 12, 0, tzinfo=UTC)
 
 
+async def test_the_90_day_boundary_young_audio_stays_old_audio_goes_and_the_file_is_really_gone(
+    store, clock, tmp_path
+):
+    asset = store.save(SID, PCM)
+    clock.now += timedelta(days=89)
+    api = FakeApi()
+    assert (await run_purge(store, api)).expired == 0  # 89 days: kept
+    assert (tmp_path / "audio" / f"{asset.id}.vaud").exists()
+    clock.now += timedelta(days=2)  # 91 days: past the 90-day rule
+    result = await run_purge(store, api)
+    assert result.expired == 1 and result.reported == 1
+    assert not (tmp_path / "audio" / f"{asset.id}.vaud").exists()
+    assert api.deleted == [
+        (asset.id, "retention")
+    ]  # api-node audits this report (tests/retention.db.test.ts)
+    with pytest.raises(AudioStoreError):
+        store.load(asset.id)
+
+
 def test_wrong_key_damage_and_a_swapped_session_all_fail(store, tmp_path):
     asset = store.save(SID, PCM)
     with pytest.raises(AudioStoreError):
