@@ -46,11 +46,11 @@ test('a bad status or a missing reason fails', () => {
   );
   assert.ok(validate(prd, { 'FR-F1-01': entry({ why: '' }) }, fs(['a.ts', 'a.test.ts'])).length);
 });
-test('countCases counts it/test/describe-free titles and python tests', () => {
+test('countCases counts it and test titles and python tests', () => {
   assert.equal(
     countCases(
       'x.test.ts',
-      "it('a', () => {});\n  test.each([1])('b', () => {});\ndescribe('c', () => {});",
+      "it('a', () => {});\n  it.skip('b', () => {});\ndescribe('c', () => {});",
     ),
     2,
   );
