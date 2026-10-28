@@ -22,6 +22,14 @@ const steps = [
     'guard: dependency audit gate (self-test)',
     () => run(node, ['--test', 'scripts/audit-gate.test.mjs']),
   ],
+  [
+    'guard: traceability checker (self-test) and status map vs PRD ids',
+    () => {
+      const t = run(node, ['--test', 'scripts/trace.test.mjs']);
+      return t.status === 0 ? run(node, ['scripts/trace.mjs']) : t;
+    },
+  ],
+  ['guard: docs/README.md lists every document', () => run(node, ['scripts/check-docs-index.mjs'])],
   ['guard: seed/ rows carry a source', () => run(node, ['scripts/check-seed-sources.mjs'])],
   [
     'guard: Settings-page licence list is up to date',
