@@ -1,0 +1,1645 @@
+{
+  "_comment": "Hand-maintained status of every PRD requirement (Phase 13A). The IDs and texts come from the PRD by scripts/srs-lib.mjs; this file adds only status, the reason, ADR/OCI references, code paths and tests. scripts/srs.mjs and scripts/trace.mjs fail when an ID is missing here, unknown here, or when a path or named test does not exist. Statuses: Implemented, Partial, Planned. Tests: a path (a test file or a checking script); 'names' are substrings that must appear in a test title of that file.",
+  "FR-F1-01": {
+    "status": "Implemented",
+    "why": "Record button is gated by the audio and AI-processing consent scopes; the speech service also refuses audio without a consent token.",
+    "adr": [
+      "D20",
+      "D26",
+      "D27"
+    ],
+    "code": [
+      "apps/api-node/src/consent/requireConsent.ts",
+      "apps/web/src/components/clinical/ConsentGate.tsx",
+      "apps/asr-py/app/consent.py"
+    ],
+    "tests": [
+      "apps/api-node/test/consent.db.test.ts",
+      "apps/asr-py/tests/test_consent_guard.py",
+      "apps/web/src/pages/ConsultPage.test.tsx"
+    ]
+  },
+  "FR-F1-02": {
+    "status": "Implemented",
+    "why": "Versioned notice in English and Gujarati with timestamp and source. The notice wording is a placeholder and unreviewed.",
+    "adr": [
+      "D20"
+    ],
+    "oci": [
+      "OCI-016"
+    ],
+    "code": [
+      "apps/api-node/src/consent/notices.ts",
+      "apps/api-node/src/consent/notices/v0.1/en.json",
+      "apps/api-node/src/consent/notices/v0.1/gu.json"
+    ],
+    "tests": [
+      "apps/api-node/test/consent.db.test.ts",
+      "apps/web/src/pages/ConsentPage.test.tsx"
+    ]
+  },
+  "FR-F1-03": {
+    "status": "Implemented",
+    "why": "A separate whatsapp scope is required before a summary is drafted or sent.",
+    "adr": [
+      "D20",
+      "D41"
+    ],
+    "code": [
+      "apps/api-node/src/consent/service.ts",
+      "apps/api-node/src/whatsapp/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/whatsapp.db.test.ts",
+      "apps/api-node/test/consent.db.test.ts"
+    ]
+  },
+  "FR-F1-04": {
+    "status": "Implemented",
+    "why": "Withdrawal stops recording and the audio is purged by the speech service; transcripts follow the withdrawal rule. Whether this is legally enough is open.",
+    "adr": [
+      "D28",
+      "D45"
+    ],
+    "oci": [
+      "OCI-016",
+      "OCI-020"
+    ],
+    "code": [
+      "apps/api-node/src/consent/routes.ts",
+      "apps/api-node/src/transcripts/routes.ts",
+      "apps/asr-py/app/purge.py"
+    ],
+    "tests": [
+      "apps/api-node/test/consent.db.test.ts",
+      "apps/api-node/test/transcripts.db.test.ts",
+      "apps/api-node/test/retention.db.test.ts",
+      "apps/asr-py/tests/test_storage.py"
+    ]
+  },
+  "FR-F1-05": {
+    "status": "Implemented",
+    "why": "Every consent event goes to the append-only consent log and the audit log.",
+    "adr": [
+      "D20"
+    ],
+    "code": [
+      "apps/api-node/src/consent/service.ts",
+      "apps/api-node/src/audit/audit.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/consent.db.test.ts",
+      "apps/api-node/test/audit.db.test.ts",
+      "apps/api-node/test/static-rules.test.ts"
+    ]
+  },
+  "FR-F2-01": {
+    "status": "Implemented",
+    "why": "AudioWorklet capture sends PCM chunks over a plain WebSocket, not Socket.IO (deviation, ADR-D25).",
+    "adr": [
+      "D25",
+      "D27"
+    ],
+    "code": [
+      "apps/web/src/asr/AsrClient.ts",
+      "apps/web/src/asr/pcm-worklet.js",
+      "apps/asr-py/app/ws.py"
+    ],
+    "tests": [
+      "apps/web/src/asr/AsrClient.test.ts",
+      "apps/web/src/asr/pcm-worklet.test.ts",
+      "apps/asr-py/tests/test_ws.py"
+    ]
+  },
+  "FR-F2-02": {
+    "status": "Partial",
+    "why": "The silence gate is implemented, but the Silero model is an optional install (requirements-vad.txt); without it nothing is trimmed.",
+    "adr": [
+      "D25"
+    ],
+    "code": [
+      "apps/asr-py/app/vad.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_vad.py"
+    ]
+  },
+  "FR-F2-03": {
+    "status": "Implemented",
+    "why": "Sarvam saaras:v4 adapter with up to 50 keyterms. Run on one 62.6 s clip only (docs/ASR.md); the starter keyterm list is unreviewed.",
+    "adr": [
+      "D25",
+      "D26"
+    ],
+    "oci": [
+      "OCI-015"
+    ],
+    "code": [
+      "apps/asr-py/app/asr/sarvam.py",
+      "apps/asr-py/app/keyterms.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_sarvam.py",
+      "apps/asr-py/tests/test_engine_mock.py"
+    ]
+  },
+  "FR-F2-04": {
+    "status": "Implemented",
+    "why": "IndicConformer and faster-whisper adapters selectable by name; the faster-whisper small model was run on one clip (74.5% WER).",
+    "adr": [
+      "D25"
+    ],
+    "code": [
+      "apps/asr-py/app/asr/fasterwhisper.py",
+      "apps/asr-py/app/asr/indicconformer.py",
+      "apps/asr-py/app/asr/local.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_local_engines.py",
+      "apps/asr-py/tests/test_eval.py"
+    ]
+  },
+  "FR-F2-05": {
+    "status": "Partial",
+    "why": "Speaker labels exist (a mock diarizer, assignment of turns to segments, and the doctor confirming each role). The default is off; pyannote and Sarvam diarization are not wired.",
+    "adr": [
+      "D25"
+    ],
+    "code": [
+      "apps/asr-py/app/diarize.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_diarize.py"
+    ]
+  },
+  "FR-F2-06": {
+    "status": "Implemented",
+    "why": "Saved transcripts keep the original and the edited text; confirmed segments are guarded in the database.",
+    "adr": [
+      "D28"
+    ],
+    "code": [
+      "apps/api-node/src/transcripts/routes.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/transcripts.db.test.ts",
+      "apps/api-node/test/transcripts-mutation.db.test.ts"
+    ]
+  },
+  "FR-F2-07": {
+    "status": "Implemented",
+    "why": "Segments store times, speaker, text, language, engine and version; confidence only when the engine gives one.",
+    "adr": [
+      "D28"
+    ],
+    "code": [
+      "apps/api-node/src/transcripts/routes.ts",
+      "apps/asr-py/app/asr/types.py"
+    ],
+    "tests": [
+      "apps/api-node/test/transcripts.db.test.ts",
+      "apps/api-node/test/schema.db.test.ts"
+    ]
+  },
+  "FR-F3-01": {
+    "status": "Partial",
+    "why": "Extraction is schema-checked (Pydantic, JSON mode) and runs against a model adapter, but the Instructor library is not used, and red-flag mentions are deliberately not extracted by the model (OCI-018).",
+    "adr": [
+      "D30",
+      "D31"
+    ],
+    "oci": [
+      "OCI-018"
+    ],
+    "code": [
+      "apps/asr-py/app/extraction/pipelines.py",
+      "apps/asr-py/app/extraction/models.py",
+      "apps/asr-py/app/extraction/openai_compat.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_extraction.py",
+      "apps/asr-py/tests/test_extract_api.py",
+      "apps/asr-py/tests/test_openai_compat.py",
+      "apps/asr-py/tests/test_prompt_injection.py"
+    ]
+  },
+  "FR-F3-02": {
+    "status": "Implemented",
+    "why": "Every fact carries negated, uncertain and a source span.",
+    "adr": [
+      "D29"
+    ],
+    "code": [
+      "apps/api-node/src/facts/service.ts",
+      "apps/asr-py/app/extraction/models.py"
+    ],
+    "tests": [
+      "apps/api-node/test/facts.db.test.ts",
+      "apps/asr-py/tests/test_extraction.py"
+    ]
+  },
+  "FR-F3-03": {
+    "status": "Implemented",
+    "why": "A fact without a valid span is dropped as ungrounded and counted.",
+    "adr": [
+      "D29"
+    ],
+    "code": [
+      "apps/asr-py/app/extraction/grounding.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_extraction.py",
+      "apps/asr-py/tests/test_eval_extraction.py"
+    ]
+  },
+  "FR-F3-04": {
+    "status": "Partial",
+    "why": "Linking uses a word list, not Parrotlet-e embeddings (not added, ADR-D32); the SNOMED subset is not loaded (OCI-002); the doctor confirms a link by hand; unmapped facts stay free text.",
+    "adr": [
+      "D32",
+      "D37"
+    ],
+    "oci": [
+      "OCI-002",
+      "OCI-017"
+    ],
+    "code": [
+      "packages/rules/src/linking.ts",
+      "apps/asr-py/app/extraction/linking.py",
+      "apps/api-node/src/concepts/service.ts"
+    ],
+    "tests": [
+      "packages/rules/src/linking.test.ts",
+      "apps/asr-py/tests/test_linking.py",
+      "apps/api-node/test/concepts.db.test.ts",
+      "apps/web/src/components/clinical/ConceptLink.test.tsx"
+    ]
+  },
+  "FR-F3-05": {
+    "status": "Implemented",
+    "why": "The doctor adds, edits, rejects and confirms facts; only confirmed facts feed the pathway engine.",
+    "adr": [
+      "D29",
+      "D33"
+    ],
+    "code": [
+      "apps/api-node/src/facts/routes.ts",
+      "apps/web/src/components/clinical/FactsPanel.tsx",
+      "apps/web/src/components/clinical/FactChip.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/facts.db.test.ts",
+      "apps/web/src/components/clinical/FactChip.test.tsx",
+      "apps/web/src/components/clinical/FactsFailure.test.tsx"
+    ]
+  },
+  "FR-F4-01": {
+    "status": "Partial",
+    "why": "The versioned pathway format, loader, linter and lock file work, but only toy pathways exist; the real ICMR STW pathways are not transcribed (OCI-019).",
+    "adr": [
+      "D34",
+      "D35"
+    ],
+    "oci": [
+      "OCI-019",
+      "OCI-021"
+    ],
+    "code": [
+      "packages/rules/src/loader.ts",
+      "packages/rules/src/validate.ts",
+      "packages/rules/src/lint.ts",
+      "apps/api-node/src/pathways/catalog.ts"
+    ],
+    "tests": [
+      "packages/rules/src/pathways.test.ts",
+      "packages/rules/src/authoring.test.ts",
+      "apps/api-node/test/pathways.db.test.ts"
+    ]
+  },
+  "FR-F4-02": {
+    "status": "Implemented",
+    "why": "The engine scores candidate conditions after each confirmed fact (toy pathways only).",
+    "adr": [
+      "D34"
+    ],
+    "code": [
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts",
+      "apps/api-node/test/pathways.db.test.ts"
+    ]
+  },
+  "FR-F4-03": {
+    "status": "Implemented",
+    "why": "Highest information weight first; red-flag questions come first when a red flag is possible.",
+    "adr": [
+      "D34"
+    ],
+    "code": [
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "FR-F4-04": {
+    "status": "Implemented",
+    "why": "Questions are suggestions to the doctor with the node and a one-line reason.",
+    "adr": [
+      "D36"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/QuestionCard.tsx",
+      "apps/web/src/components/clinical/QuestionPanel.tsx"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/PathwayAids.test.tsx"
+    ]
+  },
+  "FR-F4-05": {
+    "status": "Partial",
+    "why": "The rules choose the question (as required), but facts are mapped to answer slots by rules, not by an LLM, and the question text is authored in the pathway (en, gu, hi), not phrased by an LLM. Safer than specified.",
+    "adr": [
+      "D34"
+    ],
+    "code": [
+      "packages/rules/src/slots.ts",
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "FR-F4-06": {
+    "status": "Implemented",
+    "why": "The engine abstains below the confidence threshold (default 0.5, unreviewed).",
+    "adr": [
+      "D34"
+    ],
+    "oci": [
+      "OCI-021"
+    ],
+    "code": [
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "FR-F4-07": {
+    "status": "Implemented",
+    "why": "Question cap, default 8.",
+    "adr": [
+      "D34"
+    ],
+    "oci": [
+      "OCI-021"
+    ],
+    "code": [
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "FR-F4-08": {
+    "status": "Implemented",
+    "why": "Dismissals and answers are stored as events and audited (QUESTION_ACTED).",
+    "adr": [
+      "D34",
+      "D36"
+    ],
+    "oci": [
+      "OCI-020"
+    ],
+    "code": [
+      "apps/api-node/src/pathways/service.ts",
+      "apps/api-node/src/pathways/routes.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/pathways.db.test.ts",
+      "apps/api-node/test/pathways-mutation.db.test.ts"
+    ]
+  },
+  "FR-F4-09": {
+    "status": "Implemented",
+    "why": "Ranked top-3 shortlist with evidence for and against, no diagnosis wording (toy pathways only).",
+    "adr": [
+      "D36"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/CandidatesPanel.tsx",
+      "apps/web/src/components/clinical/DiagnosisCandidate.tsx",
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/PathwayAids.test.tsx",
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "FR-F5-01": {
+    "status": "Implemented",
+    "why": "NLEM 2022 imported; the loaded rows number 388 against the 384 printed (OCI-005); clinician review of rows is pending.",
+    "adr": [
+      "D23"
+    ],
+    "oci": [
+      "OCI-003",
+      "OCI-004",
+      "OCI-005"
+    ],
+    "code": [
+      "apps/api-node/src/medicines/nlemParser.ts",
+      "apps/api-node/src/medicines/nlemLoad.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/nlem-parser.test.ts",
+      "apps/api-node/test/medicines-import.db.test.ts"
+    ]
+  },
+  "FR-F5-02": {
+    "status": "Implemented",
+    "why": "Generic name first; brands are child rows.",
+    "adr": [
+      "D23",
+      "D24"
+    ],
+    "code": [
+      "apps/api-node/src/medicines/routes.ts",
+      "apps/web/src/pages/MedicinesPage.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/medicines-api.db.test.ts",
+      "apps/web/src/pages/MedicinesPage.test.tsx"
+    ]
+  },
+  "FR-F5-03": {
+    "status": "Partial",
+    "why": "Autocomplete by generic or brand works; the Gujarati transliteration list is machine-drafted and unreviewed (OCI-007).",
+    "adr": [
+      "D24"
+    ],
+    "oci": [
+      "OCI-007"
+    ],
+    "code": [
+      "apps/api-node/src/medicines/search.ts",
+      "apps/api-node/src/medicines/translit.ts",
+      "apps/web/src/components/clinical/MedicineCombobox.tsx"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/MedicineCombobox.test.tsx",
+      "apps/api-node/test/medicines-table.db.test.ts"
+    ]
+  },
+  "FR-F5-04": {
+    "status": "Implemented",
+    "why": "Personal and clinic templates with items, builder page and load dialog.",
+    "adr": [
+      "D24"
+    ],
+    "code": [
+      "apps/api-node/src/templates/service.ts",
+      "apps/web/src/pages/TemplateBuilderPage.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/templates.db.test.ts",
+      "apps/web/src/pages/TemplateBuilderPage.test.tsx",
+      "apps/web/src/pages/TemplatesPage.test.tsx"
+    ]
+  },
+  "FR-F5-05": {
+    "status": "Partial",
+    "why": "Source is stored per row; the last-reviewed date column exists but is empty until a clinician reviews the rows (OCI-003).",
+    "adr": [
+      "D23"
+    ],
+    "oci": [
+      "OCI-003"
+    ],
+    "code": [
+      "apps/api-node/src/medicines/routes.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/medicines-api.db.test.ts"
+    ]
+  },
+  "FR-F6-01": {
+    "status": "Planned",
+    "why": "Medicine suggestions from the pathway's first-line items are not built (Phase 7, not started). The doctor adds medicines by hand.",
+    "adr": [
+      "D38"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "FR-F6-02": {
+    "status": "Planned",
+    "why": "Suggestion cards with safety status are not built; AlertCard exists as a design component only.",
+    "adr": [
+      "D38"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "FR-F6-03": {
+    "status": "Planned",
+    "why": "The five safety checks do not exist. Only the SafetyChecks seam and the 'Safety checks were not run' acknowledgement are built (ADR-D38).",
+    "adr": [
+      "D38"
+    ],
+    "code": [
+      "apps/api-node/src/visits/safety.ts"
+    ],
+    "tests": []
+  },
+  "FR-F6-04": {
+    "status": "Planned",
+    "why": "No red alerts exist to override; the typed-reason override flow is not built.",
+    "adr": [
+      "D38"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "FR-F6-05": {
+    "status": "Partial",
+    "why": "A red flag shows an assertive banner that must be acknowledged; the pathway engine stops asking. There are no medicine suggestions to suppress yet.",
+    "adr": [
+      "D36"
+    ],
+    "oci": [
+      "OCI-018"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/RedFlagBanner.tsx",
+      "apps/api-node/src/pathways/service.ts"
+    ],
+    "tests": [
+      "apps/web/src/a11y.live-regions.test.tsx",
+      "apps/api-node/test/pathways.db.test.ts"
+    ]
+  },
+  "FR-F6-06": {
+    "status": "Implemented",
+    "why": "The prescription is a draft until sign-off; only signing writes the immutable record.",
+    "adr": [
+      "D38"
+    ],
+    "code": [
+      "apps/api-node/src/visits/service.ts",
+      "apps/api-node/src/prescription/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/visit-sign.db.test.ts",
+      "apps/web/src/components/clinical/PrescriptionTab.test.tsx"
+    ]
+  },
+  "FR-F7-01": {
+    "status": "Implemented",
+    "why": "Sign page shows the AI-proposed versus final content.",
+    "adr": [
+      "D39"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/SignDiff.tsx",
+      "apps/web/src/pages/SignPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/SignPage.test.tsx"
+    ]
+  },
+  "FR-F7-02": {
+    "status": "Partial",
+    "why": "Signing is refused for unconfirmed facts, an unacknowledged red flag and similar named blockers. Red alerts from a safety engine cannot exist yet, so the doctor must acknowledge 'Safety checks were not run'.",
+    "adr": [
+      "D38",
+      "D39"
+    ],
+    "code": [
+      "apps/api-node/src/visits/service.ts",
+      "apps/api-node/src/visits/safety.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/visit-sign.db.test.ts",
+      "apps/api-node/test/visit-run2.db.test.ts",
+      "apps/web/src/pages/SignPage.test.tsx"
+    ]
+  },
+  "FR-F7-03": {
+    "status": "Implemented",
+    "why": "draft to signed with a snapshot hash; immutable in the registry and by database triggers; amendments need a reason and keep versions.",
+    "adr": [
+      "D38",
+      "D39"
+    ],
+    "code": [
+      "apps/api-node/src/visits/service.ts",
+      "apps/api-node/src/visits/pgRepository.ts",
+      "apps/web/src/pages/AmendPage.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/visit-sign.db.test.ts",
+      "apps/api-node/test/visit-mutation.db.test.ts"
+    ]
+  },
+  "FR-F7-04": {
+    "status": "Partial",
+    "why": "Audit entries exist for consent, audio, transcript, fact, question, sign, amendment, FHIR and WhatsApp actions, hash-chained. Suggestion accept/reject and override entries do not exist because those features are not built.",
+    "adr": [
+      "D20",
+      "D38"
+    ],
+    "code": [
+      "apps/api-node/src/audit/audit.ts",
+      "apps/api-node/src/audit/chain.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/audit.db.test.ts",
+      "apps/api-node/test/audit-chain.test.ts",
+      "apps/api-node/test/static-rules.test.ts"
+    ]
+  },
+  "FR-F8-01": {
+    "status": "Implemented",
+    "why": "Bundle builder for the NRCeS profiles at 6.5.0; known gaps are listed in docs/FHIR_GAPS.md.",
+    "adr": [
+      "D40"
+    ],
+    "code": [
+      "apps/api-node/src/fhir/builder.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/fhir/builder.test.ts",
+      "apps/api-node/test/fhir.db.test.ts"
+    ]
+  },
+  "FR-F8-02": {
+    "status": "Implemented",
+    "why": "The bundle is validated by the HL7 validator service and the output is stored with it.",
+    "adr": [
+      "D40"
+    ],
+    "code": [
+      "apps/api-node/src/fhir/validator.ts",
+      "apps/api-node/src/fhir/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/fhir.db.test.ts"
+    ]
+  },
+  "FR-F8-03": {
+    "status": "Implemented",
+    "why": "A failed validation leaves the visit signed and marks the bundle invalid with the errors.",
+    "adr": [
+      "D40"
+    ],
+    "code": [
+      "apps/api-node/src/fhir/service.ts",
+      "apps/web/src/components/clinical/FhirTab.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/fhir.db.test.ts",
+      "apps/web/src/components/clinical/FhirTab.test.tsx"
+    ]
+  },
+  "FR-F8-04": {
+    "status": "Partial",
+    "why": "Resources are mapped, but SNOMED codes are empty until a licensed release is supplied (OCI-002), so coded medicines are not produced.",
+    "adr": [
+      "D40"
+    ],
+    "oci": [
+      "OCI-002"
+    ],
+    "code": [
+      "apps/api-node/src/fhir/builder.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/fhir/builder.test.ts"
+    ]
+  },
+  "FR-F8-05": {
+    "status": "Implemented",
+    "why": "CI job runs the validator over golden and broken examples (scripts/fhir-golden-check.mjs).",
+    "adr": [
+      "D40"
+    ],
+    "code": [
+      "scripts/fhir-golden-check.mjs",
+      "scripts/fhir-validate.mjs",
+      ".github/workflows/ci.yml"
+    ],
+    "tests": [
+      "scripts/fhir-golden-check.mjs"
+    ]
+  },
+  "FR-F9-01": {
+    "status": "Partial",
+    "why": "Verify flow, status badge and page exist against a MOCK provider. The sandbox provider is unverified and has never been run against the ABDM sandbox.",
+    "adr": [
+      "D42"
+    ],
+    "code": [
+      "apps/api-node/src/abdm/service.ts",
+      "apps/api-node/src/abdm/mockProvider.ts",
+      "apps/api-node/src/abdm/sandboxProvider.ts",
+      "apps/web/src/pages/AbhaPage.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/abha.db.test.ts",
+      "apps/api-node/test/abdm/abdm.test.ts",
+      "apps/web/src/pages/AbhaPage.test.tsx"
+    ]
+  },
+  "FR-F9-02": {
+    "status": "Partial",
+    "why": "RSA encryption step is implemented and tested with a test key; the real ABDM public key and the endpoint details are unverified.",
+    "adr": [
+      "D42"
+    ],
+    "code": [
+      "apps/api-node/src/abdm/encryption.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/abdm/abdm.test.ts"
+    ]
+  },
+  "FR-F9-03": {
+    "status": "Implemented",
+    "why": "An identity guard refuses anything that looks like real identity data outside the mock or sandbox.",
+    "adr": [
+      "D42"
+    ],
+    "code": [
+      "apps/api-node/src/abdm/identityGuard.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/abdm/abdm.test.ts",
+      "apps/api-node/test/abha-mutation.db.test.ts"
+    ]
+  },
+  "FR-F10-01": {
+    "status": "Implemented",
+    "why": "The summary is built from fixed Gujarati phrases and verbatim doctor text; the phrases are unreviewed.",
+    "adr": [
+      "D41"
+    ],
+    "code": [
+      "apps/api-node/src/whatsapp/summary.ts",
+      "apps/api-node/src/whatsapp/phrases.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/whatsapp/summary.test.ts",
+      "apps/api-node/test/whatsapp.db.test.ts"
+    ]
+  },
+  "FR-F10-02": {
+    "status": "Implemented",
+    "why": "Generated from the signed record only; the doctor approves a preview before any send.",
+    "adr": [
+      "D41"
+    ],
+    "code": [
+      "apps/api-node/src/whatsapp/service.ts",
+      "apps/web/src/pages/WhatsAppSummaryPage.tsx"
+    ],
+    "tests": [
+      "apps/api-node/test/whatsapp.db.test.ts",
+      "apps/web/src/pages/WhatsAppSummaryPage.test.tsx"
+    ]
+  },
+  "FR-F10-03": {
+    "status": "Partial",
+    "why": "A Meta client and the stored message exist, but it has never been run against Meta and no Gujarati template is approved; the default sender is a mock.",
+    "adr": [
+      "D41"
+    ],
+    "code": [
+      "apps/api-node/src/whatsapp/provider.ts",
+      "apps/api-node/src/whatsapp/routes.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/whatsapp.db.test.ts",
+      "apps/api-node/test/whatsapp-mutation.db.test.ts"
+    ]
+  },
+  "FR-F10-04": {
+    "status": "Implemented",
+    "why": "Sending needs a signed visit, the whatsapp scope and an approved summary; the mock is the default.",
+    "adr": [
+      "D41"
+    ],
+    "code": [
+      "apps/api-node/src/whatsapp/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/whatsapp.db.test.ts",
+      "apps/api-node/test/whatsapp-mutation.db.test.ts"
+    ]
+  },
+  "FR-F12-01": {
+    "status": "Partial",
+    "why": "The dataset format, validator and converter exist as a command line (bench/); there is no upload screen. 11 acted clips exist, 1 with audio.",
+    "adr": [
+      "D43"
+    ],
+    "code": [
+      "apps/asr-py/app/bench/dataset.py",
+      "bench/schema.json"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_bench_dataset.py"
+    ]
+  },
+  "FR-F12-02": {
+    "status": "Partial",
+    "why": "The runner and cache exist; the LLM-only and hybrid engines are not built, so the three-way comparison cannot run.",
+    "adr": [
+      "D43"
+    ],
+    "code": [
+      "apps/asr-py/app/bench/runner.py",
+      "scripts/bench-rules.mjs"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_bench_runner.py"
+    ]
+  },
+  "FR-F12-03": {
+    "status": "Partial",
+    "why": "Metric code and a CSV exist on the command line; nothing is displayed in a console (PG-17 not built).",
+    "adr": [
+      "D43"
+    ],
+    "code": [
+      "apps/asr-py/app/bench/metrics.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_bench_metrics.py"
+    ]
+  },
+  "FR-F12-04": {
+    "status": "Implemented",
+    "why": "The cache key is engine, version and prompt hash; the frozen split refuses tuning.",
+    "adr": [
+      "D43"
+    ],
+    "code": [
+      "apps/asr-py/app/bench/runner.py",
+      "apps/asr-py/app/bench/split.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_bench_runner.py",
+      "apps/asr-py/tests/test_bench_split.py"
+    ]
+  },
+  "FR-F13-01": {
+    "status": "Planned",
+    "why": "Phase 12A (the real ClinicOS calls) is not started; it needs the owner's approval phrase. Only the adapter interface and the mock exist.",
+    "adr": [
+      "D3",
+      "D14"
+    ],
+    "code": [
+      "apps/api-node/src/clinicos/ClinicOSAdapter.ts"
+    ],
+    "tests": []
+  },
+  "FR-F13-02": {
+    "status": "Implemented",
+    "why": "Mock adapters mirror the verified ClinicOS response shapes and contract tests run against them.",
+    "adr": [
+      "D3"
+    ],
+    "code": [
+      "apps/api-node/src/clinicos/MockClinicOSAdapter.ts",
+      "apps/api-node/src/clinicos/PgMockClinicOSAdapter.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/clinicos-mock.test.ts"
+    ]
+  },
+  "FR-F13-03": {
+    "status": "Planned",
+    "why": "ClinicOSTokenAuth is a stub that throws until Phase 12.",
+    "adr": [
+      "D4",
+      "D12"
+    ],
+    "code": [
+      "apps/api-node/src/auth/ClinicOSTokenAuth.ts"
+    ],
+    "tests": []
+  },
+  "FR-F13-04": {
+    "status": "Planned",
+    "why": "No ClinicOS write exists yet, so the sign-off check, the audit entry and the served-token side effect are not built.",
+    "adr": [
+      "D14"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "NFR-PERF-01": {
+    "status": "Partial",
+    "why": "First transcript result came after 0.5-0.7 s on one clip with Sarvam (docs/ASR.md). That is one observation, not a 95th percentile.",
+    "measured": false,
+    "adr": [
+      "D25"
+    ],
+    "code": [
+      "apps/asr-py/app/ws.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_ws.py"
+    ]
+  },
+  "NFR-PERF-02": {
+    "status": "Partial",
+    "why": "The rules engine runs in process; no latency measurement exists, and the LLM phrasing path is not built.",
+    "measured": false,
+    "adr": [
+      "D34"
+    ],
+    "code": [
+      "packages/rules/src/engine.ts"
+    ],
+    "tests": [
+      "packages/rules/src/engine.test.ts"
+    ]
+  },
+  "NFR-PERF-03": {
+    "status": "Planned",
+    "why": "There is no safety engine to time.",
+    "measured": false,
+    "adr": [
+      "D38"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "NFR-PERF-04": {
+    "status": "Partial",
+    "why": "Build and validate run on sign and in CI; the time was not measured against the 10 s target.",
+    "measured": false,
+    "adr": [
+      "D40"
+    ],
+    "code": [
+      "apps/api-node/src/fhir/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/fhir.db.test.ts"
+    ]
+  },
+  "NFR-SEC-01": {
+    "status": "Implemented",
+    "why": "Every route goes through the route registry with a permission or an explicit public marker; sockets authenticate at the handshake; a role matrix test covers every route. ClinicOS token auth is not built.",
+    "measured": true,
+    "adr": [
+      "D4",
+      "D10",
+      "D20"
+    ],
+    "code": [
+      "apps/api-node/src/auth/permissions.ts",
+      "apps/api-node/src/http/",
+      "apps/api-node/src/realtime/socket.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/rbac.db.test.ts",
+      "apps/api-node/test/auth.db.test.ts",
+      "apps/api-node/test/socket.test.ts",
+      "apps/api-node/test/registry.test.ts"
+    ]
+  },
+  "NFR-SEC-02": {
+    "status": "Planned",
+    "why": "TLS is a hosting step for the owner; the repository ships HSTS and CSP headers in nginx but no TLS termination.",
+    "measured": false,
+    "adr": [
+      "D44"
+    ],
+    "code": [
+      "apps/web/nginx.conf"
+    ],
+    "tests": []
+  },
+  "NFR-SEC-03": {
+    "status": "Partial",
+    "why": "Stored audio is encrypted (ADR-D26). Database contents are not encrypted by the application; disk-level encryption is a deployment matter.",
+    "measured": false,
+    "adr": [
+      "D26"
+    ],
+    "code": [
+      "apps/asr-py/app/storage.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_storage.py",
+      "apps/api-node/test/audio-asset.db.test.ts"
+    ]
+  },
+  "NFR-SEC-04": {
+    "status": "Implemented",
+    "why": "gitleaks in the security workflow, a secrets review, and tests that the logger redacts.",
+    "measured": true,
+    "adr": [
+      "D44"
+    ],
+    "code": [
+      ".github/workflows/security.yml",
+      "apps/api-node/src/logger.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/security-secrets.db.test.ts",
+      "apps/api-node/test/security-static.test.ts"
+    ]
+  },
+  "NFR-SEC-05": {
+    "status": "Partial",
+    "why": "Prompt-injection and disclosure tests exist and the model has no tools; the OWASP LLM Top 10 list was not walked item by item.",
+    "measured": true,
+    "adr": [
+      "D30",
+      "D44"
+    ],
+    "code": [
+      "apps/asr-py/app/extraction/injection.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_prompt_injection.py",
+      "apps/api-node/test/security.db.test.ts"
+    ]
+  },
+  "NFR-SEC-06": {
+    "status": "Implemented",
+    "why": "ASVS Level 1 checklist and STRIDE threat model written, each item with evidence; items without a test are listed as such.",
+    "measured": true,
+    "adr": [
+      "D44"
+    ],
+    "code": [
+      "docs/ASVS_L1.md",
+      "docs/THREAT_MODEL.md"
+    ],
+    "tests": [
+      "apps/api-node/test/security.db.test.ts",
+      "apps/api-node/test/security-static.test.ts",
+      "apps/api-node/test/security-mutation.db.test.ts"
+    ]
+  },
+  "NFR-PRIV-01": {
+    "status": "Implemented",
+    "why": "Audio older than 90 days is purged; boundary tests exist. The 90-day value is an assumption.",
+    "measured": true,
+    "adr": [
+      "D26",
+      "D45"
+    ],
+    "oci": [
+      "OCI-016"
+    ],
+    "code": [
+      "apps/asr-py/app/purge.py"
+    ],
+    "tests": [
+      "apps/asr-py/tests/test_storage.py",
+      "apps/api-node/test/retention.db.test.ts"
+    ]
+  },
+  "NFR-PRIV-02": {
+    "status": "Implemented",
+    "why": "SIMULATED_DATA_ONLY=false is refused at start; a banner is on every page.",
+    "measured": true,
+    "adr": [
+      "D16"
+    ],
+    "code": [
+      "apps/api-node/src/config/env.ts",
+      "apps/web/src/shell/"
+    ],
+    "tests": [
+      "apps/api-node/test/config.test.ts",
+      "apps/web/src/App.test.tsx"
+    ]
+  },
+  "NFR-PRIV-03": {
+    "status": "Partial",
+    "why": "Vendor no-training settings are an account setting the owner must confirm; the repository records the vendors (SBOM) but cannot prove the setting.",
+    "measured": false,
+    "adr": [
+      "D31"
+    ],
+    "code": [
+      "docs/SBOM.md"
+    ],
+    "tests": []
+  },
+  "NFR-REL-01": {
+    "status": "Implemented",
+    "why": "Append-only table with a hash chain and a verify script.",
+    "measured": true,
+    "adr": [
+      "D20"
+    ],
+    "code": [
+      "apps/api-node/src/audit/chain.ts",
+      "scripts/verify-audit-chain.mjs"
+    ],
+    "tests": [
+      "apps/api-node/test/audit-chain.test.ts",
+      "apps/api-node/test/verify-cli.db.test.ts",
+      "apps/api-node/test/audit.db.test.ts"
+    ]
+  },
+  "NFR-REL-02": {
+    "status": "Partial",
+    "why": "When extraction is down the doctor can add facts by hand and edit the transcript; a full typed-notes mode when ASR is down was not tested end to end.",
+    "measured": false,
+    "adr": [
+      "D33"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/FactsPanel.tsx"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/FactsFailure.test.tsx"
+    ]
+  },
+  "NFR-REL-03": {
+    "status": "Partial",
+    "why": "If the SafetyChecks seam reports an error, signing is refused (tested). The engine itself does not exist.",
+    "measured": true,
+    "adr": [
+      "D38"
+    ],
+    "code": [
+      "apps/api-node/src/visits/safety.ts",
+      "apps/api-node/src/visits/service.ts"
+    ],
+    "tests": [
+      "apps/api-node/test/visit-sign.db.test.ts"
+    ]
+  },
+  "NFR-UX-01": {
+    "status": "Partial",
+    "why": "Tested against WCAG 2.1 AA with automated checks plus a keyboard walkthrough on every route; this is not a conformance claim and no screen-reader test was done.",
+    "measured": true,
+    "adr": [
+      "D45"
+    ],
+    "code": [
+      "scripts/e2e.mjs",
+      "scripts/browser-lib.mjs",
+      "docs/A11Y_REPORT.md"
+    ],
+    "tests": [
+      "apps/web/src/pages/pages.a11y.test.tsx",
+      "apps/web/src/a11y.live-regions.test.tsx",
+      "apps/web/src/design/tokens.contrast.test.ts"
+    ]
+  },
+  "NFR-UX-02": {
+    "status": "Partial",
+    "why": "English and Gujarati on all screens; Hindi appears in pathway text only. All Gujarati strings are unreviewed.",
+    "measured": true,
+    "adr": [
+      "D19",
+      "D45"
+    ],
+    "code": [
+      "apps/web/src/i18n/"
+    ],
+    "tests": [
+      "apps/web/src/i18n/i18n.test.ts",
+      "apps/api-node/test/notice-review.test.ts"
+    ]
+  },
+  "NFR-UX-03": {
+    "status": "Implemented",
+    "why": "Layouts are checked at 1280 px and 375 px (no sideways scroll, 44 px targets) in the browser sweep.",
+    "measured": true,
+    "adr": [
+      "D45"
+    ],
+    "code": [
+      "scripts/e2e.mjs"
+    ],
+    "tests": [
+      "scripts/e2e.mjs"
+    ]
+  },
+  "NFR-MAINT-01": {
+    "status": "Partial",
+    "why": "Unit, database, web and Python tests run in CI on every push. The 70 percent coverage target is not recorded anywhere.",
+    "measured": false,
+    "adr": [],
+    "code": [
+      ".github/workflows/ci.yml",
+      "scripts/check.mjs"
+    ],
+    "tests": [
+      "apps/api-node/test/http.test.ts"
+    ]
+  },
+  "NFR-MAINT-02": {
+    "status": "Partial",
+    "why": "docs/TRACEABILITY.md is generated by `npm run trace`, which fails if an Implemented requirement has no code path or test. Several requirements still have no test (listed in the matrix).",
+    "measured": true,
+    "adr": [
+      "D46"
+    ],
+    "code": [
+      "scripts/trace.mjs",
+      "scripts/srs-lib.mjs"
+    ],
+    "tests": [
+      "scripts/trace.test.mjs"
+    ]
+  },
+  "NFR-COMP-01": {
+    "status": "Partial",
+    "why": "FHIR R4 and NRCeS 6.5.0 validated in CI on golden examples. The SNOMED CT licence is not held (OCI-002).",
+    "measured": true,
+    "adr": [
+      "D40"
+    ],
+    "oci": [
+      "OCI-002"
+    ],
+    "code": [
+      "scripts/fhir-golden-check.mjs"
+    ],
+    "tests": [
+      "scripts/fhir-golden-check.mjs"
+    ]
+  },
+  "NFR-COMP-02": {
+    "status": "Implemented",
+    "why": "scripts/sbom.mjs writes docs/SBOM.md and CI has an sbom job; licences marked unknown are listed as such.",
+    "measured": true,
+    "adr": [],
+    "code": [
+      "scripts/sbom.mjs",
+      "docs/SBOM.md"
+    ],
+    "tests": [
+      "scripts/sbom.mjs"
+    ]
+  },
+  "PG-01": {
+    "status": "Implemented",
+    "why": "Login with the dev provider; the ClinicOS token provider is not built.",
+    "adr": [
+      "D4"
+    ],
+    "code": [
+      "apps/web/src/pages/LoginPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/LoginPage.test.tsx"
+    ]
+  },
+  "PG-02": {
+    "status": "Implemented",
+    "why": "Dashboard with the doctor's sessions and drafts.",
+    "adr": [
+      "D21"
+    ],
+    "code": [
+      "apps/web/src/pages/DashboardPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/DashboardPage.test.tsx"
+    ]
+  },
+  "PG-03": {
+    "status": "Implemented",
+    "why": "Phone lookup and quick-create against the stand-in patient table, not the real ClinicOS.",
+    "adr": [
+      "D21"
+    ],
+    "code": [
+      "apps/web/src/pages/PatientsPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/PatientsPage.test.tsx",
+      "apps/api-node/test/patients.db.test.ts"
+    ]
+  },
+  "PG-04": {
+    "status": "Partial",
+    "why": "Page exists; it talks to the MOCK ABHA provider only (see FR-F9-01).",
+    "adr": [
+      "D42"
+    ],
+    "code": [
+      "apps/web/src/pages/AbhaPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/AbhaPage.test.tsx"
+    ]
+  },
+  "PG-05": {
+    "status": "Implemented",
+    "why": "Three scopes, notice in both languages, withdrawal.",
+    "adr": [
+      "D20"
+    ],
+    "code": [
+      "apps/web/src/pages/ConsentPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/ConsentPage.test.tsx"
+    ]
+  },
+  "PG-06": {
+    "status": "Implemented",
+    "why": "Workspace with record bar, transcript, facts, questions, red-flag banner and history.",
+    "adr": [
+      "D27",
+      "D33",
+      "D36",
+      "D38"
+    ],
+    "code": [
+      "apps/web/src/pages/ConsultPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/ConsultPage.test.tsx"
+    ]
+  },
+  "PG-07": {
+    "status": "Partial",
+    "why": "Exists as a panel in the workspace (not a separate route); toy pathways only.",
+    "adr": [
+      "D36"
+    ],
+    "oci": [
+      "OCI-019"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/CandidatesPanel.tsx"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/PathwayAids.test.tsx"
+    ]
+  },
+  "PG-08": {
+    "status": "Partial",
+    "why": "Prescription tab exists (autocomplete, doses, templates); inline safety alerts are not built because the safety engine is not.",
+    "adr": [
+      "D38"
+    ],
+    "code": [
+      "apps/web/src/components/clinical/PrescriptionTab.tsx"
+    ],
+    "tests": [
+      "apps/web/src/components/clinical/PrescriptionTab.test.tsx"
+    ]
+  },
+  "PG-09": {
+    "status": "Implemented",
+    "why": "Checklist of named blockers, AI-versus-final diff, sign with password re-entry.",
+    "adr": [
+      "D39"
+    ],
+    "code": [
+      "apps/web/src/pages/SignPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/SignPage.test.tsx"
+    ]
+  },
+  "PG-10": {
+    "status": "Implemented",
+    "why": "Visit record with the FHIR tab and validator result; the route is /consult/:id/record, not /visits/:id.",
+    "adr": [
+      "D39",
+      "D40"
+    ],
+    "code": [
+      "apps/web/src/pages/VisitRecordPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/VisitRecordPage.test.tsx"
+    ]
+  },
+  "PG-11": {
+    "status": "Implemented",
+    "why": "Gujarati preview, approval and send log; route is /consult/:id/summary.",
+    "adr": [
+      "D41"
+    ],
+    "code": [
+      "apps/web/src/pages/WhatsAppSummaryPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/WhatsAppSummaryPage.test.tsx"
+    ]
+  },
+  "PG-12": {
+    "status": "Implemented",
+    "why": "Medicine table, edit, retire, brands.",
+    "adr": [
+      "D24"
+    ],
+    "code": [
+      "apps/web/src/pages/MedicinesPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/MedicinesPage.test.tsx"
+    ]
+  },
+  "PG-13": {
+    "status": "Implemented",
+    "why": "Template list and builder.",
+    "adr": [
+      "D24"
+    ],
+    "code": [
+      "apps/web/src/pages/TemplatesPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/TemplatesPage.test.tsx"
+    ]
+  },
+  "PG-14": {
+    "status": "Partial",
+    "why": "Read-only pathway viewer; there is no graph editor or version diff (authoring is by command line).",
+    "adr": [
+      "D35"
+    ],
+    "code": [
+      "apps/web/src/pages/PathwaysPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/PathwaysPage.test.tsx",
+      "apps/api-node/test/pathway-viewer.db.test.ts"
+    ]
+  },
+  "PG-15": {
+    "status": "Planned",
+    "why": "Safety rules admin is part of Phase 7, not started.",
+    "adr": [
+      "D38"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "PG-16": {
+    "status": "Implemented",
+    "why": "Filters, CSV export, hash-chain status. The researcher role is not built.",
+    "adr": [
+      "D20"
+    ],
+    "code": [
+      "apps/web/src/pages/AuditPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/AuditPage.test.tsx",
+      "apps/api-node/test/audit-export.db.test.ts"
+    ]
+  },
+  "PG-17": {
+    "status": "Planned",
+    "why": "No console screen; the evaluation harness is a command line (FR-F12).",
+    "adr": [
+      "D43"
+    ],
+    "code": [],
+    "tests": []
+  },
+  "PG-18": {
+    "status": "Implemented",
+    "why": "Language, intended-use text and licence list.",
+    "adr": [
+      "D21"
+    ],
+    "code": [
+      "apps/web/src/pages/SettingsPage.tsx"
+    ],
+    "tests": [
+      "apps/web/src/pages/SettingsPage.test.tsx"
+    ]
+  },
+  "PG-19": {
+    "status": "Implemented",
+    "why": "404, 403 and 500 pages with a main landmark.",
+    "adr": [
+      "D45"
+    ],
+    "code": [
+      "apps/web/src/pages/ErrorPages.tsx"
+    ],
+    "tests": [
+      "apps/web/src/App.test.tsx"
+    ]
+  },
+  "PG-20": {
+    "status": "Implemented",
+    "why": "Request queue and completion at /privacy/requests; the legal rule on signed records is open.",
+    "adr": [
+      "D45"
+    ],
+    "oci": [
+      "OCI-016"
+    ],
+    "code": [
+      "apps/web/src/pages/PrivacyRequestsPage.tsx",
+      "apps/api-node/src/privacy/service.ts"
+    ],
+    "tests": [
+      "apps/web/src/pages/PrivacyRequestsPage.test.tsx",
+      "apps/api-node/test/privacy.db.test.ts",
+      "apps/api-node/test/privacy-mutation.db.test.ts"
+    ]
+  },
+  "_features": {
+    "F11": {
+      "status": "Implemented",
+      "why": "the PRD points to FR-F5-04; the templates pages (PG-13) are built"
+    },
+    "F14": {
+      "status": "Planned",
+      "why": "P2 feature; nothing is built and the PRD lists no requirement rows"
+    },
+    "F15": {
+      "status": "Planned",
+      "why": "P2 feature (prescription PDF); nothing is built and the PRD lists no requirement rows"
+    }
+  },
+  "_metrics": {
+    "M-01": {
+      "measured": "One clip only",
+      "note": "Strict WER 42.6% on one 62.6 s clip by one speaker with Sarvam (docs/ASR.md). A protocol demonstration, not a result."
+    },
+    "M-02": {
+      "measured": "No",
+      "note": "Code and 11 acted texts exist; no gold medicine mentions yet (docs/EVALUATION_PLAN.md)."
+    },
+    "M-03": {
+      "measured": "Small acted/synthetic set only",
+      "note": "The extraction evaluation ran on 13 small acted or synthetic cases with first-draft gold labels (docs/EXTRACTION_EVAL_GUIDE.md). Not a result about real consultations."
+    },
+    "M-04": {
+      "measured": "Small acted/synthetic set only",
+      "note": "Counted by the grounding step on the same small set."
+    },
+    "M-05": {
+      "measured": "Toy pathways only",
+      "note": "No real pathways exist (OCI-019)."
+    },
+    "M-06": {
+      "measured": "Toy pathways only",
+      "note": "As M-05."
+    },
+    "M-07": {
+      "measured": "No",
+      "note": "The LLM-only and hybrid question engines are not built."
+    },
+    "M-08": {
+      "measured": "Toy red-flag cases only",
+      "note": "Needs a clinician's red-flag list (OCI-018)."
+    },
+    "M-09": {
+      "measured": "No",
+      "note": "The safety engine is not built."
+    },
+    "M-10": {
+      "measured": "No",
+      "note": "Needs the safety engine and a clinician reviewer."
+    },
+    "M-11": {
+      "measured": "Golden fixtures only",
+      "note": "The validator runs in CI on golden and broken examples; no signed real visits."
+    },
+    "M-12": {
+      "measured": "No",
+      "note": "Needs timed trials with doctors."
+    },
+    "M-13": {
+      "measured": "No",
+      "note": "Needs 5 to 10 doctor testers; scoring code only."
+    },
+    "M-14": {
+      "measured": "No",
+      "note": "Needs suggestions (Phase 7) and real use."
+    },
+    "M-15": {
+      "measured": "No",
+      "note": "Mock flow only; the ABDM sandbox is not applied for."
+    },
+    "M-16": {
+      "measured": "No",
+      "note": "Mock sender only; no Meta account or template."
+    },
+    "M-17": {
+      "measured": "Drafts only",
+      "note": "Drafts in bench/drafts/, legal and ethical text to be checked by my guide / institution."
+    }
+  }
+}
