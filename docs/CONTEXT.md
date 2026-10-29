@@ -1,34 +1,48 @@
-# CONTEXT.md - VaaniEHR in one read (re-read at every session start)
+# CONTEXT.md — VaaniEHR in one read
 
-Updated 2026-10-14. Sources: `DOCUMENTS/VaaniEHR_PRD.md` (**PRD v1.1**, ADR-D15; requirements; v1.0 archived), `CLINICOS_AUDIT.md` + `CLINICOS_INTEGRATION_FACTS.md` (what ClinicOS really is), `DECISIONS.md` (ADR-D1..D16, settled), `PHASES.md`. PRD v1.1 already reflects the audit; `PRD_ERRATA.md` records which v1.0 statements it fixed (rows 28-29 still open); ClinicOS facts follow the code, VaaniEHR scope follows the PRD (ADR-D5).
+Updated 2026-10-29 from the PRD v1.1, accepted ADRs, `docs/srs-status.json`, `docs/TRACEABILITY.md`, and repository code/tests. The PRD and accepted ADRs govern when a document conflicts with this summary.
 
 ## What VaaniEHR is
-A web module (final-year B.Tech capstone, Marwadi University, course 01CT2801) for a **general-medicine OPD doctor**. It listens to a consultation in Gujarati/Hindi/English (code-switched), turns speech into **structured facts** (with negation and transcript evidence), shows **guideline-grounded follow-up questions** (ICMR STW pathways; rules choose, LLM only maps and phrases), suggests **essential medicines (NLEM)** with **fail-closed safety checks**, and only after **doctor sign-off** builds an **ABDM-ready FHIR R4 record** (NRCeS IG 6.5.0, validated) and a **doctor-approved Gujarati WhatsApp summary**. It also ships a research evaluation console and the acted benchmark "VaaniBench-Gu".
 
-## What it is NOT
-Not a diagnosis tool (it proposes a ranked shortlist, never "diagnoses"); not for real patients, children, pregnancy or emergencies (red flag => refer/stop, no prescription); no own ASR/translation/interaction database; not billing, appointments, queue management, telemedicine, lab integration or offline mode; not clinical software of any kind.
+VaaniEHR is a final-year B.Tech **research prototype** for a general-medicine OPD workflow. It is permanently restricted to **simulated or acted data**, is not for real patients or clinical use, and makes no medical-device claim. A doctor can work through consent, transcript and fact drafts, toy pathway questions, a prescription draft, sign-off, a FHIR-oriented record, and a Gujarati summary draft.
 
-## Intended-use statement (PRD §1.6)
-VaaniEHR is a **research prototype** that helps a registered medical practitioner record a general-medicine OPD consultation and consider guideline-based follow-up questions and essential-medicine options. It **informs** clinical management; it does not diagnose, treat, or replace clinical judgement. Every clinical output requires review and sign-off by the practitioner. It is used **only with acted or simulated consultations** and is not approved for use with real patients. (Class reading under CDSCO guidance is ours, not a ruling.)
+It does not diagnose or treat. A doctor remains responsible for every confirmed fact, working condition, prescription entry, sign-off, and outbound summary. Never add clinical content without an approved cited source and named clinician review.
 
-## Architecture in 10 lines
-1. **Own PostgreSQL 16 + pgvector** database for VaaniEHR (ADR-D1); ClinicOS stays MySQL/Sequelize; no shared database, no cross-DB joins.
-2. VaaniEHR is a **separate service**; it talks to ClinicOS **over REST only** (ADR-D3), never touching its DB. ClinicOS ids (`patients.id`, `users.id`, `visits.id`, UUID strings) are stored as plain references.
-3. `apps/web` React + Vite + Tailwind; `apps/api-node` Express + Socket.IO (auth, sessions, sign-off, FHIR, WhatsApp, audit); `apps/asr-py` FastAPI (VAD, ASR adapters, extraction, summary); `packages/rules` (pathway + safety engines); Docker Compose; GitHub Actions CI.
-4. **`AuthProvider` interface** (ADR-D4): standalone phases use a seeded **dev provider**; Phase 12 adds `ClinicOSTokenAuth`, which validates the user's ClinicOS bearer token via `GET /api/auth/me` with a short cache and checks `status === 'approved'` (needs an approved ClinicOS rate-limit change first, ADR-D12). The ClinicOS `JWT_SECRET` is never shared. Standalone dev tokens: own ~1 h token, VaaniEHR-only secret, `{ sub, role, clinicId, devUser:true }`, no refresh.
-5. **VaaniEHR sockets authenticate at handshake**; no PHI over ClinicOS sockets (ADR-D10). ClinicOS sockets have no auth.
-6. VaaniEHR **owns** patient clinical profile (allergies), doctor profile (registration no., HPR id), consent events, and draft/signed state (ADR-D11). ClinicOS has none of these.
-7. A `VisitRepository` interface hides where signed visits go (own tables now, ClinicOS adapter in Phase 12, written with the doctor's own token after sign-off).
-8. LLMs: schema-constrained output, span-grounded facts, **no tools**, transcript treated as untrusted; the **safety engine fails closed**; audit log append-only and hash-chained.
-9. Mock ClinicOS adapter mirrors the verified real response shapes (e.g. lookup returns 200 `{found:false}`).
-10. Windows dev machine: all scripts Node/Python, PowerShell commands documented (ADR-D9).
+## Architecture and current implementation
 
-## Phases (details and exit criteria in `PHASES.md`)
-0 Orientation (this) | 1 Foundation + design system | 2 Identity, patients, consent, audit | 3 Medicine master + templates | 4 Audio + ASR | 5 Fact extraction | 6 Pathways + guided questions | 7 Suggestions + safety | 8 Workspace + sign-off | 9 FHIR + ABHA sandbox | 10 Gujarati WhatsApp summary | 11 Evaluation + benchmark | 12 ClinicOS integration + hardening | 13 Docs, demo, paper, viva.
-ClinicOS is read-only until the owner types **"Phase 12 integration approved"**.
+- `apps/web`: React doctor/staff/admin interface in English and Gujarati. Gujarati copy remains unreviewed.
+- `apps/api-node`: Express API, standalone development auth, consent/audit/visit/sign-off/FHIR/ABHA/WhatsApp/privacy services, backed by VaaniEHR's own PostgreSQL database.
+- `apps/asr-py`: FastAPI speech/extraction services and benchmark/evaluation tooling.
+- `packages/rules`: toy-pathway authoring and question engine. It also has Phase 7 authoring-preparation validation and immutable-lock utilities; these are **not** a runtime safety engine.
+- ClinicOS remains untouched and is represented only by interfaces and mocks. Real ClinicOS calls require the separate explicit Phase 12 approval and are not implemented.
 
-## Hard rules (full text in `AGENTS.md`)
-1. Acted/simulated data only; keep the "research prototype - simulated data" banner. 2. Nothing is a final record before doctor sign-off. 3. **Never invent clinical content**: use `TODO(source)` + `docs/OPEN_CLINICAL_ITEMS.md`. 4. LLM output is untrusted. 5. No secrets in code/commits; `.env` + `.env.example`; pin versions. 6. Every dependency/model/dataset + licence in `docs/SBOM.md`. 7. Prefer reuse; no features outside the PRD. 8. Small commits `<phase>: <what> [FR-ids]`; cite F/FR/NFR IDs.
+The API rejects `SIMULATED_DATA_ONLY=false`. External providers default to mocks. The mock ABHA flow accepts only test identities; the WhatsApp mock records a send log but transmits nothing; the FHIR validator is optional and validates golden fixtures when configured.
 
-## Where things stand
-Phase 0 is done (owner answers recorded as ADR-D12..D14); Phase 1.1 (foundation) is accepted; Phase 1.2 (design system) is accepted; Phase 2A (backend, ADR-D20) is accepted; Phase 2B (login, dashboard, patients, consent, audit, settings and error pages, plus the small API additions they needed; ADR-D21) is accepted and has had a premium visual pass (ADR-D22); Phase 3A (medicine master from NLEM 2022: importer, API, ADR-D23) is accepted; Phase 3B (template API, PG-12 medicine master page, PG-13 template list and builder, ADR-D24) is built and awaiting owner review: audit, facts, decisions, errata, doc index and this file exist. Still open: PRD-D3 (final five conditions), PRD-D4 (LLM provider), PRD-D5..D7; clinician reviewer, ethics approval and licences/accounts (PRD §16.3) are the owner's. See `DOC_INDEX.md` §3 for document conflicts and §4 for clinical content that must not be invented.
+## Evidence-backed state
+
+The requirement-level source of truth is `docs/SRS.md` and `docs/TRACEABILITY.md`. The status map distinguishes Implemented, Partial, and Planned; historical result files must not be read as current test evidence.
+
+- Consent, audit-chain infrastructure, draft-to-sign workflow, amendments, FHIR bundle construction, privacy-request workflow, ABHA UI/provider abstraction, Gujarati-summary UI, and benchmark tooling are implemented to varying documented limits.
+- FHIR conformance evidence is limited to generated golden/broken fixtures and CI-style checks; it is not proof of external ABDM/NRCeS interoperability.
+- ABHA sandbox credentials/access are unresolved. The mock flow is not an ABDM verification.
+- WhatsApp's real sender is off pending Meta credentials, a template, allowlisted test numbers, and Gujarati review. A mock log is not delivery evidence.
+- The evaluation harness and a small acted/synthetic dataset exist. They are protocol demonstrations, not validated research results or benchmark publication.
+
+## Core gaps and owner dependencies
+
+- **Phase 7 is not implemented.** No clinical suggestion generator or runtime allergy, dose, duplicate-class, interaction, or red-flag safety suite exists. `NotConfiguredSafetyChecks` and the existing sign-off acknowledgement remain unchanged. The proposed five-condition scope and authoring metadata are preparation only; see `docs/SAFETY_RULE_AUTHORING.md` and OCI-022.
+- Real pathways remain absent; committed pathways are labelled toy/test content.
+- Clinician reviewer, faculty/ethics approval, Gujarati reviewer, SNOMED/licensing decisions, ABDM sandbox credentials, and Meta credentials/template are unresolved owner actions.
+- Performance, usability, accessibility with a screen reader, external integration, clinical appropriateness, and research claims have not been externally verified.
+
+## Non-negotiable rules
+
+1. Acted/simulated data only; never place patient data or secrets in Git.
+2. Never invent clinical questions, thresholds, medicines, recommendations, interactions, citations, approvals, or licences. Use `TODO(source)` and `docs/OPEN_CLINICAL_ITEMS.md`.
+3. Do not connect preparation utilities to runtime safety, prescription, signing, or database behavior without separate approval.
+4. Preserve ClinicOS as read-only until the owner explicitly approves Phase 12 integration.
+5. Treat LLM/transcript input as untrusted; doctor review and server-side controls remain authoritative.
+
+## Read next
+
+Start with `README.md`, then `SRS.md`, `TRACEABILITY.md`, `PROGRESS_REPORT.md`, `DECISIONS.md`, `OWNER_ACTIONS.md`, and `OPEN_CLINICAL_ITEMS.md`. `DOC_INDEX.md` is the complete document index.

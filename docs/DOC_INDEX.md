@@ -248,6 +248,37 @@ PRD §5.1 priority summary:
 - **Row 31**: open
 - **Row 32**: open
 - **Row 33**: open
+- **Row 34**: open
+- **Row 35**: open
+- **Row 36**: open
+- **Row 37**: open
+- **Row 38**: open
+- **Row 39**: open
+- **Row 40**: open
+- **Row 41**: open
+- **Row 42**: open
+- **Row 43**: open
+- **Row 44**: open
+- **Row 45**: open
+- **Row 46**: open
+- **Row 47**: open
+- **Row 48**: open
+- **Row 49**: open
+- **Row 50**: open
+- **Row 51**: open
+- **Row 52**: open
+- **Row 53**: open
+- **Row 54**: open
+- **Row 55**: open
+- **Row 56**: open
+- **Row 57**: open
+- **Row 58**: open
+- **Row 59**: open
+- **Row 60**: open
+- **Row 61**: open
+- **Row 62**: open
+- **Row 63**: Open: check the endpoints against the official pages when they load
+- **Row 64**: Open
 
 ### 3.2 Conflicts between the VaaniEHR documents themselves
 

@@ -29,8 +29,8 @@ One line for every document in `docs/`. `npm run check` fails if a file in `docs
 
 | Document | What it is |
 |---|---|
-| [QUICKSTART_TEST.md](QUICKSTART_TEST.md) | Record of following the README quick start on a fresh clone: time taken, what failed or was unclear. |
-| [DEMO_SCRIPT.md](DEMO_SCRIPT.md) | Five-minute viva demo with the mock engine and the toy pathway, plus likely questions. |
+| [QUICKSTART_TEST.md](QUICKSTART_TEST.md) | Fresh-clone quick start verification record, current unverified status, test protocol, and gaps. |
+| [DEMO_SCRIPT.md](DEMO_SCRIPT.md) | Five-minute viva demo script for simulated prototype: step-by-step evidence, mock boundaries, and examiner Q&A. |
 | [ENV_VARS.md](ENV_VARS.md) | Every environment variable: where it is read, secret or not, default. |
 | [EVALUATION_PLAN.md](EVALUATION_PLAN.md) | Which metrics (M-01 to M-17) can be computed now, which need data, a clinician or a study. |
 | [ASR_EVAL_GUIDE.md](ASR_EVAL_GUIDE.md) | How to run the speech-recognition evaluation safely and cheaply. |
