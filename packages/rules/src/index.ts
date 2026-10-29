@@ -17,3 +17,4 @@ export * from './slots.js';
 export * from './types.js';
 export * from './validate.js';
 export * from './linking.js';
+export * from './safety.js';

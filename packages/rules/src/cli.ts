@@ -8,12 +8,19 @@
 //   version <file>                   write the next version of a pathway next to it, as a draft (an active file is never edited)
 //   lint <fileOrDir>                 what is still missing before sign-off; exit 1 on errors, warnings never fail
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, relative, sep } from 'node:path';
 import { runCases, type CaseFile } from './cases.js';
 import { DEFAULT_ENGINE_CONFIG } from './config.js';
 import { coverageReport } from './coverage.js';
 import { lintPathway, nextVersion, scaffoldPathway } from './lint.js';
 import { loadPathwayDir, lockActive } from './loader.js';
+import {
+  SAFETY_LOCK_FILE,
+  safetyRuleSetHash,
+  validateSafetyLockFile,
+  validateSafetyRuleSetCollection,
+  type SafetyLockFile,
+} from './safety.js';
 
 const [command, ...rest] = process.argv.slice(2);
 const flags = new Map<string, string>();
@@ -48,7 +55,149 @@ function readCases(dir: string): CaseFile[] {
     .map((n) => JSON.parse(readFileSync(join(dir, n), 'utf8')) as CaseFile);
 }
 
+function safetyFiles(target: string): string[] {
+  if (!existsSync(target)) throw new Error(`${target}: path does not exist`);
+  if (statSync(target).isFile()) {
+    if (!target.endsWith('.safety.json'))
+      throw new Error(`${target}: expected a .safety.json file or directory`);
+    return [target];
+  }
+  const walk = (dir: string): string[] =>
+    readdirSync(dir)
+      .sort()
+      .flatMap((name) => {
+        const full = join(dir, name);
+        return statSync(full).isDirectory()
+          ? walk(full)
+          : name.endsWith('.safety.json')
+            ? [full]
+            : [];
+      });
+  return walk(target);
+}
+
+function readSafetyLock(dir: string): { lock?: SafetyLockFile; problems: string[] } {
+  const file = join(dir, SAFETY_LOCK_FILE);
+  if (!existsSync(file)) return { problems: [] };
+  try {
+    const raw = JSON.parse(readFileSync(file, 'utf8')) as unknown;
+    const finding = validateSafetyLockFile(raw, file);
+    return finding.errors.length
+      ? { problems: finding.errors }
+      : { lock: raw as SafetyLockFile, problems: [] };
+  } catch {
+    return { problems: [`${file}: not valid JSON`] };
+  }
+}
+
+function lintSafety(target: string): number {
+  try {
+    const files = safetyFiles(target);
+    if (files.length === 0) {
+      out(`${target}: no .safety.json files found`);
+      return 1;
+    }
+    const root = statSync(target).isDirectory() ? target : dirname(target);
+    const items: { file: string; data: unknown }[] = [];
+    const errors: string[] = [];
+    for (const file of files)
+      try {
+        items.push({
+          file: relative(root, file).split(sep).join('/'),
+          data: JSON.parse(readFileSync(file, 'utf8')),
+        });
+      } catch {
+        errors.push(`${file}: not valid JSON`);
+      }
+    const lockRead = readSafetyLock(root);
+    errors.push(...lockRead.problems);
+    const finding = validateSafetyRuleSetCollection(items, lockRead.lock, true);
+    errors.push(...finding.errors);
+    for (const error of errors) out(`ERROR ${error}`);
+    for (const warning of finding.warnings) out(`WARN  ${warning}`);
+    out(`${files.length} safety file(s), ${errors.length} error(s)`);
+    return errors.length ? 1 : 0;
+  } catch (error) {
+    out(`ERROR ${error instanceof Error ? error.message : String(error)}`);
+    return 2;
+  }
+}
+
+function lockSafety(target: string): number {
+  try {
+    if (!existsSync(target) || !statSync(target).isDirectory()) {
+      out(`ERROR ${target}: safety-lock requires an existing directory`);
+      return 2;
+    }
+    const files = safetyFiles(target);
+    if (files.length === 0) {
+      out(`ERROR ${target}: no .safety.json files found`);
+      return 1;
+    }
+    const items: { file: string; data: unknown }[] = [];
+    const errors: string[] = [];
+    for (const file of files)
+      try {
+        items.push({
+          file: relative(target, file).split(sep).join('/'),
+          data: JSON.parse(readFileSync(file, 'utf8')),
+        });
+      } catch {
+        errors.push(`${file}: not valid JSON`);
+      }
+    const existing = readSafetyLock(target);
+    errors.push(...existing.problems);
+    const base = validateSafetyRuleSetCollection(items);
+    errors.push(...base.errors);
+    const approved = items.filter(
+      (item) => (item.data as { status?: unknown }).status === 'clinically_approved',
+    );
+    if (approved.length === 0)
+      errors.push(`${target}: no clinically_approved rule sets may be locked`);
+    if (errors.length) {
+      for (const error of errors) out(`ERROR ${error}`);
+      return 1;
+    }
+    const lock: SafetyLockFile = existing.lock ?? {
+      schema_version: 1,
+      source: 'Safety rule-set content hashes (immutability lock); not clinical approval.',
+      locks: {},
+    };
+    const added: string[] = [];
+    for (const item of approved) {
+      const data = item.data as { id: string; version: number };
+      const key = `${data.id}@${data.version}`;
+      const entry = { file: item.file, sha256: safetyRuleSetHash(item.data) };
+      const prior = lock.locks[key];
+      if (prior && (prior.file !== entry.file || prior.sha256 !== entry.sha256))
+        errors.push(
+          `${key}: existing immutable lock differs; create a new rule-set version instead`,
+        );
+      else if (!prior) {
+        lock.locks[key] = entry;
+        added.push(key);
+      }
+    }
+    if (errors.length) {
+      for (const error of errors) out(`ERROR ${error}`);
+      return 1;
+    }
+    if (added.length === 0) {
+      out('locked: nothing new (existing locks were not overwritten)');
+      return 0;
+    }
+    writeFileSync(join(target, SAFETY_LOCK_FILE), `${JSON.stringify(lock, null, 2)}\n`, 'utf8');
+    out(`locked: ${added.join(', ')} (hashing does not confer clinical approval)`);
+    return 0;
+  } catch (error) {
+    out(`ERROR ${error instanceof Error ? error.message : String(error)}`);
+    return 2;
+  }
+}
+
 function main(): number {
+  if (command === 'safety-lint' && args[0]) return lintSafety(args[0]);
+  if (command === 'safety-lock' && args[0]) return lockSafety(args[0]);
   if (command === 'validate' && args[0]) {
     const loaded = loadPathwayDir(args[0], {
       allowTest: flags.has('--allow-test'),
@@ -161,7 +310,7 @@ function main(): number {
     return errors === 0 ? 0 : 1;
   }
   out(
-    'usage: cli.ts validate|lock|cases|coverage|new|version|lint ... (see the header of packages/rules/src/cli.ts)',
+    'usage: cli.ts validate|lock|cases|coverage|new|version|lint|safety-lint|safety-lock ... (see the header of packages/rules/src/cli.ts)',
   );
   return 2;
 }

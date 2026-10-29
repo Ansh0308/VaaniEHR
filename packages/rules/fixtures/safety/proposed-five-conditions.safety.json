@@ -1,0 +1,11 @@
+{
+  "id": "proposed_five_conditions",
+  "schema_version": 1,
+  "version": 1,
+  "status": "draft",
+  "source": {
+    "citation": "TODO(source): faculty guide and practising general-medicine clinician must confirm proposed scope"
+  },
+  "clinical_review": { "state": "unreviewed" },
+  "rules": []
+}

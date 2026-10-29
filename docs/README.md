@@ -45,6 +45,7 @@ One line for every document in `docs/`. `npm run check` fails if a file in `docs
 | [ENTITY_LINKING.md](ENTITY_LINKING.md) | How facts are linked to concepts and why embeddings were not added. |
 | [PATHWAYS.md](PATHWAYS.md) | Pathway files, the question engine and how to test them. |
 | [PATHWAY_AUTHORING.md](PATHWAY_AUTHORING.md) | From a source passage to a signed-off pathway. |
+| [SAFETY_RULE_AUTHORING.md](SAFETY_RULE_AUTHORING.md) | Phase 7 preparation: source, review, version and approval gates; no clinical rules are active. |
 | [MEDICINES.md](MEDICINES.md) | The medicine master (NLEM 2022 import) and its rules. |
 | [NLEM_SPOTCHECK.md](NLEM_SPOTCHECK.md) | Spot-check of the NLEM extraction, for the viva. |
 | [FHIR_MAPPING.md](FHIR_MAPPING.md) | How a signed visit maps to the NRCeS FHIR profiles. |

@@ -33,6 +33,8 @@
     "pathway:version": "node --import tsx packages/rules/src/cli.ts version",
     "pathway:lint": "node --import tsx packages/rules/src/cli.ts lint",
     "pathways:coverage": "node --import tsx packages/rules/src/cli.ts coverage",
+    "safety:lint": "node --import tsx packages/rules/src/cli.ts safety-lint",
+    "safety:lock": "node --import tsx packages/rules/src/cli.ts safety-lock",
     "pathways:cases": "node --import tsx packages/rules/src/cli.ts cases",
     "eval:extraction": "node scripts/py.mjs exec -m app.eval_extraction",
     "list:simulated-text": "node scripts/py.mjs exec -m app.simulated_text list",
