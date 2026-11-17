@@ -541,6 +541,7 @@ def execute(opts: Options, deps: Deps) -> dict:
         "not_cached_and_not_run": {"asr": len(planned_asr), "extraction": len(planned_llm)},
         "skipped_no_audio": skipped_no_audio,
         "tuning_state": state,
+        "extras": extras,
     }
     return {
         "manifest": manifest,

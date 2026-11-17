@@ -241,6 +241,8 @@ def summary_md(run: dict) -> str:
                 out += [
                     "- **FHIR Validation (M-11)**:",
                     f"  - Validation Level: {value.get('validation_level', 'Structural check')}",
+                    f"  - Source: `{value.get('source_file', 'unknown')}` (last modified: {value.get('source_mtime', 'unknown')})",
+                    f"  - Provenance: {value.get('provenance_note', 'Historical fixture summary')}",
                     f"  - Total Bundles: {value.get('bundles', 0)} (Good: {value.get('good_bundles', 0)}, Broken: {value.get('broken_bundles', 0)})",
                     f"  - Good Bundle Pass Rate: {pct(value.get('good_pass_rate'))}",
                     f"  - Broken Bundle Catch Rate: {pct(value.get('broken_catch_rate'))}",

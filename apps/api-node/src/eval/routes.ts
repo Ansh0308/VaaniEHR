@@ -23,7 +23,7 @@ const runSummaryShape = z.object({
 
 const runDetailShape = z.object({
   id: z.string(),
-  manifest: z.record(z.unknown()),
+  manifest: z.record(z.string(), z.unknown()),
   summaryMd: z.string(),
   tableTex: z.string(),
   cellsCsv: z.string(),

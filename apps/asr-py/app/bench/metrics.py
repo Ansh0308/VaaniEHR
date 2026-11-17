@@ -20,6 +20,7 @@ import statistics
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.eval_extraction import OVERLAP, Case, Counts, GoldFact, locate, overlap, score
@@ -562,6 +563,11 @@ def read_fhir_summary_json(path: Path) -> dict[str, object]:
     total = len(data)
     all_zero_err = sum(1 for item in data if int(item.get("errors", 0)) == 0)
 
+    try:
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
+    except Exception:
+        mtime = None
+
     return {
         "bundles": total,
         "valid_bundles": all_zero_err,
@@ -575,6 +581,9 @@ def read_fhir_summary_json(path: Path) -> dict[str, object]:
         "total_warnings": total_warnings,
         "validation_level": "HL7 validator 7.0.3 against ABDM FHIR IG ndhm.in 6.5.0 profile & terminology definitions",
         "conformance_disclaimer": "Automated verification against synthetic golden fixtures only; formal ABDM/NRCeS production sandboxing has not been conducted.",
+        "source_file": str(path.as_posix()),
+        "source_mtime": mtime,
+        "provenance_note": "Historical precomputed offline fixture summary from CI (not newly executed during benchmark run)",
     }
 
 

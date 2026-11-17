@@ -711,7 +711,7 @@ export function EvaluationPage() {
                 <CheckCircle2 className="size-6 text-positive" />
                 <h3 className="font-semibold text-ink">{t('eval:conformance.fhirCardTitle')}</h3>
               </div>
-              <StateBadge state="clear" label="100% Conforming" />
+              <StateBadge state="clear" label={t('eval:conformance.fhirBadge')} />
             </div>
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between">
@@ -725,6 +725,10 @@ export function EvaluationPage() {
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.validatorLabel')}</span>
                 <span className="font-mono font-medium text-ink">{t('eval:conformance.validatorEngine')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-body">{t('eval:conformance.provenanceLabel')}</span>
+                <span className="font-mono text-xs text-body">{t('eval:conformance.provenanceNote')}</span>
               </div>
               <div className="mt-3 rounded-md bg-sunken p-3 text-xs text-body">
                 {t('eval:conformance.fhirDisclaimer')}
