@@ -123,3 +123,25 @@ export interface VerifyResult {
   firstBrokenSeq?: number;
   reason?: string;
 }
+
+export interface EvalRunSummary {
+  id: string;
+  runAt: string | null;
+  split: string | null;
+  datasetHash: string | null;
+  codeCommit: string | null;
+  casesCount: number;
+  hasErrorsCsv: boolean;
+}
+
+export interface EvalRunDetail {
+  id: string;
+  manifest: Record<string, unknown>;
+  summaryMd: string;
+  tableTex: string;
+  cellsCsv: string;
+  casesCsv: string;
+  questionsCsv: string;
+  errorsCsv: string;
+}
+

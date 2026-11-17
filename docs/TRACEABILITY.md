@@ -8,17 +8,17 @@
 
 | Kind | Requirements | Implemented | Partial | Planned |
 |---|---|---|---|---|
-| FR | 61 | 36 | 18 | 7 |
+| FR | 61 | 37 | 17 | 7 |
 | NFR | 23 | 8 | 13 | 2 |
-| PG | 20 | 14 | 4 | 2 |
+| PG | 20 | 15 | 4 | 1 |
 
 Test files referenced by a requirement whose recorded result is a failure: 0.
 
 ## Gaps (every requirement with no test, no code, or only partial coverage)
 
-- **No test:** FR-F6-01 (Planned), FR-F6-02 (Planned), FR-F6-03 (Planned), FR-F6-04 (Planned), FR-F13-01 (Planned), FR-F13-03 (Planned), FR-F13-04 (Planned), NFR-PERF-03 (Planned), NFR-SEC-02 (Planned), NFR-PRIV-03 (Partial), PG-15 (Planned), PG-17 (Planned)
-- **No code reference:** FR-F6-01 (Planned), FR-F6-02 (Planned), FR-F6-04 (Planned), FR-F13-04 (Planned), NFR-PERF-03 (Planned), PG-15 (Planned), PG-17 (Planned)
-- **Partial (the reason is in docs/SRS.md):** FR-F2-02 (Partial), FR-F2-05 (Partial), FR-F3-01 (Partial), FR-F3-04 (Partial), FR-F4-01 (Partial), FR-F4-05 (Partial), FR-F5-03 (Partial), FR-F5-05 (Partial), FR-F6-05 (Partial), FR-F7-02 (Partial), FR-F7-04 (Partial), FR-F8-04 (Partial), FR-F9-01 (Partial), FR-F9-02 (Partial), FR-F10-03 (Partial), FR-F12-01 (Partial), FR-F12-02 (Partial), FR-F12-03 (Partial), NFR-PERF-01 (Partial), NFR-PERF-02 (Partial), NFR-PERF-04 (Partial), NFR-SEC-03 (Partial), NFR-SEC-05 (Partial), NFR-PRIV-03 (Partial), NFR-REL-02 (Partial), NFR-REL-03 (Partial), NFR-UX-01 (Partial), NFR-UX-02 (Partial), NFR-MAINT-01 (Partial), NFR-MAINT-02 (Partial), NFR-COMP-01 (Partial), PG-04 (Partial), PG-07 (Partial), PG-08 (Partial), PG-14 (Partial)
+- **No test:** FR-F6-01 (Planned), FR-F6-02 (Planned), FR-F6-03 (Planned), FR-F6-04 (Planned), FR-F13-01 (Planned), FR-F13-03 (Planned), FR-F13-04 (Planned), NFR-PERF-03 (Planned), NFR-SEC-02 (Planned), NFR-PRIV-03 (Partial), PG-15 (Planned)
+- **No code reference:** FR-F6-01 (Planned), FR-F6-02 (Planned), FR-F6-04 (Planned), FR-F13-04 (Planned), NFR-PERF-03 (Planned), PG-15 (Planned)
+- **Partial (the reason is in docs/SRS.md):** FR-F2-02 (Partial), FR-F2-05 (Partial), FR-F3-01 (Partial), FR-F3-04 (Partial), FR-F4-01 (Partial), FR-F4-05 (Partial), FR-F5-03 (Partial), FR-F5-05 (Partial), FR-F6-05 (Partial), FR-F7-02 (Partial), FR-F7-04 (Partial), FR-F8-04 (Partial), FR-F9-01 (Partial), FR-F9-02 (Partial), FR-F10-03 (Partial), FR-F12-01 (Partial), FR-F12-02 (Partial), NFR-PERF-01 (Partial), NFR-PERF-02 (Partial), NFR-PERF-04 (Partial), NFR-SEC-03 (Partial), NFR-SEC-05 (Partial), NFR-PRIV-03 (Partial), NFR-REL-02 (Partial), NFR-REL-03 (Partial), NFR-UX-01 (Partial), NFR-UX-02 (Partial), NFR-MAINT-01 (Partial), NFR-MAINT-02 (Partial), NFR-COMP-01 (Partial), PG-04 (Partial), PG-07 (Partial), PG-08 (Partial), PG-14 (Partial)
 
 ## Matrix
 
@@ -77,10 +77,10 @@ Test files referenced by a requirement whose recorded result is a failure: 0.
 | FR-F10-02 | 4.10 | Implemented | `apps/api-node/src/whatsapp/service.ts`<br>`apps/web/src/pages/WhatsAppSummaryPage.tsx` | `apps/api-node/test/whatsapp.db.test.ts` (20)<br>`apps/web/src/pages/WhatsAppSummaryPage.test.tsx` (13) | pass 20; pass 13 | ADR-D41 |
 | FR-F10-03 | 4.10 | Partial | `apps/api-node/src/whatsapp/provider.ts`<br>`apps/api-node/src/whatsapp/routes.ts` | `apps/api-node/test/whatsapp.db.test.ts` (20)<br>`apps/api-node/test/whatsapp-mutation.db.test.ts` (1) | pass 20; pass 10 | ADR-D41 |
 | FR-F10-04 | 4.10 | Implemented | `apps/api-node/src/whatsapp/service.ts` | `apps/api-node/test/whatsapp.db.test.ts` (20)<br>`apps/api-node/test/whatsapp-mutation.db.test.ts` (1) | pass 20; pass 10 | ADR-D41 |
-| FR-F12-01 | 4.12 | Partial | `apps/asr-py/app/bench/dataset.py`<br>`bench/schema.json` | `apps/asr-py/tests/test_bench_dataset.py` (10) | pass 10 | ADR-D43 |
-| FR-F12-02 | 4.12 | Partial | `apps/asr-py/app/bench/runner.py`<br>`scripts/bench-rules.mjs` | `apps/asr-py/tests/test_bench_runner.py` (16) | pass 16 | ADR-D43 |
-| FR-F12-03 | 4.12 | Partial | `apps/asr-py/app/bench/metrics.py` | `apps/asr-py/tests/test_bench_metrics.py` (13) | pass 13 | ADR-D43 |
-| FR-F12-04 | 4.12 | Implemented | `apps/asr-py/app/bench/runner.py`<br>`apps/asr-py/app/bench/split.py` | `apps/asr-py/tests/test_bench_runner.py` (16)<br>`apps/asr-py/tests/test_bench_split.py` (12) | pass 16; pass 13 | ADR-D43 |
+| FR-F12-01 | 4.12 | Partial | `apps/asr-py/app/bench/dataset.py`<br>`bench/schema.json` | `apps/asr-py/tests/test_bench_dataset.py` (11) | pass 10 | ADR-D43 |
+| FR-F12-02 | 4.12 | Partial | `apps/asr-py/app/bench/runner.py`<br>`scripts/bench-rules.mjs` | `apps/asr-py/tests/test_bench_runner.py` (17) | pass 16 | ADR-D43 |
+| FR-F12-03 | 4.12 | Implemented | `apps/asr-py/app/bench/metrics.py`<br>`apps/asr-py/app/bench/export.py`<br>`apps/api-node/src/eval/routes.ts`<br>`apps/web/src/pages/EvaluationPage.tsx` | `apps/asr-py/tests/test_bench_metrics.py` (19)<br>`apps/api-node/test/eval.test.ts` (6)<br>`apps/web/src/pages/EvaluationPage.test.tsx` (8) | pass 13; no result recorded | ADR-D43 |
+| FR-F12-04 | 4.12 | Implemented | `apps/asr-py/app/bench/runner.py`<br>`apps/asr-py/app/bench/split.py` | `apps/asr-py/tests/test_bench_runner.py` (17)<br>`apps/asr-py/tests/test_bench_split.py` (12) | pass 16; pass 13 | ADR-D43 |
 | FR-F13-01 | 4.13 | Planned | `apps/api-node/src/clinicos/ClinicOSAdapter.ts` | - | - | ADR-D3, ADR-D14 |
 | FR-F13-02 | 4.13 | Implemented | `apps/api-node/src/clinicos/MockClinicOSAdapter.ts`<br>`apps/api-node/src/clinicos/PgMockClinicOSAdapter.ts` | `apps/api-node/test/clinicos-mock.test.ts` (9) | pass 9 | ADR-D3 |
 | FR-F13-03 | 4.13 | Planned | `apps/api-node/src/auth/ClinicOSTokenAuth.ts` | - | - | ADR-D4, ADR-D12 |
@@ -124,7 +124,7 @@ Test files referenced by a requirement whose recorded result is a failure: 0.
 | PG-14 | 5 | Partial | `apps/web/src/pages/PathwaysPage.tsx` | `apps/web/src/pages/PathwaysPage.test.tsx` (10)<br>`apps/api-node/test/pathway-viewer.db.test.ts` (6) | pass 10; pass 6 | ADR-D35 |
 | PG-15 | 5 | Planned | - | - | - | ADR-D38 |
 | PG-16 | 5 | Implemented | `apps/web/src/pages/AuditPage.tsx` | `apps/web/src/pages/AuditPage.test.tsx` (17)<br>`apps/api-node/test/audit-export.db.test.ts` (19) | pass 17; pass 27 | ADR-D20 |
-| PG-17 | 5 | Planned | - | - | - | ADR-D43 |
+| PG-17 | 5 | Implemented | `apps/web/src/pages/EvaluationPage.tsx`<br>`apps/api-node/src/eval/routes.ts` | `apps/web/src/pages/EvaluationPage.test.tsx` (8)<br>`apps/api-node/test/eval.test.ts` (6) | no result recorded | ADR-D43 |
 | PG-18 | 5 | Implemented | `apps/web/src/pages/SettingsPage.tsx` | `apps/web/src/pages/SettingsPage.test.tsx` (7) | pass 7 | ADR-D21 |
 | PG-19 | 5 | Implemented | `apps/web/src/pages/ErrorPages.tsx` | `apps/web/src/App.test.tsx` (13) | pass 27 | ADR-D45 |
 | PG-20 | 5 | Implemented | `apps/web/src/pages/PrivacyRequestsPage.tsx`<br>`apps/api-node/src/privacy/service.ts` | `apps/web/src/pages/PrivacyRequestsPage.test.tsx` (7)<br>`apps/api-node/test/privacy.db.test.ts` (9)<br>`apps/api-node/test/privacy-mutation.db.test.ts` (3) | pass 7; pass 9; pass 3 | ADR-D45, OCI-016 |

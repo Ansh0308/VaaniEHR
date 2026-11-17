@@ -249,13 +249,30 @@ def _optional(d: dict, cid: str, r: Report) -> None:
         r.err(cid, "condition_label must be text or null")
 
 
+def resolve_path(p: Path | str | None) -> Path | None:
+    """Resolves a path: if relative and not existing in cwd, checks against REPO_ROOT."""
+    if p is None:
+        return None
+    path = Path(p)
+    if path.is_absolute():
+        return path
+    if path.exists():
+        return path
+    candidate = REPO_ROOT / path
+    if candidate.exists():
+        return candidate
+    return path
+
+
 # ------------------------------------------------------------------ folders
 def case_files(folder: Path) -> list[Path]:
-    return sorted(p for p in folder.glob("*.json") if p.is_file())
+    resolved = resolve_path(folder) or folder
+    return sorted(p for p in resolved.glob("*.json") if p.is_file())
 
 
 def load_cases(folder: Path) -> list[dict]:
-    return [json.loads(p.read_text(encoding="utf-8")) for p in case_files(folder)]
+    resolved = resolve_path(folder) or folder
+    return [json.loads(p.read_text(encoding="utf-8")) for p in case_files(resolved)]
 
 
 def dataset_hash(cases: Iterable[dict]) -> str:
@@ -270,16 +287,18 @@ def dataset_hash(cases: Iterable[dict]) -> str:
 
 
 def validate_folder(folder: Path, audio_root: Path | None = None) -> Report:
+    resolved_folder = resolve_path(folder) or folder
+    resolved_audio_root = resolve_path(audio_root)
     r = Report()
     seen: set[str] = set()
-    for path in case_files(folder):
+    for path in case_files(resolved_folder):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             r.err(path.name, f"cannot read: {exc}")
             continue
         r.cases += 1
-        validate_case(data, audio_root, r)
+        validate_case(data, resolved_audio_root, r)
         cid = data.get("id") if isinstance(data, dict) else None
         if cid and path.stem != cid:
             r.err(str(cid), f"file name {path.name} must match the id")
@@ -299,13 +318,16 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
     )
     ap.add_argument("--audio-root", type=Path, default=None)
     args = ap.parse_args(argv)
-    folders = args.dir or [DATA_ROOT / "cases", BENCH_ROOT / "fixtures"]
+    raw_folders = args.dir or [DATA_ROOT / "cases", BENCH_ROOT / "fixtures"]
+    folders = [resolve_path(f) or f for f in raw_folders]
     total = Report()
     for folder in folders:
         if not folder.exists():
             out(f"(skipped, not found: {folder})")
             continue
-        audio_root = args.audio_root or (DATA_ROOT if folder.parent == DATA_ROOT else None)
+        audio_root = resolve_path(args.audio_root) if args.audio_root else (
+            DATA_ROOT if (folder.parent == DATA_ROOT or folder.resolve().parent == DATA_ROOT.resolve()) else None
+        )
         r = validate_folder(folder, audio_root)
         total.errors += r.errors
         total.warnings += r.warnings

@@ -868,16 +868,21 @@
     ]
   },
   "FR-F12-03": {
-    "status": "Partial",
-    "why": "Metric code and a CSV exist on the command line; nothing is displayed in a console (PG-17 not built).",
+    "status": "Implemented",
+    "why": "Phase 11 metrics computed (WER/CER by explicit language, error taxonomy, FHIR conformance, offline safety scoring) and displayed in Research Evaluation Console (PG-17).",
     "adr": [
       "D43"
     ],
     "code": [
-      "apps/asr-py/app/bench/metrics.py"
+      "apps/asr-py/app/bench/metrics.py",
+      "apps/asr-py/app/bench/export.py",
+      "apps/api-node/src/eval/routes.ts",
+      "apps/web/src/pages/EvaluationPage.tsx"
     ],
     "tests": [
-      "apps/asr-py/tests/test_bench_metrics.py"
+      "apps/asr-py/tests/test_bench_metrics.py",
+      "apps/api-node/test/eval.test.ts",
+      "apps/web/src/pages/EvaluationPage.test.tsx"
     ]
   },
   "FR-F12-04": {
@@ -1505,13 +1510,19 @@
     ]
   },
   "PG-17": {
-    "status": "Planned",
-    "why": "No console screen; the evaluation harness is a command line (FR-F12).",
+    "status": "Implemented",
+    "why": "Research Evaluation Console at /research/eval for admin and researcher roles with run selector, metrics matrix, language ASR, error taxonomy browser, FHIR and offline safety cards, and exports.",
     "adr": [
       "D43"
     ],
-    "code": [],
-    "tests": []
+    "code": [
+      "apps/web/src/pages/EvaluationPage.tsx",
+      "apps/api-node/src/eval/routes.ts"
+    ],
+    "tests": [
+      "apps/web/src/pages/EvaluationPage.test.tsx",
+      "apps/api-node/test/eval.test.ts"
+    ]
   },
   "PG-18": {
     "status": "Implemented",

@@ -136,3 +136,11 @@ def test_the_converter_builds_valid_cases_from_the_own_voice_files(tmp_path: Pat
     assert case["gold_facts"][0]["segment"] == 1
     assert case["condition_label"] is None and case["expected_questions"] == []
     assert validate_case(case).errors == []
+
+
+def test_relative_path_resolution_relative_to_repo_root():
+    lines: list[str] = []
+    # Test passing relative path 'bench/fixtures' which is not in apps/asr-py cwd
+    assert main(["--dir", "bench/fixtures"], out=lines.append) == 0
+    assert any("3 case(s)" in line and "0 error(s)" in line for line in lines)
+

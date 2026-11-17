@@ -20,6 +20,7 @@ import { SignPage } from './pages/SignPage';
 import { VisitRecordPage } from './pages/VisitRecordPage';
 import { WhatsAppSummaryPage } from './pages/WhatsAppSummaryPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { EvaluationPage } from './pages/EvaluationPage';
 import { TemplateBuilderPage } from './pages/TemplateBuilderPage';
 import { TemplatesPage } from './pages/TemplatesPage';
 import { AppShell } from './shell/AppShell';
@@ -92,6 +93,7 @@ export default function App() {
           </Route>
           <Route element={<RequireRole roles={['admin', 'researcher']} />}>
             <Route path="admin/audit" element={<AuditPage />} />
+            <Route path="research/eval" element={<EvaluationPage />} />
           </Route>
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="admin/medicines" element={<MedicinesPage />} />

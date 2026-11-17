@@ -23,6 +23,7 @@ import { sessionRoutes } from '../sessions/routes.js';
 import { templateRoutes } from '../templates/routes.js';
 import { transcriptRoutes } from '../transcripts/routes.js';
 import { visitRoutes } from '../visits/routes.js';
+import { evalRoutes } from '../eval/routes.js';
 
 export const API_PREFIX = '/api/v1';
 
@@ -49,5 +50,6 @@ export function allRoutes(config: Config): RouteDef[] {
     ...whatsappRoutes(config),
     ...abhaRoutes(),
     ...privacyRoutes(),
+    ...evalRoutes(),
   ];
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -184,3 +185,123 @@ def test_agreement_from_two_annotation_files(tmp_path: Path):
     assert out["shared_facts"] == 2 and out["only_one_annotator"] == 1
     assert out["overlap_rate"] == pytest.approx(2 / 3)
     assert out["kappa_labels"] == pytest.approx(0.0)
+
+
+def test_language_segmented_asr_explicit_tags():
+    segments = [
+        ("doctor line one", "doctor line one", "en"),
+        ("મને તાવ છે", "મને તાવ છે", "gu"),
+        ("मुझे बुखार है", "मुझे बुखार था", "hi"),  # 1 substitution in 3 words
+        ("mixed sentence text", "mixed sentence text", "mixed"),
+        ("no tag line", "no tag line", None),
+    ]
+    out = m.language_segmented_asr(segments, script_aware=True)
+    overall = out["overall"]
+    assert overall["segments"] == 5
+    by_lang = out["by_language"]
+    assert "en" in by_lang and "gu" in by_lang and "hi" in by_lang
+    assert by_lang["en"]["wer"] == 0.0
+    assert by_lang["gu"]["wer"] == 0.0
+    assert by_lang["hi"]["word_errors"] == 1
+    assert out["mixed_segments"]["segments"] == 1
+    assert out["unannotated_segments"]["segments"] == 1
+    assert "protocol_note" in out
+
+
+def test_extraction_error_categorization_and_precedence():
+    lines = ["I have fever since two days", "no cough at all"]
+    golds = [
+        gold("symptom", "have fever"),
+        gold("duration", "since two days"),
+        gold("symptom", "no cough", negated=True),
+    ]
+    predicted = [
+        m.pred_fact("symptom", "fever", "have fever", label="s1"),  # TP
+        m.pred_fact("symptom", "cough", "no cough", negated=False, label="s2"),  # Negation mismatch
+        m.pred_fact("symptom", "rash", "rash on skin"),  # Unsupported (not in text)
+        m.pred_fact("symptom", "", ""),  # Unsupported (empty quote)
+        m.pred_fact("symptom", "feverish", "have fever", label="s1"),  # Duplicate prediction
+    ]
+    errors = m.categorize_case_errors("case1", golds, lines, predicted)
+    cats = [e.error_category for e in errors]
+    assert "unsupported_fact" in cats
+    assert "negation_mismatch" in cats
+    assert "duplicate_prediction" in cats
+    assert "missed_fact" in cats  # "since two days" was missed
+    # Check that negation mismatch was recorded accurately
+    neg_err = next(e for e in errors if e.error_category == "negation_mismatch")
+    assert neg_err.gold_type == "symptom" and neg_err.predicted_type == "symptom"
+
+
+def test_extraction_error_type_mismatch_and_span_misalignment():
+    lines = ["patient took paracetamol 500mg daily"]
+    # Gold is medication, predicted extracted as symptom
+    golds = [gold("medication", "paracetamol 500mg")]
+    predicted = [
+        m.pred_fact("symptom", "paracetamol", "paracetamol 500mg"),  # Type mismatch
+    ]
+    errors = m.categorize_case_errors("case2", golds, lines, predicted)
+    assert len(errors) == 1
+    assert errors[0].error_category == "type_mismatch"
+    assert errors[0].gold_type == "medication" and errors[0].predicted_type == "symptom"
+
+    # Span misalignment test: same type, partial overlap (neither substring of other, overlap < 0.6)
+    golds_span = [gold("symptom", "fever and nausea")]
+    predicted_span = [m.pred_fact("symptom", "fever", "fever with chills")]
+    lines_span = ["patient reports fever and nausea and fever with chills"]
+    errors_span = m.categorize_case_errors("case3", golds_span, lines_span, predicted_span)
+    assert len(errors_span) > 0
+    span_err = next((e for e in errors_span if e.error_category == "span_misalignment"), None)
+    assert span_err is not None or any(e.error_category in ("missed_fact", "unmatched_prediction") for e in errors_span)
+
+
+def test_extraction_error_empty_inputs():
+    assert m.categorize_case_errors("empty", [], [], []) == []
+    # Only gold -> all missed
+    golds = [gold("symptom", "fever")]
+    errs = m.categorize_case_errors("gold_only", golds, ["fever"], [])
+    assert len(errs) == 1 and errs[0].error_category == "missed_fact"
+
+
+def test_safety_alert_metrics():
+    cases = [
+        {
+            "case_id": "c1",
+            "expected_alerts": ["ALERT_01", "ALERT_02"],
+            "detected_alerts": ["ALERT_01"],  # 1 TP, 1 FN
+        },
+        {
+            "case_id": "c2",
+            "expected_alerts": ["ALERT_03"],
+            "detected_alerts": ["ALERT_03", "ALERT_EXTRA"],  # 1 TP, 1 FP
+        },
+    ]
+    res = m.safety_alert_metrics(cases)
+    assert res["cases_evaluated"] == 2
+    overall = res["overall"]
+    assert overall["tp"] == 2
+    assert overall["fp"] == 1
+    assert overall["fn"] == 1
+    assert overall["precision"] == pytest.approx(2 / 3)
+    assert overall["recall"] == pytest.approx(2 / 3)
+    assert "synthetic harness verification" in res["safety_label"]
+
+
+def test_read_fhir_summary_json(tmp_path: Path):
+    summary_file = tmp_path / "golden-summary.json"
+    data = [
+        {"file": "good-1.json", "errors": 0, "warnings": 1},
+        {"file": "good-2.json", "errors": 0, "warnings": 0},
+        {"file": "broken-1.json", "errors": 3, "warnings": 2},
+    ]
+    summary_file.write_text(json.dumps(data), encoding="utf-8")
+    res = m.read_fhir_summary_json(summary_file)
+    assert res["bundles"] == 3
+    assert res["good_bundles"] == 2
+    assert res["good_valid"] == 2
+    assert res["good_pass_rate"] == 1.0
+    assert res["broken_bundles"] == 1
+    assert res["broken_caught"] == 1
+    assert res["broken_catch_rate"] == 1.0
+    assert "HL7 validator" in str(res["validation_level"])
+

@@ -17,6 +17,7 @@ import enCommon from './locales/en/common.json';
 import enDesign from './locales/en/design.json';
 import enShell from './locales/en/shell.json';
 import enTemplates from './locales/en/templates.json';
+import enEval from './locales/en/eval.json';
 import guAudit from './locales/gu/audit.json';
 import guAuth from './locales/gu/auth.json';
 import guClinical from './locales/gu/clinical.json';
@@ -32,6 +33,7 @@ import guCommon from './locales/gu/common.json';
 import guDesign from './locales/gu/design.json';
 import guShell from './locales/gu/shell.json';
 import guTemplates from './locales/gu/templates.json';
+import guEval from './locales/gu/eval.json';
 
 export const LANGUAGES = ['en', 'gu'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -51,6 +53,7 @@ export const NAMESPACES = [
   'consult',
   'pathways',
   'privacy',
+  'eval',
 ] as const;
 
 export const resources = {
@@ -70,6 +73,7 @@ export const resources = {
     templates: enTemplates,
     consult: enConsult,
     privacy: enPrivacy,
+    eval: enEval,
   },
   gu: {
     common: guCommon,
@@ -87,6 +91,7 @@ export const resources = {
     templates: guTemplates,
     consult: guConsult,
     privacy: guPrivacy,
+    eval: guEval,
   },
 } as const;
 

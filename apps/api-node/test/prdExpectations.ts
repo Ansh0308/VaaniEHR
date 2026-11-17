@@ -111,4 +111,7 @@ export const PRD_EXPECTED: Record<
   'PUT /templates/:id': ['doctor', 'admin'],
   'POST /templates/:id/retire': ['doctor', 'admin'],
   'POST /templates/:id/restore': ['doctor', 'admin'],
+  // Evaluation benchmark runs (PG-17, FR-F12-03): admin and researcher read run artifacts
+  'GET /eval/runs': ['admin', 'researcher'],
+  'GET /eval/runs/:id': ['admin', 'researcher'],
 };

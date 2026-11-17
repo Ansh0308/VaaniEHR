@@ -324,6 +324,7 @@ def test_result_files_carry_the_manifest_and_the_confidence_note(
         "cells.csv",
         "cases.csv",
         "questions.csv",
+        "errors.csv",
         "summary.md",
         "table.tex",
     } <= names
@@ -370,3 +371,20 @@ def test_the_real_rules_engine_on_the_toy_pathways():
     assert by["synthetic01"]["top1"] == "toy_condition_a"
     assert by["synthetic02"]["red_flag_stopped"] is True
     assert out["pathways"] == "toy" and out["config"]["question_cap"] == 8
+
+
+def test_errors_csv_and_language_metrics_in_outputs(opts: runner.Options, tmp_path: Path):
+    opts.fixtures = True
+    run = runner.execute(opts, deps())
+    out_dir = tmp_path / "eval_out"
+    export.write_outputs(out_dir, run)
+    errors_csv = out_dir / "errors.csv"
+    assert errors_csv.exists()
+    content = errors_csv.read_text(encoding="utf-8")
+    assert "error_category" in content
+    manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert "asr_languages" in manifest
+    assert "protocol_note" in manifest["asr_languages"]
+    summary_md = (out_dir / "summary.md").read_text(encoding="utf-8")
+    assert "Fact Extraction Error Taxonomy" in summary_md or "ASR Performance" in summary_md
+

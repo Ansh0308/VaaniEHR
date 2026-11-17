@@ -362,6 +362,8 @@ const fixture = (route: RouteDef): Call => {
     'POST /medicines/:id/brands/:brandId/retire': {
       path: `/medicines/${medicineId}/brands/${brandId}/retire`,
     },
+    'GET /eval/runs': { path: '/eval/runs' },
+    'GET /eval/runs/:id': { path: '/eval/runs/sample-results' },
   };
   const call = calls[key];
   if (!call) throw new Error(`rbac.db.test: no request fixture for ${key}; add one`);

@@ -275,7 +275,7 @@ The PRD gives F11 no requirement rows (the PRD points to FR-F5-04; the templates
 |---|---|---|---|---|
 | FR-F12-01 | Upload acted audio with gold labels (transcript, facts, question path, prescription). | Partial | The dataset format, validator and converter exist as a command line (bench/); there is no upload screen. 11 acted clips exist, 1 with audio. | ADR-D43 |
 | FR-F12-02 | Run the same case through three pipelines: rules-only, LLM-only, hybrid. | Partial | The runner and cache exist; the LLM-only and hybrid engines are not built, so the three-way comparison cannot run. | ADR-D43 |
-| FR-F12-03 | Compute and display the metrics in §14; export CSV for the paper. | Partial | Metric code and a CSV exist on the command line; nothing is displayed in a console (PG-17 not built). | ADR-D43 |
+| FR-F12-03 | Compute and display the metrics in §14; export CSV for the paper. | Implemented | Phase 11 metrics computed (WER/CER by explicit language, error taxonomy, FHIR conformance, offline safety scoring) and displayed in Research Evaluation Console (PG-17). | ADR-D43 |
 | FR-F12-04 | Store engine versions and prompts for every run (reproducibility). | Implemented | The cache key is engine, version and prompt hash; the frozen split refuses tuning. | ADR-D43 |
 
 ### 4.13 F13 - ClinicOS integration (P1)
@@ -321,7 +321,7 @@ Routes in the "Route in the PRD" column are the PRD's; where the built route dif
 | PG-14 | Guideline pathway admin | `/admin/pathways` | admin | P1 | Partial | Read-only pathway viewer; there is no graph editor or version diff (authoring is by command line). | ADR-D35 |
 | PG-15 | Safety rules admin | `/admin/safety` | admin | P1 | Planned | Safety rules admin is part of Phase 7, not started. | ADR-D38 |
 | PG-16 | Audit log | `/admin/audit` | admin, researcher | P1 | Implemented | Filters, CSV export, hash-chain status. The researcher role is not built. | ADR-D20 |
-| PG-17 | Evaluation console | `/research/eval` | researcher, admin | P1 | Planned | No console screen; the evaluation harness is a command line (FR-F12). | ADR-D43 |
+| PG-17 | Evaluation console | `/research/eval` | researcher, admin | P1 | Implemented | Research Evaluation Console at /research/eval for admin and researcher roles with run selector, metrics matrix, language ASR, error taxonomy browser, FHIR and offline safety cards, and exports. | ADR-D43 |
 | PG-18 | Settings and About | `/settings` | all | P1 | Implemented | Language, intended-use text and licence list. | ADR-D21 |
 | PG-19 | Error pages | `/404`, `/500` | all | P0 | Implemented | 404, 403 and 500 pages with a main landmark. | ADR-D45 |
 | PG-20 | Consent withdrawal / data erasure request | `/privacy/request` | staff, admin | P2 | Implemented | Request queue and completion at /privacy/requests; the legal rule on signed records is open. | ADR-D45, OCI-016 |

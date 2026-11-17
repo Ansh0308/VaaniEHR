@@ -32,6 +32,8 @@ import shellEn from './locales/en/shell.json';
 import shellGu from './locales/gu/shell.json';
 import templatesEn from './locales/en/templates.json';
 import templatesGu from './locales/gu/templates.json';
+import evalEn from './locales/en/eval.json';
+import evalGu from './locales/gu/eval.json';
 
 type Tree = { [key: string]: string | Tree };
 
@@ -51,6 +53,7 @@ const RESOURCES: Record<string, { en: Tree; gu: Tree }> = {
   templates: { en: templatesEn, gu: templatesGu },
   consult: { en: consultEn, gu: consultGu },
   privacy: { en: privacyEn, gu: privacyGu },
+  eval: { en: evalEn, gu: evalGu },
 };
 
 function flatten(tree: Tree, prefix = ''): Record<string, string> {

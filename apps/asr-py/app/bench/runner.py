@@ -374,6 +374,8 @@ def execute(opts: Options, deps: Deps) -> dict:
 
     cells: list[dict] = []
     case_rows: list[dict] = []
+    all_error_rows: list[dict] = []
+    segment_pairs: list[tuple[str, str, str | None]] = []
     skipped_no_audio = 0
     for asr in opts.asr:
         texts: dict[str, list[str]] = {}
@@ -381,8 +383,11 @@ def execute(opts: Options, deps: Deps) -> dict:
         cer_rows: dict[str, metrics.ErrorCount] = {}
         asr_version = "gold-transcript"
         for case in cases:
+            case_segs = case.get("transcript", {}).get("segments", [])
             if asr == "gold":
                 texts[case["id"]] = gold_lines(case)
+                for seg in case_segs:
+                    segment_pairs.append((seg.get("text", ""), seg.get("text", ""), seg.get("lang")))
                 continue
             hyp = transcribe(case, asr, opts, deps, cache, spend, planned_asr)
             if hyp is None:
@@ -395,6 +400,10 @@ def execute(opts: Options, deps: Deps) -> dict:
             ref, hypo = " ".join(gold_lines(case)), " ".join(hyp["lines"])
             wer_rows[case["id"]] = metrics.wer_count(ref, hypo)
             cer_rows[case["id"]] = metrics.cer_count(ref, hypo)
+            for si, seg in enumerate(case_segs):
+                ref_txt = seg.get("text", "")
+                hyp_txt = hyp["lines"][si] if si < len(hyp.get("lines", [])) else ""
+                segment_pairs.append((ref_txt, hyp_txt, seg.get("lang")))
         used = [c for c in cases if c["id"] in texts]
         for variant in opts.variants:
             packed = []
@@ -420,6 +429,11 @@ def execute(opts: Options, deps: Deps) -> dict:
                         fact if asr == "gold" else fact.model_copy(update={"segment_label": None})
                     )
                 packed.append((gold_facts(case), lines, predicted))
+                # Deterministic error categorization for errors.csv export
+                errs = metrics.categorize_case_errors(case["id"], gold_facts(case), lines, predicted)
+                for e in errs:
+                    all_error_rows.append(e.to_dict())
+
                 medicine_gold += [m["generic"] for m in case.get("medicine_mentions", [])]
                 medicine_pred += [p.value for p in predicted if p.type == "current_medicine"]
                 one = metrics.fact_scores([packed[-1]])
@@ -466,6 +480,24 @@ def execute(opts: Options, deps: Deps) -> dict:
     extras: dict[str, object] = {}
     if opts.fhir_csv:
         extras["fhir_validity"] = metrics.fhir_validity(metrics.read_fhir_csv(opts.fhir_csv))
+    elif opts.fixtures or any(c.get("synthetic") for c in cases):
+        golden_summary = REPO_ROOT / "data" / "fhir" / "out" / "golden-summary.json"
+        if golden_summary.exists():
+            extras["fhir_validity"] = metrics.read_fhir_summary_json(golden_summary)
+
+    safety_cases = [c for c in cases if "expected_alerts" in c or c.get("synthetic")]
+    if safety_cases:
+        cases_for_scoring = []
+        for sc in safety_cases:
+            if "expected_alerts" in sc:
+                cases_for_scoring.append({
+                    "case_id": sc["id"],
+                    "expected_alerts": sc.get("expected_alerts", []),
+                    "detected_alerts": sc.get("detected_alerts", []),
+                })
+        if cases_for_scoring:
+            extras["safety_scoring"] = metrics.safety_alert_metrics(cases_for_scoring)
+
     if opts.time_csv:
         extras["time_to_sign"] = metrics.time_to_sign(opts.time_csv)
     if opts.questionnaire_csv:
@@ -477,6 +509,13 @@ def execute(opts: Options, deps: Deps) -> dict:
         share = script_share(" ".join(gold_lines(c)))
         for k in scripts:
             scripts[k] += share[k]
+
+    asr_languages = (
+        metrics.language_segmented_asr(segment_pairs, script_aware=True)
+        if segment_pairs
+        else None
+    )
+
     manifest = {
         "run_at": deps.now().isoformat(timespec="seconds"),
         "code_commit": _git_commit(),
@@ -489,6 +528,7 @@ def execute(opts: Options, deps: Deps) -> dict:
         "asr_engines": {
             a: next((x["asr_version"] for x in cells if x["asr"] == a), None) for a in opts.asr
         },
+        "asr_languages": asr_languages,
         "llm": {"provider": provider.name, "model": provider.model},
         "prompt_hashes": {v: prompt_hash_of(v) for v in opts.variants},
         "pathways": {
@@ -509,6 +549,7 @@ def execute(opts: Options, deps: Deps) -> dict:
         ),
         "cells": cells,
         "case_rows": case_rows,
+        "error_rows": all_error_rows,
         "questions": questions,
         "extras": extras,
     }

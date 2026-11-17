@@ -14,13 +14,15 @@ Normalisation (so the numbers can be compared and reproduced):
 from __future__ import annotations
 
 import csv
+import json
+import re
 import statistics
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.eval_extraction import Case, Counts, GoldFact, locate, score
+from app.eval_extraction import OVERLAP, Case, Counts, GoldFact, locate, overlap, score
 from app.extraction.models import PredictedFact
 from app.extraction.text import normalise
 from app.wer import align, to_gujarati, wer_report, words
@@ -37,6 +39,9 @@ class ErrorCount:
         return (
             self.errors / self.reference_units if self.reference_units else float(self.errors > 0)
         )
+
+
+VALID_EXPLICIT_LANGS = {"gu", "hi", "en"}
 
 
 def _chars(text: str, script_aware: bool) -> list[str]:
@@ -59,6 +64,75 @@ def wer_count(reference: str, hypothesis: str, script_aware: bool = True) -> Err
 def micro(counts: Iterable[ErrorCount]) -> ErrorCount:
     items = list(counts)
     return ErrorCount(sum(c.reference_units for c in items), sum(c.errors for c in items))
+
+
+def language_segmented_asr(
+    segments: Sequence[tuple[str, str, str | None]],
+    script_aware: bool = True,
+) -> dict[str, object]:
+    """Computes overall WER/CER and breaks down metrics strictly by validated explicit segment language tags.
+
+    segments = [(reference, hypothesis, explicit_lang_tag), ...]
+    Does NOT use script detection to guess spoken language (script != language).
+    Segments explicitly tagged 'gu', 'hi', or 'en' are under 'by_language'.
+    Segments tagged 'mixed' are under 'mixed_segments'.
+    Segments with missing or unrecognized tags are under 'unannotated_segments'.
+    """
+    total_words: list[ErrorCount] = []
+    total_chars: list[ErrorCount] = []
+    by_lang_words: dict[str, list[ErrorCount]] = defaultdict(list)
+    by_lang_chars: dict[str, list[ErrorCount]] = defaultdict(list)
+    mixed_words: list[ErrorCount] = []
+    mixed_chars: list[ErrorCount] = []
+    unannotated_words: list[ErrorCount] = []
+    unannotated_chars: list[ErrorCount] = []
+
+    for ref, hyp, tag in segments:
+        w = wer_count(ref, hyp, script_aware=script_aware)
+        c = cer_count(ref, hyp, script_aware=script_aware)
+        total_words.append(w)
+        total_chars.append(c)
+
+        norm_tag = (tag or "").strip().lower() or None
+        if norm_tag in VALID_EXPLICIT_LANGS:
+            by_lang_words[norm_tag].append(w)
+            by_lang_chars[norm_tag].append(c)
+        elif norm_tag == "mixed":
+            mixed_words.append(w)
+            mixed_chars.append(c)
+        else:
+            unannotated_words.append(w)
+            unannotated_chars.append(c)
+
+    def pack_group(w_list: list[ErrorCount], c_list: list[ErrorCount]) -> dict[str, float | int]:
+        wm = micro(w_list)
+        cm = micro(c_list)
+        return {
+            "segments": len(w_list),
+            "reference_words": wm.reference_units,
+            "word_errors": wm.errors,
+            "wer": wm.rate,
+            "reference_chars": cm.reference_units,
+            "char_errors": cm.errors,
+            "cer": cm.rate,
+        }
+
+    overall = pack_group(total_words, total_chars)
+    by_lang = {lang: pack_group(by_lang_words[lang], by_lang_chars[lang]) for lang in sorted(by_lang_words)}
+    mixed = pack_group(mixed_words, mixed_chars)
+    unannotated = pack_group(unannotated_words, unannotated_chars)
+
+    return {
+        "overall": overall,
+        "by_language": by_lang,
+        "mixed_segments": mixed,
+        "unannotated_segments": unannotated,
+        "protocol_note": (
+            "Language breakdowns rely strictly on explicit segment annotations ('gu', 'hi', 'en', 'mixed'). "
+            "Script detection was not used to assign spoken language. "
+            "Results on small synthetic/acted test cases are protocol demonstrations and not statistically meaningful population performance."
+        ),
+    }
 
 
 # ------------------------------------------------------------------ M-02 medicine names
@@ -151,6 +225,253 @@ def fact_scores(
     }
 
 
+@dataclass(frozen=True)
+class ExtractionErrorRecord:
+    case_id: str
+    error_category: str
+    gold_type: str
+    predicted_type: str
+    gold_quote: str
+    predicted_quote: str
+    detail: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "case_id": self.case_id,
+            "error_category": self.error_category,
+            "gold_type": self.gold_type,
+            "predicted_type": self.predicted_type,
+            "gold_quote": self.gold_quote,
+            "predicted_quote": self.predicted_quote,
+            "detail": self.detail,
+        }
+
+
+def _p_line(p: PredictedFact) -> int | None:
+    if p.segment_label and re.fullmatch(r"s\d+", p.segment_label):
+        return int(p.segment_label[1:]) - 1
+    return None
+
+
+def categorize_case_errors(
+    case_id: str,
+    gold: Sequence[GoldFact],
+    lines: Sequence[str],
+    predicted: Sequence[PredictedFact],
+) -> list[ExtractionErrorRecord]:
+    """Deterministic extraction error classification avoiding double counting.
+
+    Precedence order:
+      1. Unsupported / missing evidence quotes (ungrounded hallucination / span error)
+      2. True positives and negation mismatches (matching type & span overlap >= OVERLAP)
+      3. Type mismatches (unmatched predictions and gold with span overlap >= OVERLAP)
+      4. Span misalignments (unmatched predictions and gold with same type, 0 < overlap < OVERLAP)
+      5. Duplicate predictions (multiple predictions claiming same evidence span)
+      6. Unmatched predictions (extra predictions not in gold standard)
+      7. Missed facts (gold facts without corresponding prediction)
+    """
+    gold_list = [GoldFact(g.type, g.value, g.negated, g.uncertain, g.quote) for g in gold]
+    locate(gold_list, list(lines))
+    norm_lines = [normalise(l).casefold() for l in lines]
+
+    errors: list[ExtractionErrorRecord] = []
+    valid_predictions: list[tuple[int, PredictedFact]] = []
+
+    # Step 1: Detect unsupported / missing evidence
+    for pi, p in enumerate(predicted):
+        quote = normalise(p.evidence_quote).casefold() if p.evidence_quote else ""
+        if not quote:
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="unsupported_fact",
+                    gold_type="",
+                    predicted_type=p.type,
+                    gold_quote="",
+                    predicted_quote="",
+                    detail="Missing or empty evidence quote",
+                )
+            )
+        elif not any(quote in line for line in norm_lines):
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="unsupported_fact",
+                    gold_type="",
+                    predicted_type=p.type,
+                    gold_quote="",
+                    predicted_quote=p.evidence_quote,
+                    detail="Evidence quote not verbatim in transcript text",
+                )
+            )
+        else:
+            valid_predictions.append((pi, p))
+
+    # Step 2: Level 1 match: same type and overlap >= OVERLAP
+    tp_pairs = []
+    for pi, p in valid_predictions:
+        p_line = _p_line(p)
+        for gi, g in enumerate(gold_list):
+            if p.type == g.type and (p_line is None or g.line is None or p_line == g.line):
+                o = overlap(p.evidence_quote, g.quote)
+                if o >= OVERLAP:
+                    tp_pairs.append((o, pi, gi))
+
+    tp_pairs.sort(key=lambda x: (x[0], -x[1], -x[2]), reverse=True)
+    used_p: set[int] = set()
+    used_g: set[int] = set()
+
+    for _o, pi, gi in tp_pairs:
+        if pi in used_p or gi in used_g:
+            continue
+        used_p.add(pi)
+        used_g.add(gi)
+        p = predicted[pi]
+        g = gold_list[gi]
+        if p.negated != g.negated:
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="negation_mismatch",
+                    gold_type=g.type,
+                    predicted_type=p.type,
+                    gold_quote=g.quote,
+                    predicted_quote=p.evidence_quote,
+                    detail=f"Negation mismatch: gold negated={g.negated}, predicted negated={p.negated}",
+                )
+            )
+
+    # Step 3: Level 2 match: type mismatch (different types, but overlap >= OVERLAP)
+    type_pairs = []
+    for pi, p in valid_predictions:
+        if pi in used_p:
+            continue
+        p_line = _p_line(p)
+        for gi, g in enumerate(gold_list):
+            if gi in used_g:
+                continue
+            if p_line is None or g.line is None or p_line == g.line:
+                o = overlap(p.evidence_quote, g.quote)
+                if o >= OVERLAP:
+                    type_pairs.append((o, pi, gi))
+
+    type_pairs.sort(key=lambda x: (x[0], -x[1], -x[2]), reverse=True)
+    for _o, pi, gi in type_pairs:
+        if pi in used_p or gi in used_g:
+            continue
+        used_p.add(pi)
+        used_g.add(gi)
+        p = predicted[pi]
+        g = gold_list[gi]
+        errors.append(
+            ExtractionErrorRecord(
+                case_id=case_id,
+                error_category="type_mismatch",
+                gold_type=g.type,
+                predicted_type=p.type,
+                gold_quote=g.quote,
+                predicted_quote=p.evidence_quote,
+                detail=f"Type mismatch on evidence: gold type '{g.type}' vs predicted '{p.type}'",
+            )
+        )
+
+    # Step 4: Level 3 match: span misalignment (same type, 0.0 < overlap < OVERLAP)
+    span_pairs = []
+    for pi, p in valid_predictions:
+        if pi in used_p:
+            continue
+        p_line = _p_line(p)
+        for gi, g in enumerate(gold_list):
+            if gi in used_g:
+                continue
+            if p.type == g.type and (p_line is None or g.line is None or p_line == g.line):
+                o = overlap(p.evidence_quote, g.quote)
+                if 0.0 < o < OVERLAP:
+                    span_pairs.append((o, pi, gi))
+
+    span_pairs.sort(key=lambda x: (x[0], -x[1], -x[2]), reverse=True)
+    for o, pi, gi in span_pairs:
+        if pi in used_p or gi in used_g:
+            continue
+        used_p.add(pi)
+        used_g.add(gi)
+        p = predicted[pi]
+        g = gold_list[gi]
+        errors.append(
+            ExtractionErrorRecord(
+                case_id=case_id,
+                error_category="span_misalignment",
+                gold_type=g.type,
+                predicted_type=p.type,
+                gold_quote=g.quote,
+                predicted_quote=p.evidence_quote,
+                detail=f"Partial quote overlap ({o:.2f} < {OVERLAP}) for type '{g.type}'",
+            )
+        )
+
+    # Step 5: Level 4: remaining unmatched predictions
+    for pi, p in valid_predictions:
+        if pi in used_p:
+            continue
+        is_dup = any(
+            p.type == predicted[other_pi].type
+            and overlap(p.evidence_quote, predicted[other_pi].evidence_quote) >= OVERLAP
+            for other_pi in used_p
+        )
+        if is_dup:
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="duplicate_prediction",
+                    gold_type="",
+                    predicted_type=p.type,
+                    gold_quote="",
+                    predicted_quote=p.evidence_quote,
+                    detail=f"Duplicate prediction of type '{p.type}' with overlapping evidence",
+                )
+            )
+        else:
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="unmatched_prediction",
+                    gold_type="",
+                    predicted_type=p.type,
+                    gold_quote="",
+                    predicted_quote=p.evidence_quote,
+                    detail=f"Predicted fact of type '{p.type}' not in gold standard",
+                )
+            )
+
+    # Step 6: Level 5: remaining unmatched gold facts
+    for gi, g in enumerate(gold_list):
+        if gi in used_g:
+            continue
+        errors.append(
+            ExtractionErrorRecord(
+                case_id=case_id,
+                error_category="missed_fact",
+                gold_type=g.type,
+                predicted_type="",
+                gold_quote=g.quote,
+                predicted_quote="",
+                detail=f"Gold fact of type '{g.type}' ('{g.quote}') was not extracted",
+            )
+        )
+
+    return errors
+
+
+def categorize_extraction_errors(
+    cases: Sequence[tuple[str, Sequence[GoldFact], Sequence[str], Sequence[PredictedFact]]],
+) -> list[ExtractionErrorRecord]:
+    """Categorizes extraction errors across multiple cases."""
+    all_errors: list[ExtractionErrorRecord] = []
+    for cid, gold, lines, predicted in cases:
+        all_errors.extend(categorize_case_errors(cid, gold, lines, predicted))
+    return all_errors
+
+
 # ------------------------------------------------------------------ M-05..M-08 toy pathways
 def pathway_scores(results: Sequence[dict]) -> dict[str, float | int | None]:
     """results = [{label, top1, top3, questions_to_top3}] from the TOY rules-only simulation."""
@@ -190,6 +511,132 @@ def read_fhir_csv(path: Path) -> list[int]:
     """CSV with a header; columns `bundle` and `errors` (a count)."""
     with path.open(newline="", encoding="utf-8") as handle:
         return [int(row["errors"]) for row in csv.DictReader(handle)]
+
+
+def read_fhir_summary_json(path: Path) -> dict[str, object]:
+    """Reads the JSON output of the HL7 FHIR validator (e.g. data/fhir/out/golden-summary.json)
+
+    and computes golden-fixture conformance metrics.
+    """
+    if not path.exists():
+        return {
+            "bundles": 0,
+            "valid": 0,
+            "percent": None,
+            "status": f"not run ({path.name} not found)",
+            "validation_level": "structural/schema checks only",
+        }
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, list):
+        return {
+            "bundles": 0,
+            "valid": 0,
+            "percent": None,
+            "status": "invalid summary format",
+            "validation_level": "structural/schema checks only",
+        }
+
+    good_bundles = 0
+    good_valid = 0
+    broken_bundles = 0
+    broken_caught = 0
+    total_errors = 0
+    total_warnings = 0
+
+    for item in data:
+        fname = str(item.get("file", ""))
+        errs = int(item.get("errors", 0))
+        warns = int(item.get("warnings", 0))
+        total_errors += errs
+        total_warnings += warns
+        is_good = "good-" in fname
+        if is_good:
+            good_bundles += 1
+            if errs == 0:
+                good_valid += 1
+        else:
+            broken_bundles += 1
+            if errs > 0:
+                broken_caught += 1
+
+    total = len(data)
+    all_zero_err = sum(1 for item in data if int(item.get("errors", 0)) == 0)
+
+    return {
+        "bundles": total,
+        "valid_bundles": all_zero_err,
+        "good_bundles": good_bundles,
+        "good_valid": good_valid,
+        "good_pass_rate": good_valid / good_bundles if good_bundles else None,
+        "broken_bundles": broken_bundles,
+        "broken_caught": broken_caught,
+        "broken_catch_rate": broken_caught / broken_bundles if broken_bundles else None,
+        "total_errors": total_errors,
+        "total_warnings": total_warnings,
+        "validation_level": "HL7 validator 7.0.3 against ABDM FHIR IG ndhm.in 6.5.0 profile & terminology definitions",
+        "conformance_disclaimer": "Automated verification against synthetic golden fixtures only; formal ABDM/NRCeS production sandboxing has not been conducted.",
+    }
+
+
+# ------------------------------------------------------------------ M-09 Offline safety scoring
+def safety_alert_metrics(
+    cases: Sequence[dict],
+) -> dict[str, object]:
+    """Offline precision/recall scoring for expected vs detected safety alert identifiers on synthetic fixtures.
+
+    Each case in cases: {"case_id": str, "expected_alerts": Sequence[str], "detected_alerts": Sequence[str]}
+    Uses synthetic test labels only. Does NOT introduce clinical rules or alter the runtime safety engine.
+    """
+    total_tp = total_fp = total_fn = 0
+    per_case: list[dict[str, object]] = []
+
+    for c in cases:
+        cid = str(c.get("case_id", "?"))
+        exp = set(c.get("expected_alerts") or [])
+        det = set(c.get("detected_alerts") or [])
+        tp = len(exp & det)
+        fp = len(det - exp)
+        fn = len(exp - det)
+        total_tp += tp
+        total_fp += fp
+        total_fn += fn
+        p = tp / (tp + fp) if tp + fp else 0.0
+        r = tp / (tp + fn) if tp + fn else 0.0
+        f1 = 2 * p * r / (p + r) if p + r else 0.0
+        per_case.append(
+            {
+                "case_id": cid,
+                "expected": sorted(exp),
+                "detected": sorted(det),
+                "tp": tp,
+                "fp": fp,
+                "fn": fn,
+                "precision": p,
+                "recall": r,
+                "f1": f1,
+            }
+        )
+
+    p_overall = total_tp / (total_tp + total_fp) if total_tp + total_fp else 0.0
+    r_overall = total_tp / (total_tp + total_fn) if total_tp + total_fn else 0.0
+    f1_overall = 2 * p_overall * r_overall / (p_overall + r_overall) if p_overall + r_overall else 0.0
+
+    return {
+        "cases_evaluated": len(cases),
+        "total_expected": total_tp + total_fn,
+        "total_detected": total_tp + total_fp,
+        "overall": {
+            "tp": total_tp,
+            "fp": total_fp,
+            "fn": total_fn,
+            "precision": p_overall,
+            "recall": r_overall,
+            "f1": f1_overall,
+        },
+        "per_case": per_case,
+        "safety_label": "synthetic harness verification only; not clinical safety performance",
+        "protocol_note": "Evaluated purely offline on synthetic test fixtures without activating runtime clinical rules.",
+    }
 
 
 # ------------------------------------------------------------------ M-12 time to sign

@@ -17781,6 +17781,247 @@
           "PATHWAY_DATA_DELETED"
         ]
       }
+    },
+    "/eval/runs": {
+      "get": {
+        "tags": [
+          "Evaluation"
+        ],
+        "summary": "Admin or researcher: list available benchmark evaluation runs (read only)",
+        "operationId": "getEvalRuns",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "runAt": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "split": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "datasetHash": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "codeCommit": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "casesCount": {
+                            "type": "number"
+                          },
+                          "hasErrorsCsv": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "runAt",
+                          "split",
+                          "datasetHash",
+                          "codeCommit",
+                          "casesCount",
+                          "hasErrorsCsv"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "eval.read",
+        "x-allowed-roles": [
+          "admin",
+          "researcher"
+        ]
+      }
+    },
+    "/eval/runs/{id}": {
+      "get": {
+        "tags": [
+          "Evaluation"
+        ],
+        "summary": "Admin or researcher: full benchmark outputs and manifest for one run (read only)",
+        "operationId": "getEvalRunsId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9]{8}T[0-9]{6}|sample-results)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "manifest": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "summaryMd": {
+                          "type": "string"
+                        },
+                        "tableTex": {
+                          "type": "string"
+                        },
+                        "cellsCsv": {
+                          "type": "string"
+                        },
+                        "casesCsv": {
+                          "type": "string"
+                        },
+                        "questionsCsv": {
+                          "type": "string"
+                        },
+                        "errorsCsv": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "manifest",
+                        "summaryMd",
+                        "tableTex",
+                        "cellsCsv",
+                        "casesCsv",
+                        "questionsCsv",
+                        "errorsCsv"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to the caller)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "eval.read",
+        "x-allowed-roles": [
+          "admin",
+          "researcher"
+        ]
+      }
     }
   },
   "components": {

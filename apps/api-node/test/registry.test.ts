@@ -82,11 +82,11 @@ describe('permissions table', () => {
     }
   });
 
-  it('researcher can only read the audit log (PRD 2.2) and the shared medicine list, nothing that touches a patient', () => {
+  it('researcher can only read the audit log (PRD 2.2), shared medicine list, and evaluation console (PG-17), nothing that touches a patient', () => {
     const granted = Object.keys(PERMISSIONS).filter((p) =>
       roleHasPermission('researcher', p as keyof typeof PERMISSIONS),
     );
-    expect(granted).toEqual(['audit.read', 'medicine.read']);
+    expect(granted).toEqual(['audit.read', 'medicine.read', 'eval.read']);
   });
 
   it('only a doctor may open a session (PRD 2.2: record consultation)', () => {

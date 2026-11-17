@@ -80,6 +80,8 @@ export const PERMISSIONS = {
   // editable by its owner or an admin (ADR-D24).
   'template.read': ['doctor', 'admin'],
   'template.write': ['doctor', 'admin'],
+  // evaluation benchmark console (PG-17, FR-F12-03, ADR-D43): admin and researcher inspect run artifacts
+  'eval.read': ['admin', 'researcher'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type PermissionId = keyof typeof PERMISSIONS;
