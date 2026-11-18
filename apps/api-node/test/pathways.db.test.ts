@@ -489,3 +489,134 @@ describe('the kept record after withdrawal (Phase 6C)', () => {
     expect((await call('get', '/pathway-record', undefined, doctor2)).status).toBe(404);
   });
 });
+
+describe('synthetic consultation workflow (Phase 6B demonstration)', () => {
+  let swSession: string;
+  beforeAll(async () => {
+    swSession = await newSession();
+    await record('audio', true, swSession);
+    await record('ai_processing', true, swSession);
+  });
+
+  it('progresses through a complete consultation lifecycle safely', async () => {
+    // 1. Initial State: No facts -> suggests heaviest shared entry node q1 (toy_symptom_1)
+    const q1Res = (await call('get', '/questions/next', undefined, doctor, swSession)).body.data;
+    expect(q1Res).toMatchObject({
+      outcome: 'QUESTION',
+      pathwayId: 'toy_condition_a',
+      nodeId: 'toy_condition_a/q1',
+      slot: 'toy_symptom_1',
+      eventStatus: 'suggested',
+      questionsUsed: 0,
+      questionCap: 8,
+    });
+    expect(q1Res.ask).toMatch(/toy symptom 1/);
+    expect(q1Res.reasonText).toBeTruthy();
+
+    // 2. Doctor marks q1 as asked -> event recorded, questionsUsed = 1, audited
+    const act1 = await call(
+      'post',
+      `/questions/${q1Res.eventId}/action`,
+      { action: 'asked' },
+      doctor,
+      swSession,
+    );
+    expect(act1.status).toBe(200);
+    expect(act1.body.data.status).toBe('asked');
+
+    // 3. Patient confirms toy_symptom_1 -> engine records fact with confirmed concept
+    await h.db.owner.query(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
+         confirmed_at, confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+       VALUES ($1,$2,'symptom','toy fact 1',false,'manual','confirmed','manual',now(),$3,'toy_c_toy_symptom_1','confirmed',$3,now())`,
+      [swSession, clinicId, doctorId],
+    );
+
+    // 4. Engine evaluates new state -> toy_symptom_1 is known, so q1 is never re-asked; next suggested question is q2 (toy_symptom_2)
+    const q2Res = (await call('get', '/questions/next', undefined, doctor, swSession)).body.data;
+    expect(q2Res.outcome).toBe('QUESTION');
+    expect(q2Res.nodeId).toBe('toy_condition_a/q2');
+    expect(q2Res.slot).toBe('toy_symptom_2');
+    expect(q2Res.questionsUsed).toBe(1);
+
+    // 5. Doctor marks q2 as asked and patient confirms toy_symptom_2
+    await call(
+      'post',
+      `/questions/${q2Res.eventId}/action`,
+      { action: 'asked' },
+      doctor,
+      swSession,
+    );
+    await h.db.owner.query(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
+         confirmed_at, confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+       VALUES ($1,$2,'symptom','toy fact 2',false,'manual','confirmed','manual',now(),$3,'toy_c_toy_symptom_2','confirmed',$3,now())`,
+      [swSession, clinicId, doctorId],
+    );
+
+    // 6. Inspect Candidate Differentials -> candidates ranked by evidence, non-diagnostic notice included
+    const candRes = (await call('get', '/candidates', undefined, doctor, swSession)).body.data;
+    expect(candRes.candidates.length).toBeGreaterThan(0);
+    expect(candRes.candidates[0].pathwayId).toBe('toy_condition_a');
+    expect(candRes.candidates[0].evidenceFor.map((e: { slot: string }) => e.slot)).toContain(
+      'toy_symptom_1',
+    );
+    expect(candRes.notice).toMatch(/non-binding clinical aid|not a diagnosis|doctor decides/i);
+
+    // 7. Red-Flag Emergency: emergency fact arrives (toy_redflag_1)
+    await h.db.owner.query(
+      `INSERT INTO extracted_fact (session_id, clinic_id, type, value, negated, source, status, pipeline,
+         confirmed_at, confirmed_by, concept_id, concept_status, concept_confirmed_by, concept_confirmed_at)
+       VALUES ($1,$2,'symptom','emergency red flag',false,'manual','confirmed','manual',now(),$3,'toy_c_toy_redflag_1','confirmed',$3,now())`,
+      [swSession, clinicId, doctorId],
+    );
+    const redFlagRes = (await call('get', '/questions/next', undefined, doctor, swSession)).body
+      .data;
+    expect(redFlagRes.outcome).toBe('RED_FLAG');
+    expect(redFlagRes.redFlags).toContain('toy_condition_b/q3');
+    expect(redFlagRes.ask).toBeNull(); // routine questions halted
+
+    // Doctor must explicitly acknowledge red flag
+    const ackRes = await call(
+      'post',
+      `/questions/${redFlagRes.eventId}/action`,
+      { action: 'acknowledged' },
+      doctor,
+      swSession,
+    );
+    expect(ackRes.status).toBe(200);
+
+    // 8. Doctor selects working condition
+    const selectRes = await call(
+      'post',
+      '/candidates/select',
+      { pathwayId: 'toy_condition_a', version: 1 },
+      doctor,
+      swSession,
+    );
+    expect(selectRes.status).toBe(201);
+    expect(selectRes.body.data).toMatchObject({
+      notListed: false,
+      pathwayId: 'toy_condition_a',
+      version: 1,
+    });
+
+    // 9. Doctor undos working condition
+    const undoRes = await call('post', '/candidates/select/undo', undefined, doctor, swSession);
+    expect(undoRes.status).toBe(200);
+    expect(undoRes.body.data).toEqual({ undone: true });
+
+    // 10. Audit chain verification: all actions were logged with IDs and doctor identity
+    const auditLogs = (
+      await h.db.owner.query(
+        'SELECT action, meta FROM audit_log WHERE session_id = $1 ORDER BY seq',
+        [swSession],
+      )
+    ).rows;
+    const actions = auditLogs.map((a) => a.action);
+    expect(actions).toContain('QUESTION_ACTED');
+    expect(actions).toContain('RED_FLAG_ACKNOWLEDGED');
+    expect(actions).toContain('CANDIDATE_SELECTED');
+    expect(actions).toContain('CANDIDATE_SELECTION_UNDONE');
+  });
+});
