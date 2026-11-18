@@ -19,19 +19,32 @@ from dataclasses import dataclass
 DEVANAGARI = range(0x0900, 0x0980)
 GUJARATI = range(0x0A80, 0x0B00)
 OFFSET = 0x0A80 - 0x0900
+ZERO_WIDTH_CHARS = frozenset({"\u200b", "\u200c", "\u200d", "\ufeff", "\u00ad"})
+
+
+def strip_zero_width(text: str) -> str:
+    """Removes invisible zero-width formatting characters (ZWJ, ZWNJ, BOM, soft hyphen).
+    Preserves all linguistic vowel signs, matras, and diacritics (Mn, Mc categories).
+    """
+    return "".join(ch for ch in text if ch not in ZERO_WIDTH_CHARS)
 
 
 def words(text: str) -> list[str]:
-    """Words are whitespace-separated; punctuation and symbols at their edges are stripped."""
+    """Words are whitespace-separated; zero-width artifacts and edge punctuation are stripped.
+    Linguistic vowel marks and viramas are strictly preserved.
+    """
+    normalized = strip_zero_width(unicodedata.normalize("NFC", text))
     out = []
-    for raw in unicodedata.normalize("NFC", text).lower().split():
+    for raw in normalized.lower().split():
         start, end = 0, len(raw)
         while start < end and unicodedata.category(raw[start])[0] in "PSZC":
             start += 1
         while end > start and unicodedata.category(raw[end - 1])[0] in "PSZC":
             end -= 1
         if end > start:
-            out.append(raw[start:end])
+            token = strip_zero_width(raw[start:end])
+            if token:
+                out.append(token)
     return out
 
 
@@ -158,3 +171,35 @@ def wer_report(reference: str, hypothesis: str) -> tuple[WerResult, WerResult]:
     ref, hyp = words(reference), words(hypothesis)
     mapped_ref, mapped_hyp = [to_gujarati(w) for w in ref], [to_gujarati(w) for w in hyp]
     return _result(align(ref, hyp), len(ref)), _result(align(mapped_ref, mapped_hyp), len(ref))
+
+
+def detect_segment_language(text: str, fallback_hint: str | None = None) -> str | None:
+    """Estimates script-based language or 'mixed' when an ASR engine provides no segment language."""
+    shares = script_share(text)
+    indic = shares.get("gujarati", 0.0) + shares.get("devanagari", 0.0)
+    latin = shares.get("latin", 0.0)
+    if (
+        (indic >= 12.0 and latin >= 12.0)
+        or (indic >= 25.0 and latin >= 10.0)
+        or (latin >= 25.0 and indic >= 10.0)
+    ):
+        return "mixed"
+    if shares.get("gujarati", 0.0) >= 60.0:
+        return "gu-IN"
+    if shares.get("devanagari", 0.0) >= 60.0:
+        return "hi-IN"
+    if latin >= 60.0:
+        return "en-IN"
+    if (
+        shares.get("gujarati", 0.0) > shares.get("devanagari", 0.0)
+        and shares.get("gujarati", 0.0) > latin
+    ):
+        return "gu-IN"
+    if (
+        shares.get("devanagari", 0.0) > shares.get("gujarati", 0.0)
+        and shares.get("devanagari", 0.0) > latin
+    ):
+        return "hi-IN"
+    if latin > indic:
+        return "en-IN"
+    return fallback_hint

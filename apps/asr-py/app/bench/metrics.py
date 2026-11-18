@@ -196,11 +196,12 @@ def fact_scores(
     hallucination rate. Gold lines are located here, so gold facts need only a quote."""
     per_type: dict[str, Counts] = defaultdict(Counts)
     negation = Counts()
+    uncertainty = Counts()
     ungrounded = proposed = 0
     for gold, lines, predicted in cases:
         gold_list = [GoldFact(g.type, g.value, g.negated, g.uncertain, g.quote) for g in gold]
         locate(gold_list, list(lines))
-        score(Case("x", list(lines), gold_list), _Result(list(predicted)), per_type, negation)  # type: ignore[arg-type]
+        score(Case("x", list(lines), gold_list), _Result(list(predicted)), per_type, negation, uncertainty)  # type: ignore[arg-type]
         text = [normalise(line).casefold() for line in lines]
         for p in predicted:
             proposed += 1
@@ -218,6 +219,7 @@ def fact_scores(
         },
         "overall": prf(overall) | {"tp": overall.tp, "fp": overall.fp, "fn": overall.fn},
         "negation": prf(negation) | {"tp": negation.tp, "fp": negation.fp, "fn": negation.fn},
+        "uncertainty": prf(uncertainty) | {"tp": uncertainty.tp, "fp": uncertainty.fp, "fn": uncertainty.fn},
         "hallucination": {
             "ungrounded": ungrounded,
             "proposed": proposed,
@@ -339,6 +341,18 @@ def categorize_case_errors(
                     gold_quote=g.quote,
                     predicted_quote=p.evidence_quote,
                     detail=f"Negation mismatch: gold negated={g.negated}, predicted negated={p.negated}",
+                )
+            )
+        if p.uncertain != g.uncertain:
+            errors.append(
+                ExtractionErrorRecord(
+                    case_id=case_id,
+                    error_category="uncertainty_mismatch",
+                    gold_type=g.type,
+                    predicted_type=p.type,
+                    gold_quote=g.quote,
+                    predicted_quote=p.evidence_quote,
+                    detail=f"Uncertainty mismatch: gold uncertain={g.uncertain}, predicted uncertain={p.uncertain}",
                 )
             )
 

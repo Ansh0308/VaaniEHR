@@ -8,7 +8,7 @@ import type { Queryable } from '../db/tx.js';
 import { errors } from '../http/errors.js';
 import { permRoute, type RouteDef } from '../http/routeRegistry.js';
 import { loadSession } from '../sessions/service.js';
-import { factType, factView, normaliseText, readFacts, speaker, textHash } from './service.js';
+import { factType, factView, findSpanInText, readFacts, speaker, textHash } from './service.js';
 
 const idParams = z.object({ id: z.uuid() });
 type IdParams = z.infer<typeof idParams>;
@@ -75,6 +75,7 @@ interface Locked {
   status: 'heard' | 'confirmed' | 'rejected' | 'stale';
   source_segment_id: string | null;
   evidence_quote: string | null;
+  match_type: 'exact' | 'fuzzy' | null;
 }
 
 export function factRoutes(): RouteDef[] {
@@ -159,7 +160,7 @@ export function factRoutes(): RouteDef[] {
         if (!session) throw errors.notFound('Session not found');
         await requireConsent(ctx.db, session.id);
         const found = await ctx.db.query<Locked>(
-          `SELECT id, type, status, source_segment_id, evidence_quote
+          `SELECT id, type, status, source_segment_id, evidence_quote, match_type
              FROM extracted_fact WHERE id = $1 AND session_id = $2 FOR UPDATE`,
           [ctx.params.factId, session.id],
         );
@@ -184,14 +185,16 @@ export function factRoutes(): RouteDef[] {
               [f.source_segment_id],
             );
             const text = seg.rows[0]?.text;
-            const quote = normaliseText(f.evidence_quote);
-            const at = text === undefined ? -1 : normaliseText(text).indexOf(quote);
-            if (text === undefined || at < 0) {
+            if (text === undefined) {
+              throw errors.conflict('The source text no longer exists');
+            }
+            const foundSpan = findSpanInText(text, f.evidence_quote, f.match_type);
+            if (!foundSpan) {
               throw errors.conflict(
                 'The evidence is no longer in the transcript; edit the text or reject the fact',
               );
             }
-            span = { start: at, end: at + quote.length, hash: textHash(text) };
+            span = { start: foundSpan.start, end: foundSpan.end, hash: textHash(text) };
           }
           const edit = b.action === 'edit';
           // a changed value makes the concept link stale: the doctor must confirm it again

@@ -35,17 +35,31 @@ def find_quote(segment_text: str, quote: str) -> Match | None:
     at = text.find(wanted)
     if at >= 0:
         return Match(at, at + len(wanted), "exact", 1.0)
+
+    # Fast case-insensitive exact match
+    lower_text = text.lower()
+    lower_wanted = wanted.lower()
+    lower_at = lower_text.find(lower_wanted)
+    if lower_at >= 0 and len(lower_text) == len(text):
+        return Match(lower_at, lower_at + len(wanted), "fuzzy", 1.0)
+
     if len(text) > MAX_FUZZY_SEGMENT or len(wanted) < 4:
         return None
+
     folded_text, folded_quote = text.casefold(), wanted.casefold()
-    if len(folded_text) != len(text) or len(folded_quote) != len(wanted):
-        return None  # case folding changed the length (rare scripts): positions would not line up, so do not guess
+    target_text, target_quote = folded_text, folded_quote
+    if len(folded_text) != len(text):
+        if len(lower_text) == len(text):
+            target_text, target_quote = lower_text, lower_wanted
+        else:
+            target_text, target_quote = text, wanted
+
     best: Match | None = None
     low, high = max(3, int(len(wanted) * 0.8)), min(len(text), int(len(wanted) * 1.2) + 1)
-    matcher = SequenceMatcher(None, folded_quote, "", autojunk=False)
+    matcher = SequenceMatcher(None, target_quote, "", autojunk=False)
     for width in range(low, high + 1):
         for start in range(0, len(text) - width + 1):
-            matcher.set_seq2(folded_text[start : start + width])
+            matcher.set_seq2(target_text[start : start + width])
             ratio = matcher.ratio()
             if ratio >= FUZZY_THRESHOLD and (best is None or ratio > best.ratio):
                 best = Match(start, start + width, "fuzzy", ratio)

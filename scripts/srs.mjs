@@ -12,7 +12,9 @@ const refs = (s) => [...(s.adr ?? []).map((a) => `ADR-${a}`), ...(s.oci ?? [])].
 const table = (head, rows) =>
   `| ${head.join(' | ')} |\n|${head.map(() => '---').join('|')}|\n${rows.map((r) => `| ${r.map(cell).join(' | ')} |`).join('\n')}`;
 const tally = (list) =>
-  ['Implemented', 'Partial', 'Planned'].map((k) => list.filter((r) => status[r.id]?.status === k).length);
+  ['Implemented', 'Partial', 'Planned'].map(
+    (k) => list.filter((r) => status[r.id]?.status === k).length,
+  );
 
 const regions = {};
 
@@ -26,7 +28,7 @@ regions.counts = (() => {
 })();
 
 regions.fr = Object.entries(prd.features)
-  .map(([f, info], i) => {
+  .map(([f, info]) => {
     const n = Number(f.slice(1));
     const head = `### 4.${n} ${f} - ${info.title} (${info.priority || 'priority not stated'})`;
     const own = prd.fr.filter((r) => r.feature === f);
@@ -35,15 +37,39 @@ regions.fr = Object.entries(prd.features)
       return `${head}\n\nThe PRD gives ${f} no requirement rows (${s ? s.why : 'no entry in docs/srs-status.json'}). Status: **${s?.status ?? 'unknown'}**.`;
     }
     return `${head}\n\n${table(
-      ['ID', 'Requirement (PRD text, unchanged)', 'Status', 'What exists, or what is missing', 'ADR / OCI'],
+      [
+        'ID',
+        'Requirement (PRD text, unchanged)',
+        'Status',
+        'What exists, or what is missing',
+        'ADR / OCI',
+      ],
       own.map((r) => [r.id, r.text, status[r.id].status, status[r.id].why, refs(status[r.id])]),
     )}`;
   })
   .join('\n\n');
 
 regions.pg = table(
-  ['ID', 'Page', 'Route in the PRD', 'Who', 'Priority', 'Status', 'What exists, or what is missing', 'ADR / OCI'],
-  prd.pg.map((r) => [r.id, r.name, r.route, r.roles, r.priority, status[r.id].status, status[r.id].why, refs(status[r.id])]),
+  [
+    'ID',
+    'Page',
+    'Route in the PRD',
+    'Who',
+    'Priority',
+    'Status',
+    'What exists, or what is missing',
+    'ADR / OCI',
+  ],
+  prd.pg.map((r) => [
+    r.id,
+    r.name,
+    r.route,
+    r.roles,
+    r.priority,
+    status[r.id].status,
+    status[r.id].why,
+    refs(status[r.id]),
+  ]),
 );
 
 const NFR_TITLES = {
@@ -59,10 +85,26 @@ regions.nfr = Object.keys(NFR_TITLES)
   .map((k, i) => {
     const own = prd.nfr.filter((r) => r.id.split('-')[1] === k);
     return `### 6.${i + 1} ${NFR_TITLES[k]}\n\n${table(
-      ['ID', 'Requirement (PRD text, unchanged)', 'Target (PRD)', 'Status', 'Evidence', 'What exists, or what is missing', 'ADR / OCI'],
+      [
+        'ID',
+        'Requirement (PRD text, unchanged)',
+        'Target (PRD)',
+        'Status',
+        'Evidence',
+        'What exists, or what is missing',
+        'ADR / OCI',
+      ],
       own.map((r) => {
         const s = status[r.id];
-        return [r.id, `${r.category}: ${r.text}`, r.target, s.status, s.measured ? 'Automated test or check' : 'Not measured', s.why, refs(s)];
+        return [
+          r.id,
+          `${r.category}: ${r.text}`,
+          r.target,
+          s.status,
+          s.measured ? 'Automated test or check' : 'Not measured',
+          s.why,
+          refs(s),
+        ];
       }),
     )}`;
   })
@@ -72,7 +114,13 @@ regions.metrics = table(
   ['ID', 'Metric', 'Target (PRD)', 'Measured?', 'Note'],
   prd.metrics.map((m) => {
     const s = status._metrics?.[m.id];
-    return [m.id, m.name, m.target, s?.measured ?? 'unknown', s?.note ?? 'no entry in docs/srs-status.json'];
+    return [
+      m.id,
+      m.name,
+      m.target,
+      s?.measured ?? 'unknown',
+      s?.note ?? 'no entry in docs/srs-status.json',
+    ];
   }),
 );
 
@@ -85,13 +133,21 @@ regions.oci = (() => {
     const first = m[2].split(/(?<=[.:])\s/)[0];
     rows.push([m[1], first.length > 200 ? first.slice(0, 197) + '...' : first]);
   }
-  return table(['ID', 'Open item (first sentence; the full text and the owner action are in docs/OPEN_CLINICAL_ITEMS.md)'], rows);
+  return table(
+    [
+      'ID',
+      'Open item (first sentence; the full text and the owner action are in docs/OPEN_CLINICAL_ITEMS.md)',
+    ],
+    rows,
+  );
 })();
 
 const file = join(ROOT, 'docs', 'SRS.md');
 let md = readFileSync(file, 'utf8');
 for (const [name, body] of Object.entries(regions)) {
-  const re = new RegExp(`(<!-- BEGIN GENERATED:${name} -->)[\\s\\S]*?(<!-- END GENERATED:${name} -->)`);
+  const re = new RegExp(
+    `(<!-- BEGIN GENERATED:${name} -->)[\\s\\S]*?(<!-- END GENERATED:${name} -->)`,
+  );
   if (!re.test(md)) throw new Error(`docs/SRS.md has no GENERATED:${name} region`);
   md = md.replace(re, (_, a, b) => `${a}\n\n${body}\n\n${b}`);
 }

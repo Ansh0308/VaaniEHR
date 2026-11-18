@@ -97,9 +97,24 @@ class PipelineResult:
     grounded_exact: int = 0
     grounded_fuzzy: int = 0
     response: LlmResponse | None = None
+    truncated: bool = False
 
 
 _FENCE = re.compile(r"^```[a-zA-Z]*\s*|\s*```$")
+
+
+def _is_truncated(text: str) -> bool:
+    """Detects whether an LLM response was truncated mid-generation (e.g. max token cutoff)."""
+    s = text.strip()
+    if not s:
+        return False
+    if not (s.endswith("}") or s.endswith("]")):
+        return True
+    try:
+        json.loads(s)
+        return False
+    except json.JSONDecodeError as e:
+        return "Unterminated" in e.msg or "Expecting" in e.msg
 
 
 def _lenient_json(text: str) -> object | None:
@@ -159,6 +174,8 @@ async def run_pipeline(
         if not isinstance(items, list):
             result.invalid_json += 1
             result.dropped_invalid += 1
+            if _is_truncated(response.text):
+                result.truncated = True
             return result
         for item in items:
             try:
@@ -178,8 +195,10 @@ async def run_pipeline(
 
     try:
         output = LlmOutput.model_validate_json(response.text)
-    except ValidationError:
+    except (ValidationError, ValueError):
         result.schema_failures += 1  # not repaired, not guessed: the whole reply is refused
+        if _is_truncated(response.text):
+            result.truncated = True
         return result
 
     by_label = {label_of(i): s for i, s in enumerate(segments)}
@@ -201,6 +220,19 @@ async def run_pipeline(
                 1  # a fooled model must not turn an injected line into a fact
             )
             continue
+
+        # Suppress duplicate prediction spans (>80% overlap for same type in same segment)
+        is_dup = False
+        for existing in result.facts:
+            if existing.segment_id == segment.segment_id and existing.type == fact.type:
+                inter = max(0, min(existing.span_end, match.end) - max(existing.span_start, match.start))
+                smaller = min(existing.span_end - existing.span_start, match.end - match.start)
+                if smaller > 0 and (inter / smaller) >= 0.8:
+                    is_dup = True
+                    break
+        if is_dup:
+            continue
+
         if match.match_type == "exact":
             result.grounded_exact += 1
         else:

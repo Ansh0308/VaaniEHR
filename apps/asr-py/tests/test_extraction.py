@@ -401,3 +401,65 @@ def test_cached_answers_do_not_count_towards_the_monthly_token_cap(tmp_path):
     log.add(input_tokens=900, output_tokens=0, requests=1, **common)
     log.add(input_tokens=5000, output_tokens=5000, requests=0, **common)  # a cache hit
     assert log.month_totals()[0] == 900
+
+
+async def test_duplicate_span_suppression_keeps_first():
+    segment = SegmentIn("seg-1", 0, "patient", "Patient has severe fever since yesterday evening")
+    f1 = fact(label="s1", quote="severe fever")
+    f2 = fact(label="s1", quote="fever")
+    res = await run_pipeline("grounded", MockProvider(json.dumps({"facts": [f1, f2]})), [segment])
+    assert len(res.facts) == 1
+    assert res.facts[0].evidence_quote == "severe fever"
+
+
+async def test_truncated_response_detection():
+    segment = SegmentIn("seg-1", 0, "patient", "Patient has fever")
+    truncated_json = '{"facts": [{"type": "symptom", "value": "fever"'
+    res_grounded = await run_pipeline("grounded", MockProvider(truncated_json), [segment])
+    assert res_grounded.schema_failures == 1
+    assert res_grounded.truncated is True
+
+    res_plain = await run_pipeline("plain", MockProvider(truncated_json), [segment])
+    assert res_plain.invalid_json == 1
+    assert res_plain.truncated is True
+
+
+def test_grounding_casefold_and_indic_diacritics():
+    # Case-insensitive match
+    m = find_quote("PATIENT HAS HIGH FEVER", "high fever")
+    assert m is not None and m.match_type == "fuzzy" and m.ratio == 1.0
+
+    # Indic Gujarati conjuncts & matras preserved
+    text_gu = "દર્દીને બે દિવસથી ખૂબ તાવ અને ખાંસી છે"
+    m_gu = find_quote(text_gu, "ખૂબ તાવ")
+    assert m_gu is not None and m_gu.match_type == "exact"
+
+
+async def test_sample_provider_clinical_patterns():
+    from app.extraction.sample import SampleProvider
+
+    provider = SampleProvider()
+    user_prompt = (
+        '<transcript>\n'
+        '<segment id="s1">Patient has BP 130/85 mmHg and pulse 82</segment>\n'
+        '<segment id="s2">તાવ બે દિવસથી છે અને કદાચ શરદી નથી</segment>\n'
+        '<segment id="s3">Allergy to penicillin reported</segment>\n'
+        '<segment id="s4">Patient complains of chest pain since morning</segment>\n'
+        '</transcript>'
+    )
+    res = await provider.complete("sys", user_prompt)
+    output = json.loads(res.text)
+    facts = output["facts"]
+
+    types = [f["type"] for f in facts]
+    assert "vital" in types
+    assert "duration" in types
+    assert "allergy" in types
+    assert "red_flag_mention" in types
+
+    # Check Indic negation and uncertainty in s2
+    s2_facts = [f for f in facts if f["segment_id"] == "s2"]
+    assert len(s2_facts) > 0
+    assert any(f["negated"] is True for f in s2_facts)
+    assert any(f["uncertain"] is True for f in s2_facts)
+

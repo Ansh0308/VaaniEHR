@@ -193,7 +193,11 @@ def overlap(a: str, b: str) -> float:
 
 
 def score(
-    case: Case, result: PipelineResult, per_type: dict[str, Counts], negation: Counts
+    case: Case,
+    result: PipelineResult,
+    per_type: dict[str, Counts],
+    negation: Counts,
+    uncertainty: Counts | None = None,
 ) -> None:
     """Adds one case to the counts. Greedy one-to-one matching by highest overlap."""
     predicted = result.predicted
@@ -224,16 +228,28 @@ def score(
             negation.fp += 1
         elif g.negated and not p.negated:
             negation.fn += 1
+
+        if uncertainty is not None:
+            if g.uncertain and p.uncertain:
+                uncertainty.tp += 1
+            elif p.uncertain and not g.uncertain:
+                uncertainty.fp += 1
+            elif g.uncertain and not p.uncertain:
+                uncertainty.fn += 1
     for pi, p in enumerate(predicted):
         if pi not in used_p:
             per_type[p.type if p.type in FACT_TYPES else "other"].fp += 1
             if p.negated:
                 negation.fp += 1
+            if uncertainty is not None and p.uncertain:
+                uncertainty.fp += 1
     for gi, g in enumerate(case.gold):
         if gi not in used_g:
             per_type[g.type].fn += 1
             if g.negated:
                 negation.fn += 1
+            if uncertainty is not None and g.uncertain:
+                uncertainty.fn += 1
 
 
 # ------------------------------------------------------------------ running

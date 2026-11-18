@@ -2,7 +2,7 @@
 // and stored, never logged and never put in the audit log (ids and counts only).
 import { z } from 'zod';
 import type { Queryable } from '../db/tx.js';
-import { normaliseText, textHash } from './text.js';
+import { findSpanInText, normaliseText, textHash } from './text.js';
 
 export const FACT_TYPES = [
   'symptom',
@@ -144,4 +144,4 @@ export async function markStaleForSegments(
   return stale;
 }
 
-export { normaliseText, textHash };
+export { findSpanInText, normaliseText, textHash };

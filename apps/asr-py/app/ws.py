@@ -21,6 +21,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import re
 import uuid
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, replace
@@ -36,6 +37,7 @@ from app.internal_api import InternalApiError, InternalApiPort
 from app.storage import AudioStore, AudioStoreError
 from app.usage import PAID_ENGINES, CapExceeded, SpendGuard, UsageLog
 from app.vad import VADBackend, VadGate
+from app.wer import detect_segment_language
 
 MAX_KEYTERMS = 50
 MAX_KEYTERM_CHARS = 64
@@ -94,7 +96,11 @@ def _valid_start(message: dict[str, Any]) -> tuple[str, str | None, list[str], s
     engine = message.get("engine")
     if message.get("type") != "start" or not isinstance(token, str) or not token:
         raise _Stop(4400, "bad_start")
-    if language is not None and (not isinstance(language, str) or len(language) > 12):
+    if language is not None and (
+        not isinstance(language, str)
+        or len(language) > 35
+        or not re.match(r"^[a-zA-Z0-9\-_,]+$", language)
+    ):
         raise _Stop(4400, "bad_language")
     if (
         not isinstance(terms, list)
@@ -205,11 +211,19 @@ def register(app: FastAPI, services: Services) -> None:
                             start_ms=gate.to_original_ms(segment.start_ms),
                             end_ms=gate.to_original_ms(segment.end_ms, end=True),
                         )
+                    if segment.language is None:
+                        segment = replace(
+                            segment,
+                            language=detect_segment_language(segment.text, language),
+                        )
                     if segment.kind == "final":
                         finals_sent += 1
-                    await ws.send_json({"type": segment.kind, "segment": segment_json(segment)})
+                    try:
+                        await ws.send_json({"type": segment.kind, "segment": segment_json(segment)})
+                    except WebSocketDisconnect:
+                        break
             except WebSocketDisconnect:
-                raise
+                pass
             except Exception:  # noqa: BLE001 - any engine failure ends the stream the same way
                 failure.append(_Stop(1011, "engine_failed"))
 
@@ -270,7 +284,8 @@ def register(app: FastAPI, services: Services) -> None:
             elif audio_task in done:
                 audio_task.result()  # raises the _Stop / disconnect if that is why it ended
                 await queue.put(None)  # normal stop: let the engine finish its last utterance
-                await asyncio.wait_for(engine_task, 30)
+                with contextlib.suppress(WebSocketDisconnect):
+                    await asyncio.wait_for(engine_task, 30)
                 if failure:
                     stop = failure[0]
             elif engine_task in done and failure:

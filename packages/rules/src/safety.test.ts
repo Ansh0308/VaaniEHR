@@ -83,7 +83,7 @@ describe('safety-rule preparation gate', () => {
     );
   });
   it('rejects malformed structures, duplicate ids and invalid calendar dates', () => {
-    const x = draft() as any;
+    const x = draft() as unknown as Record<string, unknown>;
     delete x.source;
     x.clinical_review = { state: 'pending', reviewed_on: '2026-02-30' };
     x.rules = [
@@ -95,14 +95,21 @@ describe('safety-rule preparation gate', () => {
     );
   });
   it('rejects disabled approved rules and incomplete source or reviewer metadata', () => {
-    const x = approved() as any;
-    x.rules[0].enabled = false;
+    const x = JSON.parse(JSON.stringify(approved())) as {
+      source: Partial<Record<string, unknown>>;
+      rules: Array<{ enabled?: boolean; clinical_review: Partial<Record<string, unknown>> }>;
+    };
+    x.rules[0]!.enabled = false;
     delete x.source.locator;
-    delete x.rules[0].clinical_review.approval_reference;
-    expect(validateSafetyRuleSet(x).errors.join('\n')).toMatch(
-      /cannot contain disabled|source.locator|approval_reference/,
-    );
-    expect(isSafetyRuleSetEligible(x)).toBe(false);
+    delete x.rules[0]!.clinical_review.approval_reference;
+    expect(
+      validateSafetyRuleSet(
+        x as unknown as Parameters<typeof validateSafetyRuleSet>[0],
+      ).errors.join('\n'),
+    ).toMatch(/cannot contain disabled|source.locator|approval_reference/);
+    expect(
+      isSafetyRuleSetEligible(x as unknown as Parameters<typeof isSafetyRuleSetEligible>[0]),
+    ).toBe(false);
   });
   it('requires an immutable lock for approved content and catches tampering, path changes and status changes', () => {
     const x = approved();

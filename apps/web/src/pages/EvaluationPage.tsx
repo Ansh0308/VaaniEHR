@@ -2,17 +2,14 @@
 // Read-only inspection of benchmark evaluation runs, language-segmented ASR metrics,
 // extraction error taxonomy, ABDM/FHIR conformance, and synthetic safety scoring.
 import {
-  AlertTriangle,
   CheckCircle2,
   Copy,
   Download,
   FileCode,
-  FileSpreadsheet,
   FileText,
   Filter,
   FlaskConical,
   Languages,
-  ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -22,7 +19,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Badge, StateBadge } from '../components/ui/Badge';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
-import { EmptyState, Skeleton } from '../components/ui/Feedback';
+import { Skeleton } from '../components/ui/Feedback';
 import { Input, Select } from '../components/ui/Field';
 import { Table, type Column } from '../components/ui/Table';
 import { Tabs, type TabItem } from '../components/ui/Tabs';
@@ -129,7 +126,7 @@ export function EvaluationPage() {
         if (res.length > 0 && !selectedRunId && res[0]) {
           setSelectedRunId(res[0].id);
         }
-      } catch (err) {
+      } catch {
         toast.push({
           title: t('eval:errorLoadRuns'),
           kind: 'blocked',
@@ -153,7 +150,7 @@ export function EvaluationPage() {
         const detail = await api.get<EvalRunDetail>(`/eval/runs/${selectedRunId}`);
         if (!active) return;
         setRunDetail(detail);
-      } catch (err) {
+      } catch {
         toast.push({
           title: t('eval:errorLoadDetail'),
           kind: 'blocked',
@@ -204,10 +201,45 @@ export function EvaluationPage() {
     if (!runDetail?.manifest) return [];
     const asrLang = runDetail.manifest['asr_languages'] as
       | {
-          overall?: { segments: number; reference_words: number; word_errors: number; wer: number; reference_chars: number; char_errors: number; cer: number };
-          by_language?: Record<string, { segments: number; reference_words: number; word_errors: number; wer: number; reference_chars: number; char_errors: number; cer: number }>;
-          mixed_segments?: { segments: number; reference_words: number; word_errors: number; wer: number; reference_chars: number; char_errors: number; cer: number };
-          unannotated_segments?: { segments: number; reference_words: number; word_errors: number; wer: number; reference_chars: number; char_errors: number; cer: number };
+          overall?: {
+            segments: number;
+            reference_words: number;
+            word_errors: number;
+            wer: number;
+            reference_chars: number;
+            char_errors: number;
+            cer: number;
+          };
+          by_language?: Record<
+            string,
+            {
+              segments: number;
+              reference_words: number;
+              word_errors: number;
+              wer: number;
+              reference_chars: number;
+              char_errors: number;
+              cer: number;
+            }
+          >;
+          mixed_segments?: {
+            segments: number;
+            reference_words: number;
+            word_errors: number;
+            wer: number;
+            reference_chars: number;
+            char_errors: number;
+            cer: number;
+          };
+          unannotated_segments?: {
+            segments: number;
+            reference_words: number;
+            word_errors: number;
+            wer: number;
+            reference_chars: number;
+            char_errors: number;
+            cer: number;
+          };
         }
       | undefined;
 
@@ -285,16 +317,35 @@ export function EvaluationPage() {
   // Metrics Table M-01 to M-13
   const metricMatrix = useMemo<MetricSummaryRow[]>(() => {
     const groundedCell = cellRows.find((c) => c.variant === 'grounded') || cellRows[0];
-    const factF1 = groundedCell?.fact_f1 ? `${(Number(groundedCell.fact_f1) * 100).toFixed(1)}%` : '—';
-    const factP = groundedCell?.fact_precision ? `${(Number(groundedCell.fact_precision) * 100).toFixed(1)}%` : '—';
-    const factR = groundedCell?.fact_recall ? `${(Number(groundedCell.fact_recall) * 100).toFixed(1)}%` : '—';
-    const negF1 = groundedCell?.negation_f1 ? `${(Number(groundedCell.negation_f1) * 100).toFixed(1)}%` : '—';
-    const halRate = groundedCell?.hallucination_rate ? `${(Number(groundedCell.hallucination_rate) * 100).toFixed(1)}%` : '0.0%';
-    const medAcc = groundedCell?.medicine_accuracy ? `${(Number(groundedCell.medicine_accuracy) * 100).toFixed(1)}%` : '—';
+    const factF1 = groundedCell?.fact_f1
+      ? `${(Number(groundedCell.fact_f1) * 100).toFixed(1)}%`
+      : '—';
+    const factP = groundedCell?.fact_precision
+      ? `${(Number(groundedCell.fact_precision) * 100).toFixed(1)}%`
+      : '—';
+    const factR = groundedCell?.fact_recall
+      ? `${(Number(groundedCell.fact_recall) * 100).toFixed(1)}%`
+      : '—';
+    const negF1 = groundedCell?.negation_f1
+      ? `${(Number(groundedCell.negation_f1) * 100).toFixed(1)}%`
+      : '—';
+    const halRate = groundedCell?.hallucination_rate
+      ? `${(Number(groundedCell.hallucination_rate) * 100).toFixed(1)}%`
+      : '0.0%';
+    const medAcc = groundedCell?.medicine_accuracy
+      ? `${(Number(groundedCell.medicine_accuracy) * 100).toFixed(1)}%`
+      : '—';
 
-    const asrLang = runDetail?.manifest?.['asr_languages'] as { overall?: { wer: number; cer: number } } | undefined;
-    const werStr = asrLang?.overall?.wer !== undefined ? `${(asrLang.overall.wer * 100).toFixed(1)}%` : (groundedCell?.wer || '—');
-    const cerStr = asrLang?.overall?.cer !== undefined ? `${(asrLang.overall.cer * 100).toFixed(1)}%` : (groundedCell?.cer || '—');
+    const asrLang = runDetail?.manifest?.['asr_languages'] as
+      { overall?: { wer: number; cer: number } } | undefined;
+    const werStr =
+      asrLang?.overall?.wer !== undefined
+        ? `${(asrLang.overall.wer * 100).toFixed(1)}%`
+        : groundedCell?.wer || '—';
+    const cerStr =
+      asrLang?.overall?.cer !== undefined
+        ? `${(asrLang.overall.cer * 100).toFixed(1)}%`
+        : groundedCell?.cer || '—';
 
     return [
       {
@@ -366,7 +417,8 @@ export function EvaluationPage() {
         name: 'Safety Alert Recall',
         status: 'CLINICIAN',
         value: '100% (Synthetic harness only)',
-        notes: 'Offline synthetic suite verification. Runtime clinical safety engine remains disabled.',
+        notes:
+          'Offline synthetic suite verification. Runtime clinical safety engine remains disabled.',
         baseline: 'Unreviewed clinical rules not active',
       },
       {
@@ -431,18 +483,47 @@ export function EvaluationPage() {
 
   // Language columns
   const langColumns: Column<LanguageMetricRow>[] = [
-    { key: 'lang', header: t('eval:languages.lang'), render: (r) => <span className="font-semibold text-ink">{r.lang}</span> },
-    { key: 'segments', header: t('eval:languages.segments'), render: (r) => r.segments, align: 'right' },
-    { key: 'refWords', header: t('eval:languages.refWords'), render: (r) => r.refWords, align: 'right' },
-    { key: 'wordErrors', header: t('eval:languages.wordErrors'), render: (r) => r.wordErrors, align: 'right' },
+    {
+      key: 'lang',
+      header: t('eval:languages.lang'),
+      render: (r) => <span className="font-semibold text-ink">{r.lang}</span>,
+    },
+    {
+      key: 'segments',
+      header: t('eval:languages.segments'),
+      render: (r) => r.segments,
+      align: 'right',
+    },
+    {
+      key: 'refWords',
+      header: t('eval:languages.refWords'),
+      render: (r) => r.refWords,
+      align: 'right',
+    },
+    {
+      key: 'wordErrors',
+      header: t('eval:languages.wordErrors'),
+      render: (r) => r.wordErrors,
+      align: 'right',
+    },
     {
       key: 'wer',
       header: t('eval:languages.wer'),
       render: (r) => <span className="font-mono font-bold text-ink">{r.wer}</span>,
       align: 'right',
     },
-    { key: 'refChars', header: t('eval:languages.refChars'), render: (r) => r.refChars, align: 'right' },
-    { key: 'charErrors', header: t('eval:languages.charErrors'), render: (r) => r.charErrors, align: 'right' },
+    {
+      key: 'refChars',
+      header: t('eval:languages.refChars'),
+      render: (r) => r.refChars,
+      align: 'right',
+    },
+    {
+      key: 'charErrors',
+      header: t('eval:languages.charErrors'),
+      render: (r) => r.charErrors,
+      align: 'right',
+    },
     {
       key: 'cer',
       header: t('eval:languages.cer'),
@@ -492,7 +573,9 @@ export function EvaluationPage() {
     {
       key: 'predicted_quote',
       header: t('eval:errors.predQuote'),
-      render: (r) => <span className="font-mono text-body text-sm">{r.predicted_quote || '—'}</span>,
+      render: (r) => (
+        <span className="font-mono text-body text-sm">{r.predicted_quote || '—'}</span>
+      ),
     },
     {
       key: 'detail',
@@ -567,14 +650,30 @@ export function EvaluationPage() {
                   <caption className="sr-only">{t('eval:ablation.caption')}</caption>
                   <thead className="bg-sunken text-xs font-semibold text-ink">
                     <tr>
-                      <th scope="col" className="px-4 py-2">{t('eval:ablation.variant')}</th>
-                      <th scope="col" className="px-4 py-2">{t('eval:ablation.cases')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.factPrecision')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.factRecall')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.factF1')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.negationF1')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.hallucinationRate')}</th>
-                      <th scope="col" className="px-4 py-2 text-right">{t('eval:ablation.medicineAcc')}</th>
+                      <th scope="col" className="px-4 py-2">
+                        {t('eval:ablation.variant')}
+                      </th>
+                      <th scope="col" className="px-4 py-2">
+                        {t('eval:ablation.cases')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.factPrecision')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.factRecall')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.factF1')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.negationF1')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.hallucinationRate')}
+                      </th>
+                      <th scope="col" className="px-4 py-2 text-right">
+                        {t('eval:ablation.medicineAcc')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
@@ -582,12 +681,30 @@ export function EvaluationPage() {
                       <tr key={i} className="hover:bg-sunken/40">
                         <td className="px-4 py-2 font-mono font-bold text-ink">{c.variant}</td>
                         <td className="px-4 py-2 font-mono">{c.cases}</td>
-                        <td className="px-4 py-2 text-right font-mono">{c.fact_precision ? `${(Number(c.fact_precision) * 100).toFixed(1)}%` : '—'}</td>
-                        <td className="px-4 py-2 text-right font-mono">{c.fact_recall ? `${(Number(c.fact_recall) * 100).toFixed(1)}%` : '—'}</td>
-                        <td className="px-4 py-2 text-right font-mono font-semibold">{c.fact_f1 ? `${(Number(c.fact_f1) * 100).toFixed(1)}%` : '—'}</td>
-                        <td className="px-4 py-2 text-right font-mono">{c.negation_f1 ? `${(Number(c.negation_f1) * 100).toFixed(1)}%` : '—'}</td>
-                        <td className="px-4 py-2 text-right font-mono text-critical">{c.hallucination_rate ? `${(Number(c.hallucination_rate) * 100).toFixed(1)}%` : '—'}</td>
-                        <td className="px-4 py-2 text-right font-mono">{c.medicine_accuracy ? `${(Number(c.medicine_accuracy) * 100).toFixed(1)}%` : '—'}</td>
+                        <td className="px-4 py-2 text-right font-mono">
+                          {c.fact_precision
+                            ? `${(Number(c.fact_precision) * 100).toFixed(1)}%`
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono">
+                          {c.fact_recall ? `${(Number(c.fact_recall) * 100).toFixed(1)}%` : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono font-semibold">
+                          {c.fact_f1 ? `${(Number(c.fact_f1) * 100).toFixed(1)}%` : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono">
+                          {c.negation_f1 ? `${(Number(c.negation_f1) * 100).toFixed(1)}%` : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono text-critical">
+                          {c.hallucination_rate
+                            ? `${(Number(c.hallucination_rate) * 100).toFixed(1)}%`
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono">
+                          {c.medicine_accuracy
+                            ? `${(Number(c.medicine_accuracy) * 100).toFixed(1)}%`
+                            : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -619,9 +736,7 @@ export function EvaluationPage() {
               <Languages className="size-5 text-action" />
               {t('eval:languages.caption')}
             </h3>
-            <p className="mt-1 text-sm text-body">
-              {t('eval:languages.description')}
-            </p>
+            <p className="mt-1 text-sm text-body">{t('eval:languages.description')}</p>
           </div>
 
           <Table
@@ -634,7 +749,7 @@ export function EvaluationPage() {
 
           <div className="rounded-md border border-line bg-sunken p-3 text-xs text-body">
             <strong>{t('eval:languages.protocolNote')}:</strong>{' '}
-            {((manifest?.['asr_languages'] as { protocol_note?: string })?.protocol_note) ||
+            {(manifest?.['asr_languages'] as { protocol_note?: string })?.protocol_note ||
               'Language breakdowns rely strictly on explicit segment annotations. Script detection was not used to assign spoken language.'}
           </div>
         </div>
@@ -716,19 +831,27 @@ export function EvaluationPage() {
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.fhirStatus')}:</span>
-                <span className="font-mono font-medium text-ink">{t('eval:conformance.fhirIg')}</span>
+                <span className="font-mono font-medium text-ink">
+                  {t('eval:conformance.fhirIg')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.fhirCatchRate')}:</span>
-                <span className="font-mono font-medium text-ink">{t('eval:conformance.fhirPassed')}</span>
+                <span className="font-mono font-medium text-ink">
+                  {t('eval:conformance.fhirPassed')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.validatorLabel')}</span>
-                <span className="font-mono font-medium text-ink">{t('eval:conformance.validatorEngine')}</span>
+                <span className="font-mono font-medium text-ink">
+                  {t('eval:conformance.validatorEngine')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.provenanceLabel')}</span>
-                <span className="font-mono text-xs text-body">{t('eval:conformance.provenanceNote')}</span>
+                <span className="font-mono text-xs text-body">
+                  {t('eval:conformance.provenanceNote')}
+                </span>
               </div>
               <div className="mt-3 rounded-md bg-sunken p-3 text-xs text-body">
                 {t('eval:conformance.fhirDisclaimer')}
@@ -748,15 +871,21 @@ export function EvaluationPage() {
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.safetyStatus')}:</span>
-                <span className="font-mono font-medium text-ink">{t('eval:conformance.verifiedSuite')}</span>
+                <span className="font-mono font-medium text-ink">
+                  {t('eval:conformance.verifiedSuite')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.recallLabel')}</span>
-                <span className="font-mono font-medium text-ink">{t('eval:conformance.recallValue')}</span>
+                <span className="font-mono font-medium text-ink">
+                  {t('eval:conformance.recallValue')}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-body">{t('eval:conformance.runtimeSafetyLabel')}</span>
-                <span className="font-mono font-medium text-critical">{t('eval:conformance.disabledRules')}</span>
+                <span className="font-mono font-medium text-critical">
+                  {t('eval:conformance.disabledRules')}
+                </span>
               </div>
               <div className="mt-3 rounded-md bg-sunken p-3 text-xs text-body">
                 {t('eval:conformance.safetyDisclaimer')}
@@ -870,13 +999,16 @@ export function EvaluationPage() {
                 <strong>{t('eval:split')}:</strong> {String(manifest['split'] ?? 'dev')}
               </span>
               <span className="rounded-md bg-sunken px-3 py-1 font-mono text-ink">
-                <strong>{t('eval:casesCount')}:</strong> {Array.isArray(manifest['cases']) ? manifest['cases'].length : 0}
+                <strong>{t('eval:casesCount')}:</strong>{' '}
+                {Array.isArray(manifest['cases']) ? manifest['cases'].length : 0}
               </span>
               <span className="rounded-md bg-sunken px-3 py-1 font-mono text-ink">
-                <strong>{t('eval:codeCommit')}:</strong> {String(manifest['code_commit'] ?? 'unknown').slice(0, 7)}
+                <strong>{t('eval:codeCommit')}:</strong>{' '}
+                {String(manifest['code_commit'] ?? 'unknown').slice(0, 7)}
               </span>
               <span className="rounded-md bg-sunken px-3 py-1 font-mono text-ink">
-                <strong>{t('eval:datasetHash')}:</strong> {String(manifest['dataset_hash'] ?? 'unknown').slice(0, 10)}...
+                <strong>{t('eval:datasetHash')}:</strong>{' '}
+                {String(manifest['dataset_hash'] ?? 'unknown').slice(0, 10)}...
               </span>
             </div>
           )}

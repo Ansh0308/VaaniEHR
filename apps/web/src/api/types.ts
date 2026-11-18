@@ -144,4 +144,3 @@ export interface EvalRunDetail {
   questionsCsv: string;
   errorsCsv: string;
 }
-

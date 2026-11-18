@@ -65,7 +65,27 @@ def test_fact_scores_with_negation_and_hallucination():
     )
     # negation: gold negated cough predicted not negated -> fn 1, no tp, no fp
     assert (out["negation"]["tp"], out["negation"]["fp"], out["negation"]["fn"]) == (0, 0, 1)
+    assert "uncertainty" in out
     assert out["hallucination"] == {"ungrounded": 1, "proposed": 3, "rate": pytest.approx(1 / 3)}
+
+
+def test_fact_scores_with_uncertainty():
+    lines = ["Patient may perhaps have migraine headache"]
+    golds = [GoldFact("symptom", "migraine", False, True, "migraine headache")]
+    # Test uncertainty TP
+    pred_tp = [m.pred_fact("symptom", "migraine", "migraine headache", uncertain=True)]
+    out_tp = m.fact_scores([(golds, lines, pred_tp)])
+    assert (out_tp["uncertainty"]["tp"], out_tp["uncertainty"]["fp"], out_tp["uncertainty"]["fn"]) == (1, 0, 0)
+    assert out_tp["uncertainty"]["f1"] == 1.0
+
+    # Test uncertainty FN (predicted uncertain=False when gold is uncertain=True)
+    pred_fn = [m.pred_fact("symptom", "migraine", "migraine headache", uncertain=False)]
+    out_fn = m.fact_scores([(golds, lines, pred_fn)])
+    assert (out_fn["uncertainty"]["tp"], out_fn["uncertainty"]["fp"], out_fn["uncertainty"]["fn"]) == (0, 0, 1)
+
+    # Test error categorization includes uncertainty mismatch
+    errs = m.categorize_case_errors("case-1", golds, lines, pred_fn)
+    assert any(e.error_category == "uncertainty_mismatch" for e in errs)
 
 
 def test_pathway_scores_and_red_flag_recall():

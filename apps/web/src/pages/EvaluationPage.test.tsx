@@ -1,5 +1,5 @@
 // PG-17 Evaluation console tests (/research/eval, Phase 11, ADR-D43).
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanupApp, renderApp, type Handler } from '../test-utils/harness';
 
@@ -24,7 +24,19 @@ const sampleDetail = {
     split: 'dev',
     dataset_hash: 'f4823ab5aee0302cdfa8975e87f18585ee5d22371fc03dc9566b7f438f8e162e',
     code_commit: '56ef44d5ed90c8520f0af00472868852112f72b0',
-    cases: ['clip04', 'clip05', 'clip06', 'clip07', 'clip08', 'clip09', 'clip10', 'clip11', 'synthetic01', 'synthetic02', 'synthetic03'],
+    cases: [
+      'clip04',
+      'clip05',
+      'clip06',
+      'clip07',
+      'clip08',
+      'clip09',
+      'clip10',
+      'clip11',
+      'synthetic01',
+      'synthetic02',
+      'synthetic03',
+    ],
     asr_languages: {
       overall: {
         segments: 59,
@@ -73,15 +85,18 @@ const sampleDetail = {
         char_errors: 0,
         cer: 0.0,
       },
-      protocol_note: 'Language breakdowns rely strictly on explicit segment annotations. Script detection was not used to assign spoken language.',
+      protocol_note:
+        'Language breakdowns rely strictly on explicit segment annotations. Script detection was not used to assign spoken language.',
     },
   },
   summaryMd: '# Evaluation Summary\n\nAll tests passed.',
   tableTex: '\\begin{tabular}{lll}\nResult & 1 & 2\n\\end{tabular}',
-  cellsCsv: 'asr,asr_version,variant,cases,fact_precision,fact_recall,fact_f1,negation_f1,hallucination_rate,wer,cer,medicine_accuracy\ngold,gold-transcript,plain,11,0.85,0.90,0.87,0.70,0.15,,,0.95\ngold,gold-transcript,grounded,11,1.00,0.92,0.96,0.80,0.00,,,0.98',
+  cellsCsv:
+    'asr,asr_version,variant,cases,fact_precision,fact_recall,fact_f1,negation_f1,hallucination_rate,wer,cer,medicine_accuracy\ngold,gold-transcript,plain,11,0.85,0.90,0.87,0.70,0.15,,,0.95\ngold,gold-transcript,grounded,11,1.00,0.92,0.96,0.80,0.00,,,0.98',
   casesCsv: 'case_id,engine,variant\nclip04,gold,grounded',
   questionsCsv: 'case_id,engine,steps\nclip04,rules-only,2',
-  errorsCsv: 'case_id,error_category,gold_type,predicted_type,gold_quote,predicted_quote,detail\nclip04,missed_fact,symptom,,fever,,Gold fact not extracted\nclip05,unsupported_fact,,symptom,,headache,Extracted assertion not grounded',
+  errorsCsv:
+    'case_id,error_category,gold_type,predicted_type,gold_quote,predicted_quote,detail\nclip04,missed_fact,symptom,,fever,,Gold fact not extracted\nclip05,unsupported_fact,,symptom,,headache,Extracted assertion not grounded',
 };
 
 const evalHandlers: Record<string, Handler> = {
@@ -97,7 +112,10 @@ describe('PG-17 EvaluationPage', () => {
       routes: evalHandlers,
     });
 
-    const heading = await screen.findByRole('heading', { level: 1, name: /Research Evaluation Console/i });
+    const heading = await screen.findByRole('heading', {
+      level: 1,
+      name: /Research Evaluation Console/i,
+    });
     expect(heading).toBeTruthy();
 
     // Confidence disclaimer
@@ -114,7 +132,10 @@ describe('PG-17 EvaluationPage', () => {
       routes: evalHandlers,
     });
 
-    const heading = await screen.findByRole('heading', { level: 1, name: /Research Evaluation Console/i });
+    const heading = await screen.findByRole('heading', {
+      level: 1,
+      name: /Research Evaluation Console/i,
+    });
     expect(heading).toBeTruthy();
   });
 
@@ -167,7 +188,9 @@ describe('PG-17 EvaluationPage', () => {
     expect(screen.getByText(/Hindi \(hi\)/i)).toBeTruthy();
     expect(screen.getByText(/English \(en\)/i)).toBeTruthy();
     expect(screen.getByText(/Mixed \/ Code-switched segments/i)).toBeTruthy();
-    expect(screen.getByText(/Language breakdowns rely strictly on explicit segment annotations/i)).toBeTruthy();
+    expect(
+      screen.getByText(/Language breakdowns rely strictly on explicit segment annotations/i),
+    ).toBeTruthy();
   });
 
   it('switches to Extraction Errors tab and filters errors by category', async () => {
