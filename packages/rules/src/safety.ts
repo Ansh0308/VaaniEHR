@@ -93,11 +93,233 @@ function requiredReview(review: unknown, at: string, errors: string[]): void {
     errors.push(`${at}: clinical_review.reviewed_on must be a valid calendar date`);
 }
 
+function checkUnexpectedKeys(obj: Obj, allowed: string[], at: string, errors: string[]): void {
+  for (const key of Object.keys(obj)) {
+    if (!allowed.includes(key)) {
+      errors.push(`${at}: unexpected property "${key}"`);
+    }
+  }
+}
+
+export function validateSafetyRuleCriteria(
+  kind: SafetyRuleKind,
+  criteria: unknown,
+  at: string,
+  errors: string[],
+): void {
+  if (!isObj(criteria)) {
+    errors.push(`${at} must be an object`);
+    return;
+  }
+
+  switch (kind) {
+    case 'allergy_cross_reactivity': {
+      checkUnexpectedKeys(
+        criteria,
+        ['allergen', 'prohibited_substances', 'description'],
+        at,
+        errors,
+      );
+      if (!nonEmpty(criteria.allergen)) errors.push(`${at}.allergen must be a non-empty string`);
+      if (
+        !Array.isArray(criteria.prohibited_substances) ||
+        criteria.prohibited_substances.length === 0
+      ) {
+        errors.push(`${at}.prohibited_substances must be a non-empty array of strings`);
+      } else {
+        for (const [idx, sub] of criteria.prohibited_substances.entries()) {
+          if (!nonEmpty(sub))
+            errors.push(`${at}.prohibited_substances[${idx}] must be a non-empty string`);
+        }
+      }
+      if (criteria.description !== undefined && !nonEmpty(criteria.description)) {
+        errors.push(`${at}.description must be a non-empty string when present`);
+      }
+      break;
+    }
+    case 'maximum_daily_dose': {
+      checkUnexpectedKeys(
+        criteria,
+        ['substance', 'max_daily_amount', 'unit', 'description'],
+        at,
+        errors,
+      );
+      if (!nonEmpty(criteria.substance)) errors.push(`${at}.substance must be a non-empty string`);
+      if (
+        typeof criteria.max_daily_amount !== 'number' ||
+        !Number.isFinite(criteria.max_daily_amount) ||
+        criteria.max_daily_amount <= 0
+      ) {
+        errors.push(`${at}.max_daily_amount must be a positive number`);
+      }
+      if (!nonEmpty(criteria.unit)) errors.push(`${at}.unit must be a non-empty string`);
+      if (criteria.description !== undefined && !nonEmpty(criteria.description)) {
+        errors.push(`${at}.description must be a non-empty string when present`);
+      }
+      break;
+    }
+    case 'duplicate_drug_class': {
+      checkUnexpectedKeys(
+        criteria,
+        ['drug_class', 'substances', 'max_allowed', 'description'],
+        at,
+        errors,
+      );
+      if (!nonEmpty(criteria.drug_class))
+        errors.push(`${at}.drug_class must be a non-empty string`);
+      if (!Array.isArray(criteria.substances) || criteria.substances.length < 2) {
+        errors.push(`${at}.substances must be an array of at least two substance strings`);
+      } else {
+        for (const [idx, sub] of criteria.substances.entries()) {
+          if (!nonEmpty(sub)) errors.push(`${at}.substances[${idx}] must be a non-empty string`);
+        }
+      }
+      if (criteria.max_allowed !== undefined) {
+        if (!Number.isInteger(criteria.max_allowed) || Number(criteria.max_allowed) < 1) {
+          errors.push(`${at}.max_allowed must be a positive integer`);
+        }
+      }
+      if (criteria.description !== undefined && !nonEmpty(criteria.description)) {
+        errors.push(`${at}.description must be a non-empty string when present`);
+      }
+      break;
+    }
+    case 'major_interaction': {
+      checkUnexpectedKeys(criteria, ['substance_a', 'substance_b', 'description'], at, errors);
+      if (!nonEmpty(criteria.substance_a))
+        errors.push(`${at}.substance_a must be a non-empty string`);
+      if (!nonEmpty(criteria.substance_b))
+        errors.push(`${at}.substance_b must be a non-empty string`);
+      if (
+        nonEmpty(criteria.substance_a) &&
+        nonEmpty(criteria.substance_b) &&
+        criteria.substance_a.trim().toLowerCase() === criteria.substance_b.trim().toLowerCase()
+      ) {
+        errors.push(`${at}: substance_a and substance_b must be distinct substances`);
+      }
+      if (criteria.description !== undefined && !nonEmpty(criteria.description)) {
+        errors.push(`${at}.description must be a non-empty string when present`);
+      }
+      break;
+    }
+    case 'out_of_scope_stop': {
+      checkUnexpectedKeys(
+        criteria,
+        ['condition', 'min_age_years', 'max_age_years', 'prohibited_symptoms', 'description'],
+        at,
+        errors,
+      );
+      const hasCondition = nonEmpty(criteria.condition);
+      const hasMinAge =
+        typeof criteria.min_age_years === 'number' && Number.isFinite(criteria.min_age_years);
+      const hasMaxAge =
+        typeof criteria.max_age_years === 'number' && Number.isFinite(criteria.max_age_years);
+      const hasSymptoms =
+        Array.isArray(criteria.prohibited_symptoms) && criteria.prohibited_symptoms.length > 0;
+
+      if (!hasCondition && !hasMinAge && !hasMaxAge && !hasSymptoms) {
+        errors.push(
+          `${at}: out_of_scope_stop criteria must define at least one constraint (condition, age bounds, or prohibited_symptoms)`,
+        );
+      }
+      if (criteria.condition !== undefined && !hasCondition) {
+        errors.push(`${at}.condition must be a non-empty string when present`);
+      }
+      if (criteria.min_age_years !== undefined) {
+        if (!hasMinAge || (criteria.min_age_years as number) < 0) {
+          errors.push(`${at}.min_age_years must be a non-negative number`);
+        }
+      }
+      if (criteria.max_age_years !== undefined) {
+        if (!hasMaxAge || (criteria.max_age_years as number) < 0) {
+          errors.push(`${at}.max_age_years must be a non-negative number`);
+        }
+      }
+      if (
+        hasMinAge &&
+        hasMaxAge &&
+        (criteria.min_age_years as number) > (criteria.max_age_years as number)
+      ) {
+        errors.push(`${at}: min_age_years cannot exceed max_age_years`);
+      }
+      if (criteria.prohibited_symptoms !== undefined) {
+        if (
+          !Array.isArray(criteria.prohibited_symptoms) ||
+          criteria.prohibited_symptoms.length === 0
+        ) {
+          errors.push(
+            `${at}.prohibited_symptoms must be a non-empty array of strings when present`,
+          );
+        } else {
+          for (const [idx, sym] of criteria.prohibited_symptoms.entries()) {
+            if (!nonEmpty(sym))
+              errors.push(`${at}.prohibited_symptoms[${idx}] must be a non-empty string`);
+          }
+        }
+      }
+      if (criteria.description !== undefined && !nonEmpty(criteria.description)) {
+        errors.push(`${at}.description must be a non-empty string when present`);
+      }
+      break;
+    }
+  }
+}
+
+export function isSyntheticSafetyRuleSet(raw: unknown): boolean {
+  if (!isObj(raw)) return false;
+  if (raw.synthetic === true || raw.tier === 'synthetic_test') return true;
+  if (
+    typeof raw.id === 'string' &&
+    (raw.id.toLowerCase().startsWith('synthetic') || raw.id.toLowerCase().startsWith('synth_'))
+  )
+    return true;
+  if (isObj(raw.source)) {
+    if (
+      typeof raw.source.source_id === 'string' &&
+      raw.source.source_id.toUpperCase().startsWith('SYNTH')
+    )
+      return true;
+    if (typeof raw.source.license_reuse === 'string' && /synthetic/i.test(raw.source.license_reuse))
+      return true;
+    if (typeof raw.source.citation === 'string' && /synthetic/i.test(raw.source.citation))
+      return true;
+  }
+  if (isObj(raw.clinical_review)) {
+    if (
+      typeof raw.clinical_review.reviewer === 'string' &&
+      /synthetic/i.test(raw.clinical_review.reviewer)
+    )
+      return true;
+    if (
+      typeof raw.clinical_review.approval_reference === 'string' &&
+      raw.clinical_review.approval_reference.toUpperCase().startsWith('SYNTH')
+    )
+      return true;
+  }
+  return false;
+}
+
 /** Structural validation accepts unfinished drafts, but never declares any document eligible. */
 export function validateSafetyRuleSet(raw: unknown, label = 'safety rule set'): SafetyFinding {
   const errors: string[] = [];
   const warnings: string[] = [];
   if (!isObj(raw)) return { errors: [`${label}: must be a JSON object`], warnings };
+  checkUnexpectedKeys(
+    raw,
+    [
+      'id',
+      'schema_version',
+      'version',
+      'status',
+      'source',
+      'clinical_review',
+      'rules',
+      'synthetic',
+      'tier',
+    ],
+    label,
+    errors,
+  );
   for (const key of [
     'id',
     'schema_version',
@@ -132,14 +354,32 @@ export function validateSafetyRuleSet(raw: unknown, label = 'safety rule set'): 
       errors.push(`${at} must be an object`);
       continue;
     }
+    checkUnexpectedKeys(
+      rule,
+      ['id', 'kind', 'enabled', 'severity', 'description', 'source', 'clinical_review', 'criteria'],
+      at,
+      errors,
+    );
     if (!nonEmpty(rule.id) || !ID.test(rule.id)) errors.push(`${at}.id is invalid`);
     else if (ids.has(rule.id)) errors.push(`${at}.id duplicates ${rule.id}`);
     else ids.add(rule.id);
     if (!(SAFETY_RULE_KINDS as readonly string[]).includes(String(rule.kind)))
       errors.push(`${at}.kind is invalid`);
     if (typeof rule.enabled !== 'boolean') errors.push(`${at}.enabled must be boolean`);
+    if (rule.severity !== undefined && !['red', 'amber'].includes(String(rule.severity)))
+      errors.push(`${at}.severity must be "red" or "amber" when present`);
+    if (rule.description !== undefined && !nonEmpty(rule.description))
+      errors.push(`${at}.description must be a non-empty string when present`);
     if (!isObj(rule.source) || !nonEmpty(rule.source.citation))
       errors.push(`${at}.source.citation is required`);
+    if (rule.criteria !== undefined) {
+      validateSafetyRuleCriteria(
+        String(rule.kind) as SafetyRuleKind,
+        rule.criteria,
+        `${at}.criteria`,
+        errors,
+      );
+    }
   }
   const approved = raw.status === 'clinically_approved';
   if (approved) {
@@ -172,6 +412,14 @@ export function isSafetyRuleSetEligible(raw: unknown, lock?: SafetyLockEntry): b
   )
     return false;
   return lock.sha256 === safetyRuleSetHash(raw);
+}
+
+/** Strictly verifies eligibility AND enforces fail-closed isolation from fictional/synthetic fixtures. */
+export function isSafetyRuleSetEligibleForProduction(
+  raw: unknown,
+  lock?: SafetyLockEntry,
+): boolean {
+  return isSafetyRuleSetEligible(raw, lock) && !isSyntheticSafetyRuleSet(raw);
 }
 
 export function validateSafetyLockFile(raw: unknown, label = SAFETY_LOCK_FILE): SafetyFinding {

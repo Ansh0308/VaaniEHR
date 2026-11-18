@@ -3,6 +3,8 @@
   "schema_version": 1,
   "version": 1,
   "status": "clinically_approved",
+  "synthetic": true,
+  "tier": "synthetic_test",
   "source": {
     "source_id": "SYNTH-SRC-001",
     "document_title": "Synthetic Evaluation Mechanics Test Specification",

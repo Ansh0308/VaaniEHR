@@ -5,7 +5,11 @@ import {
   evaluateSafetyRule,
   evaluateSafetyRuleSet,
   evaluateSafetyRuleSets,
+  isSafetyRuleSetEligibleForProduction,
+  isSyntheticSafetyRuleSet,
   SafetyIntegrityError,
+  validateSafetyRuleCriteria,
+  type EvaluatableSafetyRule,
   type EvaluatableSafetyRuleSet,
   type SafetyEvaluationInput,
   type SafetyLockFile,
@@ -16,8 +20,31 @@ const lockPath = resolve(__dirname, '../fixtures/safety/safety-rules.lock.json')
 const fixtureJson: EvaluatableSafetyRuleSet = JSON.parse(readFileSync(fixturePath, 'utf8'));
 const lockJson: SafetyLockFile = JSON.parse(readFileSync(lockPath, 'utf8'));
 
-describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
-  it('evaluates approved locked rule set with correct hash and marks eligible: true', () => {
+describe('SafetyEvaluator - Synthetic Approval Isolation', () => {
+  it('identifies synthetic fixtures and isolates them from production eligibility', () => {
+    expect(isSyntheticSafetyRuleSet(fixtureJson)).toBe(true);
+    // Low-level integrity check might pass for tests, but production eligibility strictly rejects synthetic content
+    const lockEntry = lockJson.locks['synthetic_mechanics@1'];
+    expect(isSafetyRuleSetEligibleForProduction(fixtureJson, lockEntry)).toBe(false);
+  });
+
+  it('rejects evaluation of synthetic rule sets by default in production clinical mode', () => {
+    const input: SafetyEvaluationInput = {
+      encounterCondition: 'SYNTH_CONDITION_ZETA',
+      patient: { ageYears: 30, allergies: [], symptoms: [] },
+      prescriptions: [{ substance: 'SYNTH_SUBSTANCE_BETA', dailyAmount: 500, unit: 'mg' }],
+    };
+
+    // By default allowSynthetic is false -> fail closed!
+    expect(() =>
+      evaluateSafetyRuleSet(fixtureJson, input, {
+        lockFile: lockJson,
+        enforceEligibility: true,
+      }),
+    ).toThrow(/isolated from clinical evaluation/i);
+  });
+
+  it('evaluates approved locked synthetic fixture only when allowSynthetic: true is explicitly provided', () => {
     const input: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
       patient: {
@@ -37,14 +64,18 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
     const summary = evaluateSafetyRuleSet(fixtureJson, input, {
       lockFile: lockJson,
       enforceEligibility: true,
+      allowSynthetic: true,
     });
 
     expect(summary.eligible).toBe(true);
+    expect(summary.clinicalScope).toBe('synthetic_test');
     expect(summary.ruleSetId).toBe('synthetic_mechanics');
     expect(summary.totalRules).toBe(5);
     expect(summary.counts.pass).toBeGreaterThan(0);
   });
+});
 
+describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
   it('rejects unapproved (draft) rule sets when eligibility is enforced', () => {
     const draftRuleSet: EvaluatableSafetyRuleSet = {
       ...JSON.parse(JSON.stringify(fixtureJson)),
@@ -52,9 +83,9 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
       clinical_review: { state: 'unreviewed' },
     };
 
-    expect(() => evaluateSafetyRuleSet(draftRuleSet, {}, { enforceEligibility: true })).toThrow(
-      SafetyIntegrityError,
-    );
+    expect(() =>
+      evaluateSafetyRuleSet(draftRuleSet, {}, { enforceEligibility: true, allowSynthetic: true }),
+    ).toThrow(SafetyIntegrityError);
   });
 
   it('rejects rule set when immutable lock entry is missing', () => {
@@ -71,6 +102,7 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
         {
           lockFile: emptyLock,
           enforceEligibility: true,
+          allowSynthetic: true,
         },
       ),
     ).toThrow(SafetyIntegrityError);
@@ -78,7 +110,6 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
 
   it('rejects tampered rule set where content does not match lock SHA-256 hash', () => {
     const tamperedRuleSet: EvaluatableSafetyRuleSet = JSON.parse(JSON.stringify(fixtureJson));
-    // Tamper with rule content
     tamperedRuleSet.rules[0]!.severity = 'amber';
 
     expect(() =>
@@ -88,6 +119,7 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
         {
           lockFile: lockJson,
           enforceEligibility: true,
+          allowSynthetic: true,
         },
       ),
     ).toThrow(/tampered with or modified/);
@@ -104,11 +136,111 @@ describe('SafetyEvaluator - Integrity & Eligibility Gates', () => {
       {},
       {
         enforceEligibility: false,
+        allowSynthetic: true,
       },
     );
 
     expect(summary.eligible).toBe(false);
+    expect(summary.clinicalScope).toBe('synthetic_test');
     expect(summary.totalRules).toBe(5);
+  });
+});
+
+describe('SafetyEvaluator - Runtime Criteria Validation', () => {
+  it('rejects criteria with unexpected properties', () => {
+    const errors: string[] = [];
+    validateSafetyRuleCriteria(
+      'maximum_daily_dose',
+      {
+        substance: 'SYNTH_SUBSTANCE_BETA',
+        max_daily_amount: 1000,
+        unit: 'mg',
+        unexpected_extra_property: true,
+      },
+      'test.criteria',
+      errors,
+    );
+    expect(errors.join('\n')).toMatch(/unexpected property "unexpected_extra_property"/);
+  });
+
+  it('rejects non-positive max_daily_amount and missing units', () => {
+    const errors: string[] = [];
+    validateSafetyRuleCriteria(
+      'maximum_daily_dose',
+      {
+        substance: 'SYNTH_SUBSTANCE_BETA',
+        max_daily_amount: -50,
+        unit: '',
+      },
+      'test.criteria',
+      errors,
+    );
+    expect(errors.join('\n')).toMatch(/must be a positive number/);
+    expect(errors.join('\n')).toMatch(/unit must be a non-empty string/);
+  });
+
+  it('rejects duplicate class criteria with fewer than 2 substances', () => {
+    const errors: string[] = [];
+    validateSafetyRuleCriteria(
+      'duplicate_drug_class',
+      {
+        drug_class: 'SYNTH_CLASS',
+        substances: ['ONLY_ONE_SUBSTANCE'],
+      },
+      'test.criteria',
+      errors,
+    );
+    expect(errors.join('\n')).toMatch(/at least two substance strings/);
+  });
+
+  it('rejects major interaction criteria when substance_a equals substance_b', () => {
+    const errors: string[] = [];
+    validateSafetyRuleCriteria(
+      'major_interaction',
+      {
+        substance_a: 'SYNTH_DRUG_X',
+        substance_b: 'synth_drug_x',
+      },
+      'test.criteria',
+      errors,
+    );
+    expect(errors.join('\n')).toMatch(/must be distinct substances/);
+  });
+
+  it('rejects out_of_scope_stop when min_age exceeds max_age', () => {
+    const errors: string[] = [];
+    validateSafetyRuleCriteria(
+      'out_of_scope_stop',
+      {
+        condition: 'SYNTH_CONDITION',
+        min_age_years: 70,
+        max_age_years: 20,
+      },
+      'test.criteria',
+      errors,
+    );
+    expect(errors.join('\n')).toMatch(/min_age_years cannot exceed max_age_years/);
+  });
+
+  it('produces configuration_error when rule being evaluated has invalid criteria', () => {
+    const badRule: EvaluatableSafetyRule = {
+      id: 'bad_criteria_rule',
+      kind: 'maximum_daily_dose',
+      enabled: true,
+      source: fixtureJson.rules[0]!.source,
+      clinical_review: fixtureJson.rules[0]!.clinical_review,
+      criteria: {
+        substance: 'SYNTH_DRUG',
+        max_daily_amount: -10, // Invalid: negative
+        unit: 'mg',
+      },
+    };
+
+    const res = evaluateSafetyRule(badRule, fixtureJson, {
+      prescriptions: [{ substance: 'SYNTH_DRUG', dailyAmount: 50, unit: 'mg' }],
+    });
+    expect(res.outcome).toBe('configuration_error');
+    expect(res.message).toMatch(/criteria validation failed/i);
   });
 });
 
@@ -161,13 +293,24 @@ describe('SafetyEvaluator - Allergy Cross-Reactivity Mechanics', () => {
   });
 
   it('returns configuration_error when patient record is missing or allergies field is malformed', () => {
-    const resNoPatient = evaluateSafetyRule(allergyRule, fixtureJson, {});
+    const resNoPatient = evaluateSafetyRule(allergyRule, fixtureJson, {
+      prescriptions: [{ substance: 'SYNTH_SAFE' }],
+    });
     expect(resNoPatient.outcome).toBe('configuration_error');
 
     const resBadAllergies = evaluateSafetyRule(allergyRule, fixtureJson, {
       patient: { allergies: 'not-an-array' as unknown as [] },
+      prescriptions: [{ substance: 'SYNTH_SAFE' }],
     });
     expect(resBadAllergies.outcome).toBe('configuration_error');
+  });
+
+  it('returns configuration_error when prescription list is missing', () => {
+    const res = evaluateSafetyRule(allergyRule, fixtureJson, {
+      patient: { allergies: [{ allergen: 'SYNTH_ALLERGEN_ALPHA' }] },
+    });
+    expect(res.outcome).toBe('configuration_error');
+    expect(res.message).toMatch(/prescriptions list is required/i);
   });
 });
 
@@ -250,7 +393,7 @@ describe('SafetyEvaluator - Maximum Daily Dose Mechanics', () => {
     expect(res.evidence?.observedDailyAmount).toBe(1200);
   });
 
-  it('returns configuration_error when dose unit mismatches or dose amount is missing', () => {
+  it('returns configuration_error when dose unit mismatches or dose amount is non-positive', () => {
     const inputUnitMismatch: SafetyEvaluationInput = {
       prescriptions: [
         {
@@ -265,16 +408,19 @@ describe('SafetyEvaluator - Maximum Daily Dose Mechanics', () => {
     expect(resUnit.outcome).toBe('configuration_error');
     expect(resUnit.message).toMatch(/unit mismatch/i);
 
-    const inputMissingDose: SafetyEvaluationInput = {
+    const inputBadAmount: SafetyEvaluationInput = {
       prescriptions: [
         {
           substance: 'SYNTH_SUBSTANCE_BETA',
+          dailyAmount: -500, // Invalid: negative
+          unit: 'mg',
         },
       ],
     };
 
-    const resMissing = evaluateSafetyRule(maxDoseRule, fixtureJson, inputMissingDose);
-    expect(resMissing.outcome).toBe('configuration_error');
+    const resBad = evaluateSafetyRule(maxDoseRule, fixtureJson, inputBadAmount);
+    expect(resBad.outcome).toBe('configuration_error');
+    expect(resBad.message).toMatch(/positive finite number/i);
   });
 });
 
@@ -313,7 +459,7 @@ describe('SafetyEvaluator - Duplicate Drug Class Mechanics', () => {
     expect(res.evidence?.matchedSubstances).toEqual(['SYNTH_GAMMA_SUB_1', 'SYNTH_GAMMA_SUB_2']);
   });
 
-  it('returns configuration_error when prescription item is malformed', () => {
+  it('returns configuration_error when prescription item is malformed or missing substance', () => {
     const input: SafetyEvaluationInput = {
       prescriptions: [null as unknown as { substance: string }],
     };
@@ -393,7 +539,7 @@ describe('SafetyEvaluator - Out-of-Scope Stop Mechanics', () => {
     const input: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
       patient: {
-        ageYears: 10, // min is 12
+        ageYears: 10,
         symptoms: [],
       },
     };
@@ -408,7 +554,7 @@ describe('SafetyEvaluator - Out-of-Scope Stop Mechanics', () => {
     const input: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
       patient: {
-        ageYears: 70, // max is 65
+        ageYears: 70,
         symptoms: [],
       },
     };
@@ -434,36 +580,42 @@ describe('SafetyEvaluator - Out-of-Scope Stop Mechanics', () => {
     expect(res.evidence?.matchedSymptoms).toEqual(['SYNTH_RED_FLAG_COLLAPSE']);
   });
 
-  it('returns configuration_error when patient age is missing but age bounds are specified', () => {
-    const input: SafetyEvaluationInput = {
+  it('returns configuration_error when patient age is missing or negative', () => {
+    const inputMissingAge: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
-      patient: {
-        symptoms: [],
-      },
+      patient: { symptoms: [] },
     };
 
-    const res = evaluateSafetyRule(outOfScopeRule, fixtureJson, input);
-    expect(res.outcome).toBe('configuration_error');
-    expect(res.message).toMatch(/patient age is required/i);
+    const resMissing = evaluateSafetyRule(outOfScopeRule, fixtureJson, inputMissingAge);
+    expect(resMissing.outcome).toBe('configuration_error');
+
+    const inputNegativeAge: SafetyEvaluationInput = {
+      encounterCondition: 'SYNTH_CONDITION_ZETA',
+      patient: { ageYears: -5, symptoms: [] },
+    };
+
+    const resNeg = evaluateSafetyRule(outOfScopeRule, fixtureJson, inputNegativeAge);
+    expect(resNeg.outcome).toBe('configuration_error');
+    expect(resNeg.message).toMatch(/valid non-negative patient age is required/i);
   });
 
-  it('returns configuration_error when patient symptoms is not an array but prohibited symptoms are specified', () => {
-    const input: SafetyEvaluationInput = {
+  it('returns configuration_error when patient symptoms list contains empty string', () => {
+    const inputBadSymptoms: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
       patient: {
         ageYears: 30,
-        symptoms: 'invalid' as unknown as string[],
+        symptoms: [''],
       },
     };
 
-    const res = evaluateSafetyRule(outOfScopeRule, fixtureJson, input);
+    const res = evaluateSafetyRule(outOfScopeRule, fixtureJson, inputBadSymptoms);
     expect(res.outcome).toBe('configuration_error');
-    expect(res.message).toMatch(/patient symptoms list is required/i);
+    expect(res.message).toMatch(/non-empty string/i);
   });
 });
 
 describe('SafetyEvaluator - Multi-Rule Set Batch Evaluation', () => {
-  it('evaluates multiple rule sets returning summary for each', () => {
+  it('evaluates multiple rule sets returning summary for each with clinicalScope', () => {
     const input: SafetyEvaluationInput = {
       encounterCondition: 'SYNTH_CONDITION_ZETA',
       patient: {
@@ -483,10 +635,12 @@ describe('SafetyEvaluator - Multi-Rule Set Batch Evaluation', () => {
     const summaries = evaluateSafetyRuleSets([fixtureJson], input, {
       lockFile: lockJson,
       enforceEligibility: true,
+      allowSynthetic: true,
     });
 
     expect(summaries).toHaveLength(1);
     expect(summaries[0]!.totalRules).toBe(5);
+    expect(summaries[0]!.clinicalScope).toBe('synthetic_test');
     expect(summaries[0]!.eligible).toBe(true);
   });
 });

@@ -3,7 +3,10 @@
 // Disconnected from live consultation signing and prescribing.
 import {
   isSafetyRuleSetEligible,
+  isSafetyRuleSetEligibleForProduction,
+  isSyntheticSafetyRuleSet,
   safetyRuleSetHash,
+  validateSafetyRuleCriteria,
   validateSafetyRuleSet,
   type SafetyLockEntry,
   type SafetyLockFile,
@@ -11,6 +14,11 @@ import {
   type SafetyRuleSetStatus,
 } from './safety.js';
 
+export {
+  isSafetyRuleSetEligibleForProduction,
+  isSyntheticSafetyRuleSet,
+  validateSafetyRuleCriteria,
+};
 export type { SafetyLockEntry, SafetyLockFile, SafetyRuleKind, SafetyRuleSetStatus };
 
 export class SafetyIntegrityError extends Error {
@@ -25,6 +33,7 @@ export class SafetyIntegrityError extends Error {
 
 export type SafetyRuleOutcome = 'pass' | 'alert' | 'not_evaluated' | 'configuration_error';
 export type SafetyAlertSeverity = 'red' | 'amber';
+export type SafetyClinicalScope = 'clinical' | 'synthetic_test';
 
 export interface SafetyRuleProvenance {
   sourceId: string;
@@ -49,12 +58,14 @@ export interface MaxDoseRuleCriteria {
   substance: string;
   max_daily_amount: number;
   unit: string;
+  description?: string;
 }
 
 export interface DuplicateClassRuleCriteria {
   drug_class: string;
   substances: string[];
   max_allowed?: number;
+  description?: string;
 }
 
 export interface InteractionRuleCriteria {
@@ -68,6 +79,7 @@ export interface OutOfScopeRuleCriteria {
   min_age_years?: number;
   max_age_years?: number;
   prohibited_symptoms?: string[];
+  description?: string;
 }
 
 export interface EvaluatableSafetyRule {
@@ -99,6 +111,8 @@ export interface EvaluatableSafetyRuleSet {
   schema_version: 1;
   version: number;
   status: SafetyRuleSetStatus;
+  synthetic?: boolean;
+  tier?: 'clinical' | 'synthetic_test';
   source: {
     source_id?: string;
     document_title?: string;
@@ -170,6 +184,7 @@ export interface RuleSetEvaluationSummary {
   ruleSetVersion: number;
   ruleSetHash: string;
   status: SafetyRuleSetStatus;
+  clinicalScope: SafetyClinicalScope;
   eligible: boolean;
   totalRules: number;
   evaluatedRules: number;
@@ -190,10 +205,12 @@ export interface SafetyEvaluationOptions {
   lockEntry?: SafetyLockEntry;
   lockFile?: SafetyLockFile;
   enforceEligibility?: boolean;
+  allowSynthetic?: boolean;
 }
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
+const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
 const normalize = (v: unknown): string => (typeof v === 'string' ? v.trim().toLowerCase() : '');
 
 function extractProvenance(
@@ -221,22 +238,7 @@ function evaluateAllergyRule(
   provenance: SafetyRuleProvenance,
 ): RuleEvaluationResult {
   const severity: SafetyAlertSeverity = rule.severity ?? 'red';
-  const criteria = rule.criteria as AllergyRuleCriteria | undefined;
-
-  if (
-    !isObj(criteria) ||
-    typeof criteria.allergen !== 'string' ||
-    !Array.isArray(criteria.prohibited_substances)
-  ) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria is missing or malformed for allergy cross reactivity check.`,
-      provenance,
-    };
-  }
+  const criteria = rule.criteria as AllergyRuleCriteria;
 
   if (input.patient === undefined) {
     return {
@@ -249,34 +251,59 @@ function evaluateAllergyRule(
     };
   }
 
-  if (input.patient.allergies !== undefined && !Array.isArray(input.patient.allergies)) {
+  if (input.patient.allergies === undefined || !Array.isArray(input.patient.allergies)) {
     return {
       ruleId: rule.id,
       ruleKind: rule.kind,
       outcome: 'configuration_error',
       severity,
-      message: `Patient allergies must be an array for rule "${rule.id}".`,
+      message: `Patient allergy history is required and must be an array for rule "${rule.id}".`,
       provenance,
     };
   }
 
-  if (input.prescriptions !== undefined && !Array.isArray(input.prescriptions)) {
+  for (const [idx, allergy] of input.patient.allergies.entries()) {
+    if (!isObj(allergy) || !nonEmpty(allergy.allergen)) {
+      return {
+        ruleId: rule.id,
+        ruleKind: rule.kind,
+        outcome: 'configuration_error',
+        severity,
+        message: `Patient allergy at index ${idx} is malformed or lacks non-empty allergen name.`,
+        provenance,
+      };
+    }
+  }
+
+  if (input.prescriptions === undefined || !Array.isArray(input.prescriptions)) {
     return {
       ruleId: rule.id,
       ruleKind: rule.kind,
       outcome: 'configuration_error',
       severity,
-      message: `Prescriptions must be an array for rule "${rule.id}".`,
+      message: `Prescriptions list is required and must be an array for rule "${rule.id}".`,
       provenance,
     };
   }
 
-  const patientAllergies = input.patient.allergies ?? [];
+  for (const [idx, rx] of input.prescriptions.entries()) {
+    if (!isObj(rx) || !nonEmpty(rx.substance)) {
+      return {
+        ruleId: rule.id,
+        ruleKind: rule.kind,
+        outcome: 'configuration_error',
+        severity,
+        message: `Prescription at index ${idx} is invalid or missing non-empty substance string.`,
+        provenance,
+      };
+    }
+  }
+
+  const patientAllergies = input.patient.allergies;
   const targetAllergenNorm = normalize(criteria.allergen);
-  const patientHasAllergy = patientAllergies.some((a) => {
-    if (!isObj(a)) return false;
-    return normalize(a.allergen) === targetAllergenNorm;
-  });
+  const patientHasAllergy = patientAllergies.some(
+    (a) => normalize(a.allergen) === targetAllergenNorm,
+  );
 
   if (!patientHasAllergy) {
     return {
@@ -291,17 +318,7 @@ function evaluateAllergyRule(
   const prohibitedNorms = new Set(criteria.prohibited_substances.map(normalize));
   const matchedSubstances: string[] = [];
 
-  for (const rx of input.prescriptions ?? []) {
-    if (!isObj(rx) || typeof rx.substance !== 'string') {
-      return {
-        ruleId: rule.id,
-        ruleKind: rule.kind,
-        outcome: 'configuration_error',
-        severity,
-        message: `Prescription item is invalid or missing substance string for rule "${rule.id}".`,
-        provenance,
-      };
-    }
+  for (const rx of input.prescriptions) {
     if (prohibitedNorms.has(normalize(rx.substance))) {
       matchedSubstances.push(rx.substance);
     }
@@ -340,26 +357,9 @@ function evaluateMaxDoseRule(
   provenance: SafetyRuleProvenance,
 ): RuleEvaluationResult {
   const severity: SafetyAlertSeverity = rule.severity ?? 'red';
-  const criteria = rule.criteria as MaxDoseRuleCriteria | undefined;
+  const criteria = rule.criteria as MaxDoseRuleCriteria;
 
-  if (
-    !isObj(criteria) ||
-    typeof criteria.substance !== 'string' ||
-    typeof criteria.max_daily_amount !== 'number' ||
-    Number.isNaN(criteria.max_daily_amount) ||
-    typeof criteria.unit !== 'string'
-  ) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria is missing or malformed for maximum daily dose check.`,
-      provenance,
-    };
-  }
-
-  if (input.prescriptions !== undefined && !Array.isArray(input.prescriptions)) {
+  if (input.prescriptions === undefined || !Array.isArray(input.prescriptions)) {
     return {
       ruleId: rule.id,
       ruleKind: rule.kind,
@@ -370,13 +370,23 @@ function evaluateMaxDoseRule(
     };
   }
 
+  for (const [idx, rx] of input.prescriptions.entries()) {
+    if (!isObj(rx) || !nonEmpty(rx.substance)) {
+      return {
+        ruleId: rule.id,
+        ruleKind: rule.kind,
+        outcome: 'configuration_error',
+        severity,
+        message: `Prescription at index ${idx} is invalid or missing non-empty substance string.`,
+        provenance,
+      };
+    }
+  }
+
   const targetSubstanceNorm = normalize(criteria.substance);
   const targetUnitNorm = normalize(criteria.unit);
-  const matchingRx = (input.prescriptions ?? []).filter(
-    (rx) =>
-      isObj(rx) &&
-      typeof rx.substance === 'string' &&
-      normalize(rx.substance) === targetSubstanceNorm,
+  const matchingRx = input.prescriptions.filter(
+    (rx) => normalize(rx.substance) === targetSubstanceNorm,
   );
 
   if (matchingRx.length === 0) {
@@ -392,7 +402,17 @@ function evaluateMaxDoseRule(
   let totalDailyAmount = 0;
 
   for (const rx of matchingRx) {
-    if (typeof rx.dailyAmount === 'number' && !Number.isNaN(rx.dailyAmount)) {
+    if (typeof rx.dailyAmount === 'number') {
+      if (!Number.isFinite(rx.dailyAmount) || rx.dailyAmount <= 0) {
+        return {
+          ruleId: rule.id,
+          ruleKind: rule.kind,
+          outcome: 'configuration_error',
+          severity,
+          message: `Prescription dailyAmount for "${criteria.substance}" must be a positive finite number.`,
+          provenance,
+        };
+      }
       if (rx.unit !== undefined && normalize(rx.unit) !== targetUnitNorm) {
         return {
           ruleId: rule.id,
@@ -404,12 +424,22 @@ function evaluateMaxDoseRule(
         };
       }
       totalDailyAmount += rx.dailyAmount;
-    } else if (
-      typeof rx.doseAmount === 'number' &&
-      !Number.isNaN(rx.doseAmount) &&
-      typeof rx.frequencyPerDay === 'number' &&
-      !Number.isNaN(rx.frequencyPerDay)
-    ) {
+    } else if (typeof rx.doseAmount === 'number' && typeof rx.frequencyPerDay === 'number') {
+      if (
+        !Number.isFinite(rx.doseAmount) ||
+        rx.doseAmount <= 0 ||
+        !Number.isFinite(rx.frequencyPerDay) ||
+        rx.frequencyPerDay <= 0
+      ) {
+        return {
+          ruleId: rule.id,
+          ruleKind: rule.kind,
+          outcome: 'configuration_error',
+          severity,
+          message: `Prescription doseAmount and frequencyPerDay for "${criteria.substance}" must be positive numbers.`,
+          provenance,
+        };
+      }
       if (rx.doseUnit !== undefined && normalize(rx.doseUnit) !== targetUnitNorm) {
         return {
           ruleId: rule.id,
@@ -469,36 +499,10 @@ function evaluateDuplicateClassRule(
   provenance: SafetyRuleProvenance,
 ): RuleEvaluationResult {
   const severity: SafetyAlertSeverity = rule.severity ?? 'amber';
-  const criteria = rule.criteria as DuplicateClassRuleCriteria | undefined;
-
-  if (
-    !isObj(criteria) ||
-    typeof criteria.drug_class !== 'string' ||
-    !Array.isArray(criteria.substances)
-  ) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria is missing or malformed for duplicate drug class check.`,
-      provenance,
-    };
-  }
-
+  const criteria = rule.criteria as DuplicateClassRuleCriteria;
   const maxAllowed = criteria.max_allowed ?? 1;
-  if (typeof maxAllowed !== 'number' || maxAllowed < 1) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria max_allowed must be a positive integer.`,
-      provenance,
-    };
-  }
 
-  if (input.prescriptions !== undefined && !Array.isArray(input.prescriptions)) {
+  if (input.prescriptions === undefined || !Array.isArray(input.prescriptions)) {
     return {
       ruleId: rule.id,
       ruleKind: rule.kind,
@@ -509,20 +513,23 @@ function evaluateDuplicateClassRule(
     };
   }
 
-  const classSubstancesNorm = new Set(criteria.substances.map(normalize));
-  const matchedSubstances: string[] = [];
-
-  for (const rx of input.prescriptions ?? []) {
-    if (!isObj(rx) || typeof rx.substance !== 'string') {
+  for (const [idx, rx] of input.prescriptions.entries()) {
+    if (!isObj(rx) || !nonEmpty(rx.substance)) {
       return {
         ruleId: rule.id,
         ruleKind: rule.kind,
         outcome: 'configuration_error',
         severity,
-        message: `Prescription item is invalid or missing substance string for rule "${rule.id}".`,
+        message: `Prescription at index ${idx} is invalid or missing non-empty substance string.`,
         provenance,
       };
     }
+  }
+
+  const classSubstancesNorm = new Set(criteria.substances.map(normalize));
+  const matchedSubstances: string[] = [];
+
+  for (const rx of input.prescriptions) {
     if (classSubstancesNorm.has(normalize(rx.substance))) {
       matchedSubstances.push(rx.substance);
     }
@@ -574,24 +581,9 @@ function evaluateMajorInteractionRule(
   provenance: SafetyRuleProvenance,
 ): RuleEvaluationResult {
   const severity: SafetyAlertSeverity = rule.severity ?? 'red';
-  const criteria = rule.criteria as InteractionRuleCriteria | undefined;
+  const criteria = rule.criteria as InteractionRuleCriteria;
 
-  if (
-    !isObj(criteria) ||
-    typeof criteria.substance_a !== 'string' ||
-    typeof criteria.substance_b !== 'string'
-  ) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria is missing or malformed for major interaction check.`,
-      provenance,
-    };
-  }
-
-  if (input.prescriptions !== undefined && !Array.isArray(input.prescriptions)) {
+  if (input.prescriptions === undefined || !Array.isArray(input.prescriptions)) {
     return {
       ruleId: rule.id,
       ruleKind: rule.kind,
@@ -602,18 +594,21 @@ function evaluateMajorInteractionRule(
     };
   }
 
-  const prescribedNorms = new Set<string>();
-  for (const rx of input.prescriptions ?? []) {
-    if (!isObj(rx) || typeof rx.substance !== 'string') {
+  for (const [idx, rx] of input.prescriptions.entries()) {
+    if (!isObj(rx) || !nonEmpty(rx.substance)) {
       return {
         ruleId: rule.id,
         ruleKind: rule.kind,
         outcome: 'configuration_error',
         severity,
-        message: `Prescription item is invalid or missing substance string for rule "${rule.id}".`,
+        message: `Prescription at index ${idx} is invalid or missing non-empty substance string.`,
         provenance,
       };
     }
+  }
+
+  const prescribedNorms = new Set<string>();
+  for (const rx of input.prescriptions) {
     prescribedNorms.add(normalize(rx.substance));
   }
 
@@ -667,17 +662,7 @@ function evaluateOutOfScopeRule(
   provenance: SafetyRuleProvenance,
 ): RuleEvaluationResult {
   const severity: SafetyAlertSeverity = rule.severity ?? 'red';
-  if (!isObj(rule.criteria)) {
-    return {
-      ruleId: rule.id,
-      ruleKind: rule.kind,
-      outcome: 'configuration_error',
-      severity,
-      message: `Rule "${rule.id}" criteria is missing or malformed for out-of-scope stop check.`,
-      provenance,
-    };
-  }
-  const criteria = rule.criteria as unknown as OutOfScopeRuleCriteria;
+  const criteria = rule.criteria as OutOfScopeRuleCriteria;
 
   if (criteria.condition !== undefined) {
     const ruleConditionNorm = normalize(criteria.condition);
@@ -700,14 +685,15 @@ function evaluateOutOfScopeRule(
     if (
       !input.patient ||
       typeof input.patient.ageYears !== 'number' ||
-      Number.isNaN(input.patient.ageYears)
+      !Number.isFinite(input.patient.ageYears) ||
+      input.patient.ageYears < 0
     ) {
       return {
         ruleId: rule.id,
         ruleKind: rule.kind,
         outcome: 'configuration_error',
         severity,
-        message: `Patient age is required for age-bound evaluation on rule "${rule.id}" but was missing or invalid.`,
+        message: `Valid non-negative patient age is required for age-bound evaluation on rule "${rule.id}".`,
         provenance,
       };
     }
@@ -748,16 +734,29 @@ function evaluateOutOfScopeRule(
         ruleKind: rule.kind,
         outcome: 'configuration_error',
         severity,
-        message: `Patient symptoms list is required for red-flag symptom checking on rule "${rule.id}" but was missing or invalid.`,
+        message: `Patient symptoms list is required for red-flag symptom checking on rule "${rule.id}".`,
         provenance,
       };
+    }
+
+    for (const [idx, sym] of input.patient.symptoms.entries()) {
+      if (!nonEmpty(sym)) {
+        return {
+          ruleId: rule.id,
+          ruleKind: rule.kind,
+          outcome: 'configuration_error',
+          severity,
+          message: `Patient symptom at index ${idx} is malformed or lacks non-empty string.`,
+          provenance,
+        };
+      }
     }
 
     const patientSymptomsNorm = new Set(input.patient.symptoms.map(normalize));
     const matchedSymptoms: string[] = [];
 
     for (const symptom of criteria.prohibited_symptoms) {
-      if (typeof symptom === 'string' && patientSymptomsNorm.has(normalize(symptom))) {
+      if (patientSymptomsNorm.has(normalize(symptom))) {
         matchedSymptoms.push(symptom);
       }
     }
@@ -804,6 +803,24 @@ export function evaluateSafetyRule(
     };
   }
 
+  const criteriaErrors: string[] = [];
+  validateSafetyRuleCriteria(
+    rule.kind,
+    rule.criteria,
+    `Rule "${rule.id}".criteria`,
+    criteriaErrors,
+  );
+  if (criteriaErrors.length > 0) {
+    return {
+      ruleId: rule.id,
+      ruleKind: rule.kind,
+      outcome: 'configuration_error',
+      severity: rule.severity ?? 'red',
+      message: `Rule "${rule.id}" criteria validation failed: ${criteriaErrors.join('; ')}`,
+      provenance,
+    };
+  }
+
   switch (rule.kind) {
     case 'allergy_cross_reactivity':
       return evaluateAllergyRule(rule, input, provenance);
@@ -837,7 +854,15 @@ export function evaluateSafetyRuleSet(
   }
 
   const enforceEligibility = options.enforceEligibility ?? true;
+  const allowSynthetic = options.allowSynthetic ?? false;
   const hash = safetyRuleSetHash(ruleSet);
+  const isSynthetic = isSyntheticSafetyRuleSet(ruleSet);
+
+  if (isSynthetic && !allowSynthetic) {
+    throw new SafetyIntegrityError(
+      `Synthetic test rule set "${ruleSet.id}" is isolated from clinical evaluation. Fictional or synthetic approval metadata cannot be treated as real clinical approval. Offline synthetic test harnesses must pass { allowSynthetic: true }.`,
+    );
+  }
 
   let lockEntry = options.lockEntry;
   if (!lockEntry && options.lockFile?.locks) {
@@ -902,6 +927,7 @@ export function evaluateSafetyRuleSet(
     ruleSetVersion: ruleSet.version,
     ruleSetHash: hash,
     status: ruleSet.status,
+    clinicalScope: isSynthetic ? 'synthetic_test' : 'clinical',
     eligible,
     totalRules: (ruleSet.rules ?? []).length,
     evaluatedRules: counts.pass + counts.alert,

@@ -4,7 +4,7 @@
   "locks": {
     "synthetic_mechanics@1": {
       "file": "synthetic-mechanics.safety.json",
-      "sha256": "32a4fbce0a643f24d97d3863cd58f428f9688eb608993e1d28b1bc16bb0d53fb"
+      "sha256": "ac23be9db8484907c9875c9baea5ec45293f4a6eed3c5e52ea131cd19953d45d"
     }
   }
 }
