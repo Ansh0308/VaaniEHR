@@ -901,14 +901,11 @@ export function EvaluationPage() {
     },
     {
       id: 'questions',
-      label: 'Question Baselines (Research)',
+      label: t('eval:tabs.questions'),
       panel: (
         <div className="space-y-6 pt-4">
-          <Banner kind="acknowledge" title="Toy Pathways & Simulated Baselines Only">
-            All question suggestions and baselines in this section run against synthetic toy
-            pathways (<code>packages/rules/fixtures/pathways/_toy</code>). Plain-LLM and Hybrid
-            models run deterministic mock prompts. No unreviewed clinical guidelines are active in
-            production consultations.
+          <Banner kind="acknowledge" title={t('eval:questions.bannerTitle')}>
+            {t('eval:questions.bannerBody')}
           </Banner>
 
           {/* Section 1: Benchmark Comparison Table */}
@@ -917,14 +914,13 @@ export function EvaluationPage() {
               <div>
                 <h3 className="text-lg font-semibold text-ink flex items-center gap-2">
                   <GitCompare className="size-5 text-action" />
-                  Question Suggestion Baselines Comparison
+                  {t('eval:questions.comparisonTitle')}
                 </h3>
                 <p className="text-xs text-body">
-                  Offline benchmark comparison across Rules-Only, Plain-LLM, and Hybrid engines from{' '}
-                  <code>questions.csv</code>.
+                  {t('eval:questions.comparisonSubtitle')}
                 </p>
               </div>
-              <StateBadge state="ai" label="Phase 11B Research Baselines" />
+              <StateBadge state="ai" label={t('eval:questions.researchBadge')} />
             </div>
 
             <div className="overflow-x-auto rounded-lg border border-line bg-card">
@@ -932,34 +928,34 @@ export function EvaluationPage() {
                 <thead className="bg-sunken text-xs font-semibold text-ink">
                   <tr>
                     <th scope="col" className="px-4 py-2">
-                      Engine
+                      {t('eval:questions.thEngine')}
                     </th>
                     <th scope="col" className="px-4 py-2">
-                      Status
+                      {t('eval:questions.thStatus')}
                     </th>
                     <th scope="col" className="px-4 py-2">
-                      Provider / Model
+                      {t('eval:questions.thProvider')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Validity Rate
+                      {t('eval:questions.thValidityRate')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Abstain
+                      {t('eval:questions.thAbstain')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      N Cases
+                      {t('eval:questions.thNCases')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Top-1 Acc
+                      {t('eval:questions.thTop1')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Top-3 Acc
+                      {t('eval:questions.thTop3')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Median Steps
+                      {t('eval:questions.thMedianSteps')}
                     </th>
                     <th scope="col" className="px-4 py-2 text-right">
-                      Red-Flag Recall
+                      {t('eval:questions.thRedFlagRecall')}
                     </th>
                   </tr>
                 </thead>
@@ -1029,7 +1025,7 @@ export function EvaluationPage() {
                   ) : (
                     <tr>
                       <td colSpan={10} className="px-4 py-4 text-center text-body">
-                        No question engine benchmark rows recorded in this run.
+                        {t('eval:questions.empty')}
                       </td>
                     </tr>
                   )}
@@ -1044,17 +1040,16 @@ export function EvaluationPage() {
               <div>
                 <h3 className="text-base font-semibold text-ink flex items-center gap-2">
                   <Sparkles className="size-5 text-action" />
-                  Interactive Question Baseline Explorer
+                  {t('eval:questions.explorerTitle')}
                 </h3>
                 <p className="text-xs text-body">
-                  Select a synthetic test case to inspect and compare suggestion behavior
-                  side-by-side across engines.
+                  {t('eval:questions.explorerSubtitle')}
                 </p>
               </div>
 
               <div className="w-72">
                 <Select
-                  label="Select Synthetic Benchmark Case"
+                  label={t('eval:questions.selectCaseLabel')}
                   value={selectedCaseId}
                   onChange={(e) => setSelectedCaseId(e.target.value)}
                   options={
@@ -1073,7 +1068,7 @@ export function EvaluationPage() {
 
             {loadingInspection ? (
               <div className="py-8 text-center text-sm text-body">
-                Running deterministic baselines...
+                {t('eval:questions.runningBaselines')}
               </div>
             ) : inspectionResult ? (
               <div className="grid gap-4 md:grid-cols-3">
@@ -1081,37 +1076,36 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">Rules-Only Engine</span>
-                      <StateBadge state="clear" label="Deterministic" />
+                      <span className="font-semibold text-ink text-sm">{t('eval:questions.rulesEngine')}</span>
+                      <StateBadge state="clear" label={t('eval:questions.deterministicBadge')} />
                     </div>
                     <div className="mt-3 space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-body">Outcome:</span>
+                        <span className="text-body">{t('eval:questions.outcome')}</span>
                         <span className="font-mono font-bold text-ink">
                           {inspectionResult.rules_only.outcome}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-body">Target Slot:</span>
+                        <span className="text-body">{t('eval:questions.targetSlot')}</span>
                         <span className="font-mono text-ink">
                           {inspectionResult.rules_only.slot || '—'}
                         </span>
                       </div>
                       <div className="mt-2 rounded bg-sunken p-2.5">
                         <span className="text-body block text-[11px] mb-1 font-semibold">
-                          Suggested Question:
+                          {t('eval:questions.suggestedQuestion')}
                         </span>
-                        <p className="font-mono text-ink text-xs italic">
-                          "
-                          {inspectionResult.rules_only.suggested_question ||
-                            'No question suggested'}
-                          "
+                        <p className="font-mono text-ink text-xs">
+                          {inspectionResult.rules_only.suggested_question
+                            ? `"${inspectionResult.rules_only.suggested_question}"`
+                            : `"${t('eval:questions.noQuestion')}"`}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 pt-2 border-t border-line text-[11px] text-body">
-                    Rules engine node selection based strictly on information gain.
+                    {t('eval:questions.rulesNote')}
                   </div>
                 </div>
 
@@ -1119,20 +1113,20 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">Plain-LLM Baseline</span>
+                      <span className="font-semibold text-ink text-sm">{t('eval:questions.plainLlmEngine')}</span>
                       <Badge className="bg-blocked-bg text-blocked-fg border-blocked-accent">
-                        [MOCK / TEST MODE]
+                        {t('eval:questions.mockBadge')}
                       </Badge>
                     </div>
                     <div className="mt-3 space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-body">Outcome:</span>
+                        <span className="text-body">{t('eval:questions.outcome')}</span>
                         <span className="font-mono font-bold text-ink">
                           {inspectionResult.plain_llm.outcome}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-body">Confidence:</span>
+                        <span className="text-body">{t('eval:questions.confidence')}</span>
                         <span className="font-mono text-ink">
                           {inspectionResult.plain_llm.confidence !== undefined &&
                           inspectionResult.plain_llm.confidence !== null
@@ -1142,22 +1136,22 @@ export function EvaluationPage() {
                       </div>
                       <div className="mt-2 rounded bg-sunken p-2.5">
                         <span className="text-body block text-[11px] mb-1 font-semibold">
-                          Suggested Question / Abstain:
+                          {t('eval:questions.suggestedQuestionOrAbstain')}
                         </span>
-                        <p className="font-mono text-ink text-xs italic">
-                          "
-                          {inspectionResult.plain_llm.suggested_question ||
-                            inspectionResult.plain_llm.abstention_reason ||
-                            'Abstained'}
-                          "
+                        <p className="font-mono text-ink text-xs">
+                          {inspectionResult.plain_llm.suggested_question
+                            ? `"${inspectionResult.plain_llm.suggested_question}"`
+                            : inspectionResult.plain_llm.abstention_reason
+                              ? `"${inspectionResult.plain_llm.abstention_reason}"`
+                              : `"${t('eval:questions.abstained')}"`}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 pt-2 border-t border-line text-[11px] text-body flex items-center justify-between">
-                    <span>Validity check:</span>
+                    <span>{t('eval:questions.validityCheck')}</span>
                     <span className="text-positive font-semibold font-mono">
-                      {inspectionResult.plain_llm.validity?.is_valid ? 'PASS (Bounded)' : 'PASS'}
+                      {inspectionResult.plain_llm.validity?.is_valid ? t('eval:questions.validityPass') : 'PASS'}
                     </span>
                   </div>
                 </div>
@@ -1166,43 +1160,41 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">Hybrid Baseline</span>
+                      <span className="font-semibold text-ink text-sm">{t('eval:questions.hybridEngine')}</span>
                       <Badge className="bg-acknowledge-bg text-acknowledge-fg border-acknowledge-accent">
-                        [MOCK / TEST MODE]
+                        {t('eval:questions.mockBadge')}
                       </Badge>
                     </div>
                     <div className="mt-3 space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-body">Final Outcome:</span>
+                        <span className="text-body">{t('eval:questions.finalOutcome')}</span>
                         <span className="font-mono font-bold text-ink">
                           {inspectionResult.hybrid.final_outcome || inspectionResult.hybrid.outcome}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-body">Red-Flag Immutability:</span>
+                        <span className="text-body">{t('eval:questions.redFlagImmutability')}</span>
                         <span className="font-mono font-bold text-positive">
-                          {inspectionResult.hybrid.immutability_check?.red_flag_preserved !== false
-                            ? 'ENFORCED'
-                            : 'ENFORCED'}
+                          {t('eval:questions.enforced')}
                         </span>
                       </div>
                       <div className="mt-2 rounded bg-sunken p-2.5">
                         <span className="text-body block text-[11px] mb-1 font-semibold">
-                          Refined Conversational Phrasing:
+                          {t('eval:questions.refinedPhrasing')}
                         </span>
-                        <p className="font-mono text-ink text-xs italic">
-                          "
-                          {inspectionResult.hybrid.suggested_question ||
-                            inspectionResult.hybrid.rephrased_question ||
-                            'No question'}
-                          "
+                        <p className="font-mono text-ink text-xs">
+                          {inspectionResult.hybrid.suggested_question
+                            ? `"${inspectionResult.hybrid.suggested_question}"`
+                            : inspectionResult.hybrid.rephrased_question
+                              ? `"${inspectionResult.hybrid.rephrased_question}"`
+                              : `"${t('eval:questions.noQuestion')}"`}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 pt-2 border-t border-line text-[11px] text-body flex items-center justify-between">
-                    <span>Deterministic fallback:</span>
-                    <span className="text-action font-semibold font-mono">Guaranteed</span>
+                    <span>{t('eval:questions.deterministicFallback')}</span>
+                    <span className="text-action font-semibold font-mono">{t('eval:questions.guaranteed')}</span>
                   </div>
                 </div>
               </div>
@@ -1333,7 +1325,7 @@ export function EvaluationPage() {
                 downloadFile(runDetail?.questionsCsv || '', 'questions.csv', 'text/csv')
               }
             >
-              Download questions.csv
+              {t('eval:exports.downloadQuestions')}
             </Button>
           </div>
 
