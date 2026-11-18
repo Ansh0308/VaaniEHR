@@ -435,31 +435,26 @@ def test_grounding_casefold_and_indic_diacritics():
     assert m_gu is not None and m_gu.match_type == "exact"
 
 
-async def test_sample_provider_clinical_patterns():
+async def test_sample_provider_fixture_boundary():
+    """Demonstrates that SampleProvider strictly copies uninterpreted verbatim words without clinical heuristics."""
     from app.extraction.sample import SampleProvider
 
     provider = SampleProvider()
     user_prompt = (
         '<transcript>\n'
-        '<segment id="s1">Patient has BP 130/85 mmHg and pulse 82</segment>\n'
+        '<segment id="s1">Patient has BP 130/85 mmHg and chest pain</segment>\n'
         '<segment id="s2">તાવ બે દિવસથી છે અને કદાચ શરદી નથી</segment>\n'
-        '<segment id="s3">Allergy to penicillin reported</segment>\n'
-        '<segment id="s4">Patient complains of chest pain since morning</segment>\n'
         '</transcript>'
     )
     res = await provider.complete("sys", user_prompt)
     output = json.loads(res.text)
     facts = output["facts"]
 
-    types = [f["type"] for f in facts]
-    assert "vital" in types
-    assert "duration" in types
-    assert "allergy" in types
-    assert "red_flag_mention" in types
-
-    # Check Indic negation and uncertainty in s2
-    s2_facts = [f for f in facts if f["segment_id"] == "s2"]
-    assert len(s2_facts) > 0
-    assert any(f["negated"] is True for f in s2_facts)
-    assert any(f["uncertain"] is True for f in s2_facts)
+    # SampleProvider strictly outputs uninterpreted "symptom" with verbatim quote, never interpreting
+    assert all(f["type"] == "symptom" for f in facts)
+    assert all(f["negated"] is False for f in facts)
+    assert all(f["uncertain"] is False for f in facts)
+    # Evidence quotes are verbatim slices of text
+    assert facts[0]["evidence_quote"] == "Patient has BP"
+    assert facts[1]["evidence_quote"] == "તાવ બે દિવસથી"
 

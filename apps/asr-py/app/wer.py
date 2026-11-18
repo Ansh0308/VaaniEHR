@@ -171,35 +171,3 @@ def wer_report(reference: str, hypothesis: str) -> tuple[WerResult, WerResult]:
     ref, hyp = words(reference), words(hypothesis)
     mapped_ref, mapped_hyp = [to_gujarati(w) for w in ref], [to_gujarati(w) for w in hyp]
     return _result(align(ref, hyp), len(ref)), _result(align(mapped_ref, mapped_hyp), len(ref))
-
-
-def detect_segment_language(text: str, fallback_hint: str | None = None) -> str | None:
-    """Estimates script-based language or 'mixed' when an ASR engine provides no segment language."""
-    shares = script_share(text)
-    indic = shares.get("gujarati", 0.0) + shares.get("devanagari", 0.0)
-    latin = shares.get("latin", 0.0)
-    if (
-        (indic >= 12.0 and latin >= 12.0)
-        or (indic >= 25.0 and latin >= 10.0)
-        or (latin >= 25.0 and indic >= 10.0)
-    ):
-        return "mixed"
-    if shares.get("gujarati", 0.0) >= 60.0:
-        return "gu-IN"
-    if shares.get("devanagari", 0.0) >= 60.0:
-        return "hi-IN"
-    if latin >= 60.0:
-        return "en-IN"
-    if (
-        shares.get("gujarati", 0.0) > shares.get("devanagari", 0.0)
-        and shares.get("gujarati", 0.0) > latin
-    ):
-        return "gu-IN"
-    if (
-        shares.get("devanagari", 0.0) > shares.get("gujarati", 0.0)
-        and shares.get("devanagari", 0.0) > latin
-    ):
-        return "hi-IN"
-    if latin > indic:
-        return "en-IN"
-    return fallback_hint

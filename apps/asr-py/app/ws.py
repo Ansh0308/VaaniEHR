@@ -37,7 +37,6 @@ from app.internal_api import InternalApiError, InternalApiPort
 from app.storage import AudioStore, AudioStoreError
 from app.usage import PAID_ENGINES, CapExceeded, SpendGuard, UsageLog
 from app.vad import VADBackend, VadGate
-from app.wer import detect_segment_language
 
 MAX_KEYTERMS = 50
 MAX_KEYTERM_CHARS = 64
@@ -211,11 +210,10 @@ def register(app: FastAPI, services: Services) -> None:
                             start_ms=gate.to_original_ms(segment.start_ms),
                             end_ms=gate.to_original_ms(segment.end_ms, end=True),
                         )
-                    if segment.language is None:
-                        segment = replace(
-                            segment,
-                            language=detect_segment_language(segment.text, language),
-                        )
+                    if segment.language is None and language and "," not in language and language != "mixed":
+                        # Preserve caller's explicit single-language request if engine did not tag the segment;
+                        # otherwise leave unannotated (never guess spoken language from script).
+                        segment = replace(segment, language=language)
                     if segment.kind == "final":
                         finals_sent += 1
                     try:

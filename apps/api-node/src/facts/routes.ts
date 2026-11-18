@@ -75,7 +75,6 @@ interface Locked {
   status: 'heard' | 'confirmed' | 'rejected' | 'stale';
   source_segment_id: string | null;
   evidence_quote: string | null;
-  match_type: 'exact' | 'fuzzy' | null;
 }
 
 export function factRoutes(): RouteDef[] {
@@ -160,7 +159,7 @@ export function factRoutes(): RouteDef[] {
         if (!session) throw errors.notFound('Session not found');
         await requireConsent(ctx.db, session.id);
         const found = await ctx.db.query<Locked>(
-          `SELECT id, type, status, source_segment_id, evidence_quote, match_type
+          `SELECT id, type, status, source_segment_id, evidence_quote
              FROM extracted_fact WHERE id = $1 AND session_id = $2 FOR UPDATE`,
           [ctx.params.factId, session.id],
         );
@@ -188,7 +187,7 @@ export function factRoutes(): RouteDef[] {
             if (text === undefined) {
               throw errors.conflict('The source text no longer exists');
             }
-            const foundSpan = findSpanInText(text, f.evidence_quote, f.match_type);
+            const foundSpan = findSpanInText(text, f.evidence_quote);
             if (!foundSpan) {
               throw errors.conflict(
                 'The evidence is no longer in the transcript; edit the text or reject the fact',

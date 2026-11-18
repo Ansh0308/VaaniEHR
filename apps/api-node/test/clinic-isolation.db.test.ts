@@ -832,6 +832,9 @@ const NOT_CLINIC_SCOPED = [
   'POST /auth/logout',
   'GET /auth/me',
   'GET /consent/notice',
+  // Research evaluation benchmark routes (ADR-D37 / Phase 11): read-only benchmark runs from disk
+  'GET /eval/runs',
+  'GET /eval/runs/:id',
 ];
 
 /**

@@ -2,38 +2,28 @@
 
 Covers:
 - Zero-width character handling without losing Indic vowel marks or ligatures.
-- Code-switched language detection and segment annotation fallback.
+- Separation of script analysis from spoken language ground truth.
 - Composite language tag validation in WebSocket handshake.
 - WebSocket streaming simulation and graceful client disconnect handling.
 """
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import AsyncIterator
-from typing import Any
-
 import os
 import time
+from typing import Any
 
-import pytest
 from starlette.testclient import TestClient
 
-from app.asr.engine import ASREngine
 from app.asr.mock import MockEngine
-from app.asr.types import Capabilities, Segment
 from app.config import Settings
 from app.consent import ConsentGuard, sign
 from app.main import create_app
 from app.usage import SpendGuard, UsageLog
 from app.wer import (
-    align,
-    detect_segment_language,
     script_share,
     strip_zero_width,
-    to_gujarati,
     wer,
-    wer_report,
     words,
 )
 from app.ws import Services, _valid_start
@@ -43,7 +33,7 @@ def test_zero_width_characters_stripped_without_losing_linguistic_vowels():
     # Gujarati "તાવ" (tav) with zero-width non-joiner (ZWNJ: \u200C) and zero-width joiner (ZWJ: \u200D)
     raw_guj = "તા\u200cવ અને ઉ\u200dધરસ"
     clean_guj = "તાવ અને ઉધરસ"
-    
+
     assert strip_zero_width(raw_guj) == clean_guj
     # Tokenized words must preserve the vowel sign 'ા' (aa-matra: \u0ABE)
     w_raw = words(raw_guj)
@@ -70,35 +60,31 @@ def test_linguistic_diacritics_and_halants_preserved():
 
     conjunct_hi = "कष्ट"
     assert "ष" in words(conjunct_hi)[0] and "्" in words(conjunct_hi)[0]
-    
+
     # Anusvara (ં \u0A82, ं \u0902) must be preserved
     assert words("ખાંસી")[0] == "ખાંસી"
     assert words("ठंड")[0] == "ठंड"
 
 
-def test_code_switched_language_detection():
-    # Pure Gujarati sentence
-    assert detect_segment_language("મને બે દિવસથી તાવ છે") == "gu-IN"
+def test_script_share_is_distinct_from_spoken_language():
+    # Script share reports character unicode script percentages, but script != language.
+    shares_gu = script_share("મને બે દિવસથી તાવ છે")
+    assert shares_gu.get("gujarati", 0.0) > 80.0
 
-    # Pure Hindi sentence
-    assert detect_segment_language("मुझे दो दिन से बुखार है") == "hi-IN"
+    shares_hi = script_share("मुझे दो दिन से बुखार है")
+    assert shares_hi.get("devanagari", 0.0) > 80.0
 
-    # Pure English sentence
-    assert detect_segment_language("Patient has high fever and cough") == "en-IN"
+    shares_en = script_share("Patient has high fever and cough")
+    assert shares_en.get("latin", 0.0) > 80.0
 
-    # Mixed code-switched with multi-script text (Gujarati + English)
-    mixed_gu_en = "Patient says તાવ છે since two days"
-    assert detect_segment_language(mixed_gu_en) == "mixed"
+    # Romanized Hindi/Gujarati uses Latin script; script detection must report Latin without asserting language is English
+    shares_rom = script_share("Patient ko pet me dard hai")
+    assert shares_rom.get("latin", 0.0) > 80.0
 
-    # Mixed code-switched with multi-script text (Devanagari + English)
-    mixed_hi_en = "Patient को fever है since morning"
-    assert detect_segment_language(mixed_hi_en) == "mixed"
-
-    # Romanized code-switching with Latin script only falls back to en-IN (script != language)
-    assert detect_segment_language("Patient ko fever hai since morning") == "en-IN"
-
-    # Fallback to hint when no strong linguistic signal is present (e.g. numbers / punctuation only)
-    assert detect_segment_language("120 / 80", fallback_hint="en-IN") == "en-IN"
+    # Multi-script text contains both Indic and Latin script shares
+    shares_mixed = script_share("Patient says તાવ છે since two days")
+    assert shares_mixed.get("gujarati", 0.0) > 10.0
+    assert shares_mixed.get("latin", 0.0) > 40.0
 
 
 def test_valid_start_allows_composite_bcp47_language_tags():
@@ -180,12 +166,14 @@ def test_speech_streaming_simulation_with_mock_engine(tmp_path):
         seg1 = ws.receive_json()
         assert seg1["type"] == "final"
         assert seg1["segment"]["text"] == "તમને શું તકલીફ છે"
+        assert seg1["segment"]["language"] == "gu-IN"
 
         # Send another 25000 bytes (~780 ms)
         ws.send_bytes(b"\x00" * 25000)
         seg2 = ws.receive_json()
         assert seg2["type"] == "final"
         assert seg2["segment"]["text"] == "I have fever and body ache"
+        assert seg2["segment"]["language"] == "en-IN"
 
         # Clean stop
         ws.send_json({"type": "stop"})

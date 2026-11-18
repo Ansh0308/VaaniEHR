@@ -1,43 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { findSpanInText, normaliseText, textHash } from '../src/facts/text.js';
 
-describe('findSpanInText', () => {
+describe('findSpanInText (fail-closed evidence integrity)', () => {
   it('finds exact substring match with correct character offsets', () => {
     const text = 'Patient complains of fever since two days and mild cough.';
     const quote = 'fever since two days';
-    const span = findSpanInText(text, quote, 'exact');
+    const span = findSpanInText(text, quote);
     expect(span).not.toBeNull();
     expect(text.slice(span!.start, span!.end)).toBe(quote);
   });
 
-  it('finds case-insensitive substring match', () => {
+  it('refuses case-modified match to ensure evidence cannot be confirmed without exact match', () => {
     const text = 'Patient reports SEVERE HEADACHE since yesterday';
     const quote = 'severe headache';
-    const span = findSpanInText(text, quote, 'exact');
-    expect(span).not.toBeNull();
-    expect(text.slice(span!.start, span!.end).toLowerCase()).toBe(quote.toLowerCase());
+    const span = findSpanInText(text, quote);
+    expect(span).toBeNull();
   });
 
-  it('finds fuzzy sliding window match when matchType is fuzzy', () => {
+  it('refuses approximate or fuzzy similarity matches when transcript text has changed', () => {
     const text = 'Patient has had fevr since two days in the morning';
-    const quote = 'fever since two days'; // model output had "fever", transcript had "fevr"
-    const span = findSpanInText(text, quote, 'fuzzy');
-    expect(span).not.toBeNull();
-    expect(span!.start).toBeGreaterThanOrEqual(16);
-    expect(span!.end).toBeLessThanOrEqual(40);
+    const quote = 'fever since two days'; // typo / edit: transcript has "fevr", quote was "fever"
+    // Fail-closed: Must NEVER guess or re-ground on fuzzy similarity
+    expect(findSpanInText(text, quote)).toBeNull();
   });
 
-  it('returns null when evidence quote is no longer present in transcript', () => {
+  it('refuses re-grounding when evidence quote is no longer present in transcript', () => {
     const text = 'Patient has no symptoms today';
     const quote = 'severe chest pain';
-    expect(findSpanInText(text, quote, 'exact')).toBeNull();
-    expect(findSpanInText(text, quote, 'fuzzy')).toBeNull();
+    expect(findSpanInText(text, quote)).toBeNull();
   });
 
-  it('returns null on empty text or empty quote', () => {
-    expect(findSpanInText('', 'fever', 'exact')).toBeNull();
-    expect(findSpanInText('Patient has fever', '', 'exact')).toBeNull();
-    expect(findSpanInText('   ', '  ', null)).toBeNull();
+  it('refuses empty text or empty quote', () => {
+    expect(findSpanInText('', 'fever')).toBeNull();
+    expect(findSpanInText('Patient has fever', '')).toBeNull();
+    expect(findSpanInText('   ', '  ')).toBeNull();
   });
 
   it('computes deterministic textHash after normalisation', () => {
