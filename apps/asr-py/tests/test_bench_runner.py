@@ -401,4 +401,3 @@ def test_errors_csv_and_language_metrics_in_outputs(opts: runner.Options, tmp_pa
     assert "protocol_note" in manifest["asr_languages"]
     summary_md = (out_dir / "summary.md").read_text(encoding="utf-8")
     assert "Fact Extraction Error Taxonomy" in summary_md or "ASR Performance" in summary_md
-

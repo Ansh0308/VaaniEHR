@@ -210,7 +210,12 @@ def register(app: FastAPI, services: Services) -> None:
                             start_ms=gate.to_original_ms(segment.start_ms),
                             end_ms=gate.to_original_ms(segment.end_ms, end=True),
                         )
-                    if segment.language is None and language and "," not in language and language != "mixed":
+                    if (
+                        segment.language is None
+                        and language
+                        and "," not in language
+                        and language != "mixed"
+                    ):
                         # Preserve caller's explicit single-language request if engine did not tag the segment;
                         # otherwise leave unannotated (never guess spoken language from script).
                         segment = replace(segment, language=language)

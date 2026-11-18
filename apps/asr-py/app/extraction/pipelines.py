@@ -225,7 +225,9 @@ async def run_pipeline(
         is_dup = False
         for existing in result.facts:
             if existing.segment_id == segment.segment_id and existing.type == fact.type:
-                inter = max(0, min(existing.span_end, match.end) - max(existing.span_start, match.start))
+                inter = max(
+                    0, min(existing.span_end, match.end) - max(existing.span_start, match.start)
+                )
                 smaller = min(existing.span_end - existing.span_start, match.end - match.start)
                 if smaller > 0 and (inter / smaller) >= 0.8:
                     is_dup = True

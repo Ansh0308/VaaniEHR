@@ -441,10 +441,10 @@ async def test_sample_provider_fixture_boundary():
 
     provider = SampleProvider()
     user_prompt = (
-        '<transcript>\n'
+        "<transcript>\n"
         '<segment id="s1">Patient has BP 130/85 mmHg and chest pain</segment>\n'
         '<segment id="s2">તાવ બે દિવસથી છે અને કદાચ શરદી નથી</segment>\n'
-        '</transcript>'
+        "</transcript>"
     )
     res = await provider.complete("sys", user_prompt)
     output = json.loads(res.text)
@@ -457,4 +457,3 @@ async def test_sample_provider_fixture_boundary():
     # Evidence quotes are verbatim slices of text
     assert facts[0]["evidence_quote"] == "Patient has BP"
     assert facts[1]["evidence_quote"] == "તાવ બે દિવસથી"
-

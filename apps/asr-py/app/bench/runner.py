@@ -406,7 +406,9 @@ def execute(opts: Options, deps: Deps) -> dict:
             if asr == "gold":
                 texts[case["id"]] = gold_lines(case)
                 for seg in case_segs:
-                    segment_pairs.append((seg.get("text", ""), seg.get("text", ""), seg.get("lang")))
+                    segment_pairs.append(
+                        (seg.get("text", ""), seg.get("text", ""), seg.get("lang"))
+                    )
                 continue
             hyp = transcribe(case, asr, opts, deps, cache, spend, planned_asr)
             if hyp is None:
@@ -449,7 +451,9 @@ def execute(opts: Options, deps: Deps) -> dict:
                     )
                 packed.append((gold_facts(case), lines, predicted))
                 # Deterministic error categorization for errors.csv export
-                errs = metrics.categorize_case_errors(case["id"], gold_facts(case), lines, predicted)
+                errs = metrics.categorize_case_errors(
+                    case["id"], gold_facts(case), lines, predicted
+                )
                 for e in errs:
                     all_error_rows.append(e.to_dict())
 
@@ -509,11 +513,13 @@ def execute(opts: Options, deps: Deps) -> dict:
         cases_for_scoring = []
         for sc in safety_cases:
             if "expected_alerts" in sc:
-                cases_for_scoring.append({
-                    "case_id": sc["id"],
-                    "expected_alerts": sc.get("expected_alerts", []),
-                    "detected_alerts": sc.get("detected_alerts", []),
-                })
+                cases_for_scoring.append(
+                    {
+                        "case_id": sc["id"],
+                        "expected_alerts": sc.get("expected_alerts", []),
+                        "detected_alerts": sc.get("detected_alerts", []),
+                    }
+                )
         if cases_for_scoring:
             extras["safety_scoring"] = metrics.safety_alert_metrics(cases_for_scoring)
 
@@ -530,9 +536,7 @@ def execute(opts: Options, deps: Deps) -> dict:
             scripts[k] += share[k]
 
     asr_languages = (
-        metrics.language_segmented_asr(segment_pairs, script_aware=True)
-        if segment_pairs
-        else None
+        metrics.language_segmented_asr(segment_pairs, script_aware=True) if segment_pairs else None
     )
 
     manifest = {
@@ -613,7 +617,9 @@ def _question_stage(
         key = cache.key(
             "questions",
             engine=engine,
-            script=digest(script_file.read_text(encoding="utf-8")) if script_file.exists() else None,
+            script=digest(script_file.read_text(encoding="utf-8"))
+            if script_file.exists()
+            else None,
             pathways=probe.get("pathway_versions"),
             config=probe.get("config"),
             cases=payload,
@@ -635,7 +641,9 @@ def _question_stage(
             for r in out.get("results", [])
         ]
         valid_count = sum(1 for r in out.get("results", []) if r.get("valid", True))
-        abstain_count = sum(1 for r in out.get("results", []) if r.get("outcome") in ("ABSTAIN", "NONE"))
+        abstain_count = sum(
+            1 for r in out.get("results", []) if r.get("outcome") in ("ABSTAIN", "NONE")
+        )
         total_cases = len(out.get("results", []))
         validity_rate = round(valid_count / total_cases, 4) if total_cases > 0 else 1.0
 
@@ -644,7 +652,9 @@ def _question_stage(
                 "engine": engine,
                 "status": "toy pathways only",
                 "pathways": "toy",
-                "provider": out.get("provider", "rules-engine" if engine == "rules-only" else "mock"),
+                "provider": out.get(
+                    "provider", "rules-engine" if engine == "rules-only" else "mock"
+                ),
                 "model": out.get("model", "deterministic"),
                 "synthetic_mock": out.get("synthetic_mock", engine != "rules-only"),
                 "validity_rate": validity_rate,

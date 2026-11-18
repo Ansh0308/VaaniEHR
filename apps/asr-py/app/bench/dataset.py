@@ -325,8 +325,14 @@ def main(argv: list[str], out=print) -> int:  # noqa: ANN001
         if not folder.exists():
             out(f"(skipped, not found: {folder})")
             continue
-        audio_root = resolve_path(args.audio_root) if args.audio_root else (
-            DATA_ROOT if (folder.parent == DATA_ROOT or folder.resolve().parent == DATA_ROOT.resolve()) else None
+        audio_root = (
+            resolve_path(args.audio_root)
+            if args.audio_root
+            else (
+                DATA_ROOT
+                if (folder.parent == DATA_ROOT or folder.resolve().parent == DATA_ROOT.resolve())
+                else None
+            )
         )
         r = validate_folder(folder, audio_root)
         total.errors += r.errors

@@ -20,7 +20,7 @@ import statistics
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.eval_extraction import OVERLAP, Case, Counts, GoldFact, locate, overlap, score
@@ -119,7 +119,9 @@ def language_segmented_asr(
         }
 
     overall = pack_group(total_words, total_chars)
-    by_lang = {lang: pack_group(by_lang_words[lang], by_lang_chars[lang]) for lang in sorted(by_lang_words)}
+    by_lang = {
+        lang: pack_group(by_lang_words[lang], by_lang_chars[lang]) for lang in sorted(by_lang_words)
+    }
     mixed = pack_group(mixed_words, mixed_chars)
     unannotated = pack_group(unannotated_words, unannotated_chars)
 
@@ -201,7 +203,13 @@ def fact_scores(
     for gold, lines, predicted in cases:
         gold_list = [GoldFact(g.type, g.value, g.negated, g.uncertain, g.quote) for g in gold]
         locate(gold_list, list(lines))
-        score(Case("x", list(lines), gold_list), _Result(list(predicted)), per_type, negation, uncertainty)  # type: ignore[arg-type]
+        score(
+            Case("x", list(lines), gold_list),
+            _Result(list(predicted)),
+            per_type,
+            negation,
+            uncertainty,
+        )  # type: ignore[arg-type]
         text = [normalise(line).casefold() for line in lines]
         for p in predicted:
             proposed += 1
@@ -219,7 +227,8 @@ def fact_scores(
         },
         "overall": prf(overall) | {"tp": overall.tp, "fp": overall.fp, "fn": overall.fn},
         "negation": prf(negation) | {"tp": negation.tp, "fp": negation.fp, "fn": negation.fn},
-        "uncertainty": prf(uncertainty) | {"tp": uncertainty.tp, "fp": uncertainty.fp, "fn": uncertainty.fn},
+        "uncertainty": prf(uncertainty)
+        | {"tp": uncertainty.tp, "fp": uncertainty.fp, "fn": uncertainty.fn},
         "hallucination": {
             "ungrounded": ungrounded,
             "proposed": proposed,
@@ -275,7 +284,7 @@ def categorize_case_errors(
     """
     gold_list = [GoldFact(g.type, g.value, g.negated, g.uncertain, g.quote) for g in gold]
     locate(gold_list, list(lines))
-    norm_lines = [normalise(l).casefold() for l in lines]
+    norm_lines = [normalise(line_str).casefold() for line_str in lines]
 
     errors: list[ExtractionErrorRecord] = []
     valid_predictions: list[tuple[int, PredictedFact]] = []
@@ -578,7 +587,7 @@ def read_fhir_summary_json(path: Path) -> dict[str, object]:
     all_zero_err = sum(1 for item in data if int(item.get("errors", 0)) == 0)
 
     try:
-        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat()
     except Exception:
         mtime = None
 
@@ -642,7 +651,9 @@ def safety_alert_metrics(
 
     p_overall = total_tp / (total_tp + total_fp) if total_tp + total_fp else 0.0
     r_overall = total_tp / (total_tp + total_fn) if total_tp + total_fn else 0.0
-    f1_overall = 2 * p_overall * r_overall / (p_overall + r_overall) if p_overall + r_overall else 0.0
+    f1_overall = (
+        2 * p_overall * r_overall / (p_overall + r_overall) if p_overall + r_overall else 0.0
+    )
 
     return {
         "cases_evaluated": len(cases),

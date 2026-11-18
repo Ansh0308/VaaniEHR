@@ -89,23 +89,29 @@ def test_script_share_is_distinct_from_spoken_language():
 
 def test_valid_start_allows_composite_bcp47_language_tags():
     # Normal single tag
-    token, lang, terms, eng = _valid_start({"type": "start", "token": "tok123", "language": "gu-IN"})
+    token, lang, terms, eng = _valid_start(
+        {"type": "start", "token": "tok123", "language": "gu-IN"}
+    )
     assert lang == "gu-IN"
 
     # Composite multilingual code-switch tag (previously rejected by len > 12)
-    token, lang, terms, eng = _valid_start({
-        "type": "start",
-        "token": "tok123",
-        "language": "gu-IN,hi-IN,en-IN",
-    })
+    token, lang, terms, eng = _valid_start(
+        {
+            "type": "start",
+            "token": "tok123",
+            "language": "gu-IN,hi-IN,en-IN",
+        }
+    )
     assert lang == "gu-IN,hi-IN,en-IN"
 
     # Subtag with script and region
-    token, lang, terms, eng = _valid_start({
-        "type": "start",
-        "token": "tok123",
-        "language": "und-Latn-IN",
-    })
+    token, lang, terms, eng = _valid_start(
+        {
+            "type": "start",
+            "token": "tok123",
+            "language": "und-Latn-IN",
+        }
+    )
     assert lang == "und-Latn-IN"
 
 
@@ -130,7 +136,12 @@ def test_speech_streaming_simulation_with_mock_engine(tmp_path):
 
     script = [
         {"start_ms": 0, "end_ms": 500, "text": "તમને શું તકલીફ છે", "language": "gu-IN"},
-        {"start_ms": 600, "end_ms": 1200, "text": "I have fever and body ache", "language": "en-IN"},
+        {
+            "start_ms": 600,
+            "end_ms": 1200,
+            "text": "I have fever and body ache",
+            "language": "en-IN",
+        },
     ]
 
     mock_eng = MockEngine(script, partials=False)

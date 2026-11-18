@@ -179,7 +179,8 @@ def summary_md(run: dict) -> str:
     out += [
         "",
         "These question-engine numbers come from FAKE toy pathways and say nothing about real conditions. "
-        "Rules-Only, Plain-LLM, and Hybrid baselines evaluated using deterministic synthetic mock completion. " + run["note"],
+        "Rules-Only, Plain-LLM, and Hybrid baselines evaluated using deterministic synthetic mock completion. "
+        + run["note"],
     ]
 
     error_rows = run.get("error_rows", [])

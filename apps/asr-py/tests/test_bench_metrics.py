@@ -75,13 +75,21 @@ def test_fact_scores_with_uncertainty():
     # Test uncertainty TP
     pred_tp = [m.pred_fact("symptom", "migraine", "migraine headache", uncertain=True)]
     out_tp = m.fact_scores([(golds, lines, pred_tp)])
-    assert (out_tp["uncertainty"]["tp"], out_tp["uncertainty"]["fp"], out_tp["uncertainty"]["fn"]) == (1, 0, 0)
+    assert (
+        out_tp["uncertainty"]["tp"],
+        out_tp["uncertainty"]["fp"],
+        out_tp["uncertainty"]["fn"],
+    ) == (1, 0, 0)
     assert out_tp["uncertainty"]["f1"] == 1.0
 
     # Test uncertainty FN (predicted uncertain=False when gold is uncertain=True)
     pred_fn = [m.pred_fact("symptom", "migraine", "migraine headache", uncertain=False)]
     out_fn = m.fact_scores([(golds, lines, pred_fn)])
-    assert (out_fn["uncertainty"]["tp"], out_fn["uncertainty"]["fp"], out_fn["uncertainty"]["fn"]) == (0, 0, 1)
+    assert (
+        out_fn["uncertainty"]["tp"],
+        out_fn["uncertainty"]["fp"],
+        out_fn["uncertainty"]["fn"],
+    ) == (0, 0, 1)
 
     # Test error categorization includes uncertainty mismatch
     errs = m.categorize_case_errors("case-1", golds, lines, pred_fn)
@@ -272,7 +280,9 @@ def test_extraction_error_type_mismatch_and_span_misalignment():
     errors_span = m.categorize_case_errors("case3", golds_span, lines_span, predicted_span)
     assert len(errors_span) > 0
     span_err = next((e for e in errors_span if e.error_category == "span_misalignment"), None)
-    assert span_err is not None or any(e.error_category in ("missed_fact", "unmatched_prediction") for e in errors_span)
+    assert span_err is not None or any(
+        e.error_category in ("missed_fact", "unmatched_prediction") for e in errors_span
+    )
 
 
 def test_extraction_error_empty_inputs():
@@ -324,4 +334,3 @@ def test_read_fhir_summary_json(tmp_path: Path):
     assert res["broken_caught"] == 1
     assert res["broken_catch_rate"] == 1.0
     assert "HL7 validator" in str(res["validation_level"])
-
