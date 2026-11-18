@@ -51,9 +51,9 @@ Out of scope (PRD 1.5): real patients or audio, diagnosis, children, pregnancy a
 
 | Kind | In the PRD | Implemented | Partial | Planned |
 |---|---|---|---|---|
-| Functional (FR) | 61 | 36 | 18 | 7 |
+| Functional (FR) | 61 | 37 | 17 | 7 |
 | Non-functional (NFR) | 23 | 8 | 13 | 2 |
-| Pages (PG) | 20 | 14 | 4 | 2 |
+| Pages (PG) | 20 | 15 | 4 | 1 |
 
 <!-- END GENERATED:counts -->
 

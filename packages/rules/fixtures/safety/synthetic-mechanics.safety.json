@@ -1,0 +1,157 @@
+{
+  "id": "synthetic_mechanics",
+  "schema_version": 1,
+  "version": 1,
+  "status": "clinically_approved",
+  "source": {
+    "source_id": "SYNTH-SRC-001",
+    "document_title": "Synthetic Evaluation Mechanics Test Specification",
+    "edition_or_version": "2026.1",
+    "locator": "Section 4.2 Generic Evaluator Mechanics",
+    "license_reuse": "Synthetic test fixture for offline rule evaluation; contains no real clinical guidance or recommendations.",
+    "citation": "VaaniEHR Engineering Test Fixture: Synthetic Mechanics (Non-Clinical)"
+  },
+  "clinical_review": {
+    "state": "approved",
+    "reviewer": "Synthetic Test Reviewer, MD",
+    "reviewer_role": "Synthetic Verification Lead (Offline Non-Clinical Testing Only)",
+    "reviewed_on": "2026-11-18",
+    "approval_reference": "SYNTH-APPROV-2026-11-18"
+  },
+  "rules": [
+    {
+      "id": "synth_allergy_cross",
+      "kind": "allergy_cross_reactivity",
+      "enabled": true,
+      "severity": "red",
+      "description": "Synthetic cross-reactivity between synthetic allergen and derivatives.",
+      "source": {
+        "source_id": "SYNTH-SRC-001",
+        "document_title": "Synthetic Evaluation Mechanics Test Specification",
+        "edition_or_version": "2026.1",
+        "locator": "Rule Section 1.1",
+        "license_reuse": "Synthetic test fixture; not clinical.",
+        "citation": "VaaniEHR Engineering Test Fixture (Non-Clinical)"
+      },
+      "clinical_review": {
+        "state": "approved",
+        "reviewer": "Synthetic Test Reviewer, MD",
+        "reviewer_role": "Synthetic Verification Lead",
+        "reviewed_on": "2026-11-18",
+        "approval_reference": "SYNTH-APPROV-2026-11-18"
+      },
+      "criteria": {
+        "allergen": "SYNTH_ALLERGEN_ALPHA",
+        "prohibited_substances": ["SYNTH_SUBSTANCE_ALPHA_DERIVATIVE", "SYNTH_SUBSTANCE_ALPHA_PLUS"]
+      }
+    },
+    {
+      "id": "synth_max_daily_dose",
+      "kind": "maximum_daily_dose",
+      "enabled": true,
+      "severity": "red",
+      "description": "Synthetic upper daily dose ceiling for synthetic substance beta.",
+      "source": {
+        "source_id": "SYNTH-SRC-001",
+        "document_title": "Synthetic Evaluation Mechanics Test Specification",
+        "edition_or_version": "2026.1",
+        "locator": "Rule Section 1.2",
+        "license_reuse": "Synthetic test fixture; not clinical.",
+        "citation": "VaaniEHR Engineering Test Fixture (Non-Clinical)"
+      },
+      "clinical_review": {
+        "state": "approved",
+        "reviewer": "Synthetic Test Reviewer, MD",
+        "reviewer_role": "Synthetic Verification Lead",
+        "reviewed_on": "2026-11-18",
+        "approval_reference": "SYNTH-APPROV-2026-11-18"
+      },
+      "criteria": {
+        "substance": "SYNTH_SUBSTANCE_BETA",
+        "max_daily_amount": 1000,
+        "unit": "mg"
+      }
+    },
+    {
+      "id": "synth_duplicate_class",
+      "kind": "duplicate_drug_class",
+      "enabled": true,
+      "severity": "amber",
+      "description": "Synthetic duplication guard for synthetic class gamma.",
+      "source": {
+        "source_id": "SYNTH-SRC-001",
+        "document_title": "Synthetic Evaluation Mechanics Test Specification",
+        "edition_or_version": "2026.1",
+        "locator": "Rule Section 1.3",
+        "license_reuse": "Synthetic test fixture; not clinical.",
+        "citation": "VaaniEHR Engineering Test Fixture (Non-Clinical)"
+      },
+      "clinical_review": {
+        "state": "approved",
+        "reviewer": "Synthetic Test Reviewer, MD",
+        "reviewer_role": "Synthetic Verification Lead",
+        "reviewed_on": "2026-11-18",
+        "approval_reference": "SYNTH-APPROV-2026-11-18"
+      },
+      "criteria": {
+        "drug_class": "SYNTH_CLASS_GAMMA",
+        "substances": ["SYNTH_GAMMA_SUB_1", "SYNTH_GAMMA_SUB_2", "SYNTH_GAMMA_SUB_3"],
+        "max_allowed": 1
+      }
+    },
+    {
+      "id": "synth_major_interaction",
+      "kind": "major_interaction",
+      "enabled": true,
+      "severity": "red",
+      "description": "Synthetic major interaction between synthetic delta and synthetic epsilon.",
+      "source": {
+        "source_id": "SYNTH-SRC-001",
+        "document_title": "Synthetic Evaluation Mechanics Test Specification",
+        "edition_or_version": "2026.1",
+        "locator": "Rule Section 1.4",
+        "license_reuse": "Synthetic test fixture; not clinical.",
+        "citation": "VaaniEHR Engineering Test Fixture (Non-Clinical)"
+      },
+      "clinical_review": {
+        "state": "approved",
+        "reviewer": "Synthetic Test Reviewer, MD",
+        "reviewer_role": "Synthetic Verification Lead",
+        "reviewed_on": "2026-11-18",
+        "approval_reference": "SYNTH-APPROV-2026-11-18"
+      },
+      "criteria": {
+        "substance_a": "SYNTH_SUBSTANCE_DELTA",
+        "substance_b": "SYNTH_SUBSTANCE_EPSILON"
+      }
+    },
+    {
+      "id": "synth_out_of_scope_stop",
+      "kind": "out_of_scope_stop",
+      "enabled": true,
+      "severity": "red",
+      "description": "Synthetic out-of-scope protocol stop for condition zeta (age bounds and red flags).",
+      "source": {
+        "source_id": "SYNTH-SRC-001",
+        "document_title": "Synthetic Evaluation Mechanics Test Specification",
+        "edition_or_version": "2026.1",
+        "locator": "Rule Section 1.5",
+        "license_reuse": "Synthetic test fixture; not clinical.",
+        "citation": "VaaniEHR Engineering Test Fixture (Non-Clinical)"
+      },
+      "clinical_review": {
+        "state": "approved",
+        "reviewer": "Synthetic Test Reviewer, MD",
+        "reviewer_role": "Synthetic Verification Lead",
+        "reviewed_on": "2026-11-18",
+        "approval_reference": "SYNTH-APPROV-2026-11-18"
+      },
+      "criteria": {
+        "condition": "SYNTH_CONDITION_ZETA",
+        "min_age_years": 12,
+        "max_age_years": 65,
+        "prohibited_symptoms": ["SYNTH_RED_FLAG_COLLAPSE", "SYNTH_RED_FLAG_CYANOSIS"]
+      }
+    }
+  ]
+}

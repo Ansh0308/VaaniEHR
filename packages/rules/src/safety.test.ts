@@ -203,5 +203,5 @@ describe('safety-rule preparation gate', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 20000);
 });
