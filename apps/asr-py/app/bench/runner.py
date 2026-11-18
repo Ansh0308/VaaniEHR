@@ -47,11 +47,12 @@ from app.usage import PAID_ENGINES, CapExceeded, SpendGuard, UsageLog
 from app.wer import script_share
 
 QUESTION_ENGINES = ("rules-only", "llm-only", "hybrid")
-NOT_BUILT = {"llm-only": "not built", "hybrid": "not built"}
+NOT_BUILT: dict[str, str] = {}
 TOY_PATHWAYS = REPO_ROOT / "packages" / "rules" / "fixtures" / "pathways" / "_toy"
 RULES_SCRIPT = REPO_ROOT / "scripts" / "bench-rules.mjs"
+BENCH_QUESTIONS_SCRIPT = REPO_ROOT / "scripts" / "bench-questions.mjs"
 
-RulesRunner = Callable[[list[dict], Path], dict]
+RulesRunner = Callable[..., dict]
 
 
 class Refused(Exception):
@@ -93,9 +94,21 @@ class Deps:
     now: Callable[[], datetime] = lambda: datetime.now(UTC)
 
 
-# ------------------------------------------------------------------ the rules-only question engine (toy)
-def run_rules_script(cases: list[dict], pathway_dir: Path) -> dict:
-    """Runs scripts/bench-rules.mjs (the real rules engine on the toy pathways) on the cases' oracle answers."""
+# ------------------------------------------------------------------ question engines (toy)
+def _call_rules(rules: RulesRunner, cases: list[dict], pathway_dir: Path, engine: str) -> dict:
+    import inspect
+
+    try:
+        sig = inspect.signature(rules)
+        if len(sig.parameters) >= 3 or "engine" in sig.parameters:
+            return rules(cases, pathway_dir, engine=engine)
+    except (ValueError, TypeError):
+        pass
+    return rules(cases, pathway_dir)
+
+
+def run_rules_script(cases: list[dict], pathway_dir: Path, engine: str = "rules-only") -> dict:
+    """Runs scripts/bench-questions.mjs on the cases' oracle answers."""
     payload = [
         {
             "id": c["id"],
@@ -104,8 +117,14 @@ def run_rules_script(cases: list[dict], pathway_dir: Path) -> dict:
         }
         for c in cases
     ]
+    script = BENCH_QUESTIONS_SCRIPT if BENCH_QUESTIONS_SCRIPT.exists() else RULES_SCRIPT
+    cmd = ["node", "--import", "tsx", str(script)]
+    if script == BENCH_QUESTIONS_SCRIPT:
+        cmd.extend([engine, str(pathway_dir)])
+    else:
+        cmd.append(str(pathway_dir))
     done = subprocess.run(  # noqa: S603
-        ["node", "--import", "tsx", str(RULES_SCRIPT), str(pathway_dir)],  # noqa: S607
+        cmd,  # noqa: S607
         input=json.dumps(payload),
         capture_output=True,
         text=True,
@@ -114,7 +133,7 @@ def run_rules_script(cases: list[dict], pathway_dir: Path) -> dict:
         check=False,
     )
     if done.returncode != 0:
-        raise Refused(f"the rules simulation failed: {done.stderr.strip()[-300:]}", 1)
+        raise Refused(f"the {engine} simulation failed: {done.stderr.strip()[-300:]}", 1)
     return json.loads(done.stdout)
 
 
@@ -346,7 +365,7 @@ def execute(opts: Options, deps: Deps) -> dict:
         except ProviderError as exc:
             raise Refused(f"language model not available: {exc}") from exc
     rules = deps.rules or run_rules_script
-    probe = rules([], opts.pathway_dir)
+    probe = _call_rules(rules, [], opts.pathway_dir, "rules-only")
     state = tuning_state(models_in_use(opts, provider), {"question_engine": probe["config"]})
 
     includes_test = split is not None and (
@@ -590,18 +609,18 @@ def _question_stage(
             }
             for c in toy
         ]
+        script_file = BENCH_QUESTIONS_SCRIPT if BENCH_QUESTIONS_SCRIPT.exists() else RULES_SCRIPT
         key = cache.key(
-            "rules",
-            script=digest(RULES_SCRIPT.read_text(encoding="utf-8"))
-            if RULES_SCRIPT.exists()
-            else None,
+            "questions",
+            engine=engine,
+            script=digest(script_file.read_text(encoding="utf-8")) if script_file.exists() else None,
             pathways=probe.get("pathway_versions"),
-            config=probe["config"],
+            config=probe.get("config"),
             cases=payload,
         )
         out = cache.get(key)
         if out is None:
-            out = rules(toy, opts.pathway_dir)
+            out = _call_rules(rules, toy, opts.pathway_dir, engine)
             cache.put(key, out)
         by_id = {c["id"]: c for c in toy}
         results = [
@@ -613,13 +632,23 @@ def _question_stage(
                 "red_flag": bool(by_id[r["id"]].get("red_flag")),
                 "stopped": r["red_flag_stopped"],
             }
-            for r in out["results"]
+            for r in out.get("results", [])
         ]
+        valid_count = sum(1 for r in out.get("results", []) if r.get("valid", True))
+        abstain_count = sum(1 for r in out.get("results", []) if r.get("outcome") in ("ABSTAIN", "NONE"))
+        total_cases = len(out.get("results", []))
+        validity_rate = round(valid_count / total_cases, 4) if total_cases > 0 else 1.0
+
         rows.append(
             {
                 "engine": engine,
                 "status": "toy pathways only",
                 "pathways": "toy",
+                "provider": out.get("provider", "rules-engine" if engine == "rules-only" else "mock"),
+                "model": out.get("model", "deterministic"),
+                "synthetic_mock": out.get("synthetic_mock", engine != "rules-only"),
+                "validity_rate": validity_rate,
+                "abstentions": abstain_count,
                 "pathway": metrics.pathway_scores(results),
                 "red_flag": metrics.red_flag_recall(results),
             }

@@ -104,4 +104,42 @@ describe('Evaluation API (PG-17)', () => {
       expect(typeof data.errorsCsv).toBe('string');
     }
   });
+
+  it('GET /eval/questions/baselines returns baseline cases and mock status', async () => {
+    const res = await request(app)
+      .get('/api/v1/eval/questions/baselines')
+      .set('Authorization', `Bearer ${researcherToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.engines).toEqual(['rules-only', 'llm-only', 'hybrid']);
+    expect(res.body.data.synthetic_mock).toBe(true);
+    expect(res.body.data.cases.length).toBeGreaterThan(0);
+    expect(res.body.data.available_slots.length).toBeGreaterThan(0);
+  });
+
+  it('GET /eval/questions/inspect returns side-by-side comparison across 3 baselines', async () => {
+    const res = await request(app)
+      .get('/api/v1/eval/questions/inspect?case_id=toy_synthetic01')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    const data = res.body.data;
+    expect(data.case_id).toBe('toy_synthetic01');
+    expect(data.rules_only).toBeDefined();
+    expect(data.plain_llm).toBeDefined();
+    expect(data.hybrid).toBeDefined();
+    expect(data.plain_llm.validity).toBeDefined();
+    expect(data.hybrid.validity).toBeDefined();
+    expect(data.notes).toContain('toy research pathways');
+  });
+
+  it('doctor token is refused with 403 on question baseline endpoints', async () => {
+    const bRes = await request(app)
+      .get('/api/v1/eval/questions/baselines')
+      .set('Authorization', `Bearer ${doctorToken}`);
+    expect(bRes.status).toBe(403);
+
+    const iRes = await request(app)
+      .get('/api/v1/eval/questions/inspect?case_id=toy_synthetic01')
+      .set('Authorization', `Bearer ${doctorToken}`);
+    expect(iRes.status).toBe(403);
+  });
 });

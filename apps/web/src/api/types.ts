@@ -144,3 +144,84 @@ export interface EvalRunDetail {
   questionsCsv: string;
   errorsCsv: string;
 }
+
+export interface QuestionBaselineCase {
+  id: string;
+  title: string;
+  condition_label: string;
+  description: string;
+  dialogue: Array<{ speaker: string; text: string; lang?: string }>;
+  confirmed_slots: Record<string, unknown>;
+  oracle_slots: Record<string, unknown>;
+}
+
+export interface QuestionBaselineSlot {
+  slot: string;
+  type: string;
+  choices?: string[];
+  label: string;
+}
+
+export interface QuestionBaselinesCatalog {
+  engines: string[];
+  provider_mode: string;
+  synthetic_mock: boolean;
+  provider: string;
+  cases: QuestionBaselineCase[];
+  available_slots: QuestionBaselineSlot[];
+}
+
+export interface QuestionCandidateResult {
+  pathway_id: string;
+  score: number;
+  confidence?: number;
+  title?: string;
+  matched_slots?: string[];
+  missing_slots?: string[];
+  red_flags_present?: string[];
+}
+
+export interface QuestionEngineOutput {
+  outcome: string;
+  suggested_question?: string | null;
+  slot?: string | null;
+  node_id?: string | null;
+  confidence?: number | null;
+  candidates?: QuestionCandidateResult[];
+  rephrasing?: string | null;
+  rephrased_question?: string | null;
+  final_outcome?: string;
+  abstention_reason?: string | null;
+  validity?: {
+    is_valid: boolean;
+    errors: string[];
+    schema_valid: boolean;
+    confidence_bounded: boolean;
+    candidate_pool_bounded: boolean;
+    no_ungrounded_injections: boolean;
+    immutability_preserved: boolean;
+  };
+  provenance?: {
+    model: string;
+    provider: string;
+    prompt_version: string;
+    synthetic_mock: boolean;
+    execution_time_ms: number;
+  };
+  immutability_check?: {
+    red_flag_preserved: boolean;
+    candidate_pool_bounded: boolean;
+    overrides_attempted: boolean;
+    fallback_applied: boolean;
+  };
+}
+
+export interface QuestionBaselineComparison {
+  case_id: string;
+  context: Record<string, unknown>;
+  rules_only: QuestionEngineOutput;
+  plain_llm: QuestionEngineOutput;
+  hybrid: QuestionEngineOutput;
+  provider_mode: string;
+  notes: string;
+}

@@ -94,14 +94,63 @@ const sampleDetail = {
   cellsCsv:
     'asr,asr_version,variant,cases,fact_precision,fact_recall,fact_f1,negation_f1,hallucination_rate,wer,cer,medicine_accuracy\ngold,gold-transcript,plain,11,0.85,0.90,0.87,0.70,0.15,,,0.95\ngold,gold-transcript,grounded,11,1.00,0.92,0.96,0.80,0.00,,,0.98',
   casesCsv: 'case_id,engine,variant\nclip04,gold,grounded',
-  questionsCsv: 'case_id,engine,steps\nclip04,rules-only,2',
+  questionsCsv:
+    'question_engine,status,pathways,provider,model,validity_rate,abstentions,n,top1,top3,median_questions_to_top3,red_flag_seeded,red_flag_recall\n' +
+    'rules-only,toy pathways only,toy,rules-engine,deterministic,1.0,0,3,1.0,1.0,1,1,1.0\n' +
+    'llm-only,toy pathways only,toy,deterministic-mock-plain-llm,mock-toy-v1,1.0,0,3,1.0,1.0,0,1,0.0\n' +
+    'hybrid,toy pathways only,toy,deterministic-mock-hybrid,mock-toy-v1,1.0,0,3,1.0,1.0,1,1,1.0',
   errorsCsv:
     'case_id,error_category,gold_type,predicted_type,gold_quote,predicted_quote,detail\nclip04,missed_fact,symptom,,fever,,Gold fact not extracted\nclip05,unsupported_fact,,symptom,,headache,Extracted assertion not grounded',
+};
+
+const sampleBaselines = {
+  engines: ['rules-only', 'llm-only', 'hybrid'],
+  provider_mode: 'mock',
+  synthetic_mock: true,
+  provider: 'deterministic-mock',
+  cases: [
+    {
+      id: 'toy_synthetic01',
+      title: 'Toy Condition A (Synthetic Case 1)',
+      condition_label: 'toy_condition_a',
+      description: 'Patient with toy symptom 1',
+      dialogue: [{ speaker: 'patient', text: 'I have toy symptom one.' }],
+      confirmed_slots: { toy_symptom_1: true },
+      oracle_slots: { toy_symptom_1: true },
+    },
+  ],
+  available_slots: [{ slot: 'toy_symptom_1', type: 'boolean', label: 'Toy Symptom 1' }],
+};
+
+const sampleInspection = {
+  case_id: 'toy_synthetic01',
+  context: {},
+  rules_only: {
+    outcome: 'QUESTION',
+    suggested_question: 'Do you have toy symptom two?',
+    slot: 'toy_symptom_2',
+  },
+  plain_llm: {
+    outcome: 'QUESTION',
+    suggested_question: 'How long have you had this?',
+    confidence: 0.85,
+    validity: { is_valid: true },
+  },
+  hybrid: {
+    outcome: 'QUESTION',
+    suggested_question: 'Do you have toy symptom two?',
+    rephrasing: 'refined',
+    validity: { is_valid: true },
+  },
+  provider_mode: 'mock',
+  notes: 'toy research pathways only',
 };
 
 const evalHandlers: Record<string, Handler> = {
   'GET /eval/runs': () => ({ data: sampleRuns }),
   'GET /eval/runs/20261117T050951': () => ({ data: sampleDetail }),
+  'GET /eval/questions/baselines': () => ({ data: sampleBaselines }),
+  'GET /eval/questions/inspect': () => ({ data: sampleInspection }),
 };
 
 describe('PG-17 EvaluationPage', () => {
@@ -169,7 +218,7 @@ describe('PG-17 EvaluationPage', () => {
     expect(screen.getByText('M-01')).toBeTruthy();
     expect(screen.getByText('M-03')).toBeTruthy();
     expect(screen.getByText('M-07')).toBeTruthy();
-    expect(screen.getByText(/Not built \(placeholder\)/i)).toBeTruthy();
+    expect(screen.getByText(/Rules:.*Hybrid:/i)).toBeTruthy();
     expect(screen.getByText('M-11')).toBeTruthy();
   });
 
@@ -241,5 +290,26 @@ describe('PG-17 EvaluationPage', () => {
     expect(screen.getByRole('button', { name: /Copy Markdown/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Download Cells/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Download Errors/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Download questions\.csv/i })).toBeTruthy();
+  });
+
+  it('switches to Question Baselines tab and renders comparison table and explorer', async () => {
+    await renderApp({
+      role: 'researcher',
+      path: '/research/eval',
+      routes: evalHandlers,
+    });
+
+    const questionsTab = await screen.findByRole('tab', { name: /Question Baselines/i });
+    fireEvent.click(questionsTab);
+
+    expect(await screen.findByText(/Question Suggestion Baselines Comparison/i)).toBeTruthy();
+    expect(screen.getAllByText(/Rules Engine/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Plain-LLM \[MOCK\]/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Hybrid \[MOCK\]/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Interactive Question Baseline Explorer/i)).toBeTruthy();
+    expect((await screen.findAllByText(/Do you have toy symptom two\?/i)).length).toBeGreaterThan(
+      0,
+    );
   });
 });

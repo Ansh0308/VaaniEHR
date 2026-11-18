@@ -1,4 +1,4 @@
-question_engine,status,pathways,n,top1,top3,median_questions_to_top3,red_flag_seeded,red_flag_recall
-rules-only,toy pathways only,toy,3,1.0,1.0,1,1,1.0
-llm-only,not built,toy,,,,,,
-hybrid,not built,toy,,,,,,
+question_engine,status,pathways,provider,model,validity_rate,abstentions,n,top1,top3,median_questions_to_top3,red_flag_seeded,red_flag_recall
+rules-only,toy pathways only,toy,rules-engine,deterministic,1.0,0,3,1.0,1.0,1,1,1.0
+llm-only,toy pathways only,toy,deterministic-mock-plain-llm,mock-toy-v1,1.0,0,3,1.0,1.0,0,1,0.0
+hybrid,toy pathways only,toy,deterministic-mock-hybrid,mock-toy-v1,1.0,0,3,1.0,1.0,1,1,1.0

@@ -21,12 +21,15 @@ FIXTURES = BENCH_ROOT / "fixtures"
 TOY_CONFIG = {"question_cap": 8, "abstain_threshold": 0.5}
 
 
-def fake_rules(cases: list[dict], _dir: Path) -> dict:
+def fake_rules(cases: list[dict], _dir: Path, engine: str = "rules-only") -> dict:
     return {
-        "engine": "rules-only",
+        "engine": engine,
         "pathways": "toy",
         "pathway_versions": [{"id": "toy_condition_a", "version": 1}],
         "config": TOY_CONFIG,
+        "provider": "rules-engine" if engine == "rules-only" else "mock",
+        "model": "deterministic",
+        "synthetic_mock": engine != "rules-only",
         "results": [
             {
                 "id": c["id"],
@@ -36,6 +39,8 @@ def fake_rules(cases: list[dict], _dir: Path) -> dict:
                 "questions_to_top3": 1,
                 "red_flag_stopped": bool(c.get("red_flag")),
                 "outcome": "COMPLETE",
+                "valid": True,
+                "errors": [],
             }
             for c in cases
         ],
@@ -88,7 +93,7 @@ def real_cases(folder: Path, n: int = 6) -> list[dict]:
     return out
 
 
-def test_the_grid_runs_and_marks_what_is_not_built(opts: runner.Options):
+def test_the_grid_runs_all_question_baselines(opts: runner.Options):
     run = runner.execute(opts, deps())
     assert {(c["asr"], c["variant"]) for c in run["cells"]} == {
         ("gold", "plain"),
@@ -96,10 +101,9 @@ def test_the_grid_runs_and_marks_what_is_not_built(opts: runner.Options):
         ("gold", "grounded"),
     }
     by = {q["engine"]: q for q in run["questions"]}
-    assert by["llm-only"]["status"] == "not built" and by["hybrid"]["status"] == "not built"
-    assert (
-        by["rules-only"]["status"] == "toy pathways only" and by["rules-only"]["pathways"] == "toy"
-    )
+    assert set(by.keys()) == {"rules-only", "llm-only", "hybrid"}
+    for eng in ("rules-only", "llm-only", "hybrid"):
+        assert by[eng]["status"] == "toy pathways only" and by[eng]["pathways"] == "toy"
     # the grounded variant drops the invented fact; plain keeps it and the rate shows it
     rates = {c["variant"]: c["facts"]["hallucination"]["rate"] for c in run["cells"]}
     assert rates["grounded"] == 0.0 and rates["plain"] > 0.0
@@ -344,7 +348,7 @@ def test_result_files_carry_the_manifest_and_the_confidence_note(
     assert (
         md.count("one speaker / acted data") >= 2
         and "TOY pathways only" in md
-        and "not built" in md
+        and "Question engines" in md
     )
     tex = (out / "table.tex").read_text(encoding="utf-8")
     assert "one speaker / acted data" in tex and "\\begin{tabular}" in tex and "\\%" in tex
@@ -371,6 +375,16 @@ def test_the_real_rules_engine_on_the_toy_pathways():
     assert by["synthetic01"]["top1"] == "toy_condition_a"
     assert by["synthetic02"]["red_flag_stopped"] is True
     assert out["pathways"] == "toy" and out["config"]["question_cap"] == 8
+
+
+def test_all_three_question_baselines_on_toy_pathways():
+    cases = load_cases(FIXTURES)
+    for eng in ("rules-only", "llm-only", "hybrid"):
+        out = runner.run_rules_script(cases, runner.TOY_PATHWAYS, engine=eng)
+        assert out["engine"] == eng
+        assert out["pathways"] == "toy"
+        assert len(out["results"]) == len(cases)
+        assert "provider" in out and "model" in out
 
 
 def test_errors_csv_and_language_metrics_in_outputs(opts: runner.Options, tmp_path: Path):

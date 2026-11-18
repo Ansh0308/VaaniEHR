@@ -78,9 +78,9 @@ Test files referenced by a requirement whose recorded result is a failure: 0.
 | FR-F10-03 | 4.10 | Partial | `apps/api-node/src/whatsapp/provider.ts`<br>`apps/api-node/src/whatsapp/routes.ts` | `apps/api-node/test/whatsapp.db.test.ts` (20)<br>`apps/api-node/test/whatsapp-mutation.db.test.ts` (1) | pass 20; pass 10 | ADR-D41 |
 | FR-F10-04 | 4.10 | Implemented | `apps/api-node/src/whatsapp/service.ts` | `apps/api-node/test/whatsapp.db.test.ts` (20)<br>`apps/api-node/test/whatsapp-mutation.db.test.ts` (1) | pass 20; pass 10 | ADR-D41 |
 | FR-F12-01 | 4.12 | Partial | `apps/asr-py/app/bench/dataset.py`<br>`bench/schema.json` | `apps/asr-py/tests/test_bench_dataset.py` (11) | pass 10 | ADR-D43 |
-| FR-F12-02 | 4.12 | Partial | `apps/asr-py/app/bench/runner.py`<br>`scripts/bench-rules.mjs` | `apps/asr-py/tests/test_bench_runner.py` (17) | pass 16 | ADR-D43 |
-| FR-F12-03 | 4.12 | Implemented | `apps/asr-py/app/bench/metrics.py`<br>`apps/asr-py/app/bench/export.py`<br>`apps/api-node/src/eval/routes.ts`<br>`apps/web/src/pages/EvaluationPage.tsx` | `apps/asr-py/tests/test_bench_metrics.py` (20)<br>`apps/api-node/test/eval.test.ts` (6)<br>`apps/web/src/pages/EvaluationPage.test.tsx` (8) | pass 13; no result recorded | ADR-D43 |
-| FR-F12-04 | 4.12 | Implemented | `apps/asr-py/app/bench/runner.py`<br>`apps/asr-py/app/bench/split.py` | `apps/asr-py/tests/test_bench_runner.py` (17)<br>`apps/asr-py/tests/test_bench_split.py` (12) | pass 16; pass 13 | ADR-D43 |
+| FR-F12-02 | 4.12 | Partial | `apps/asr-py/app/bench/runner.py`<br>`scripts/bench-rules.mjs` | `apps/asr-py/tests/test_bench_runner.py` (18) | pass 16 | ADR-D43 |
+| FR-F12-03 | 4.12 | Implemented | `apps/asr-py/app/bench/metrics.py`<br>`apps/asr-py/app/bench/export.py`<br>`apps/api-node/src/eval/routes.ts`<br>`apps/web/src/pages/EvaluationPage.tsx` | `apps/asr-py/tests/test_bench_metrics.py` (20)<br>`apps/api-node/test/eval.test.ts` (9)<br>`apps/web/src/pages/EvaluationPage.test.tsx` (9) | pass 13; no result recorded | ADR-D43 |
+| FR-F12-04 | 4.12 | Implemented | `apps/asr-py/app/bench/runner.py`<br>`apps/asr-py/app/bench/split.py` | `apps/asr-py/tests/test_bench_runner.py` (18)<br>`apps/asr-py/tests/test_bench_split.py` (12) | pass 16; pass 13 | ADR-D43 |
 | FR-F13-01 | 4.13 | Planned | `apps/api-node/src/clinicos/ClinicOSAdapter.ts` | - | - | ADR-D3, ADR-D14 |
 | FR-F13-02 | 4.13 | Implemented | `apps/api-node/src/clinicos/MockClinicOSAdapter.ts`<br>`apps/api-node/src/clinicos/PgMockClinicOSAdapter.ts` | `apps/api-node/test/clinicos-mock.test.ts` (9) | pass 9 | ADR-D3 |
 | FR-F13-03 | 4.13 | Planned | `apps/api-node/src/auth/ClinicOSTokenAuth.ts` | - | - | ADR-D4, ADR-D12 |
@@ -124,7 +124,7 @@ Test files referenced by a requirement whose recorded result is a failure: 0.
 | PG-14 | 5 | Partial | `apps/web/src/pages/PathwaysPage.tsx` | `apps/web/src/pages/PathwaysPage.test.tsx` (10)<br>`apps/api-node/test/pathway-viewer.db.test.ts` (6) | pass 10; pass 6 | ADR-D35 |
 | PG-15 | 5 | Planned | - | - | - | ADR-D38 |
 | PG-16 | 5 | Implemented | `apps/web/src/pages/AuditPage.tsx` | `apps/web/src/pages/AuditPage.test.tsx` (17)<br>`apps/api-node/test/audit-export.db.test.ts` (19) | pass 17; pass 27 | ADR-D20 |
-| PG-17 | 5 | Implemented | `apps/web/src/pages/EvaluationPage.tsx`<br>`apps/api-node/src/eval/routes.ts` | `apps/web/src/pages/EvaluationPage.test.tsx` (8)<br>`apps/api-node/test/eval.test.ts` (6) | no result recorded | ADR-D43 |
+| PG-17 | 5 | Implemented | `apps/web/src/pages/EvaluationPage.tsx`<br>`apps/api-node/src/eval/routes.ts` | `apps/web/src/pages/EvaluationPage.test.tsx` (9)<br>`apps/api-node/test/eval.test.ts` (9) | no result recorded | ADR-D43 |
 | PG-18 | 5 | Implemented | `apps/web/src/pages/SettingsPage.tsx` | `apps/web/src/pages/SettingsPage.test.tsx` (7) | pass 7 | ADR-D21 |
 | PG-19 | 5 | Implemented | `apps/web/src/pages/ErrorPages.tsx` | `apps/web/src/App.test.tsx` (13) | pass 27 | ADR-D45 |
 | PG-20 | 5 | Implemented | `apps/web/src/pages/PrivacyRequestsPage.tsx`<br>`apps/api-node/src/privacy/service.ts` | `apps/web/src/pages/PrivacyRequestsPage.test.tsx` (7)<br>`apps/api-node/test/privacy.db.test.ts` (9)<br>`apps/api-node/test/privacy-mutation.db.test.ts` (3) | pass 7; pass 9; pass 3 | ADR-D45, OCI-016 |

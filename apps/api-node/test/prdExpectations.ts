@@ -114,4 +114,6 @@ export const PRD_EXPECTED: Record<
   // Evaluation benchmark runs (PG-17, FR-F12-03): admin and researcher read run artifacts
   'GET /eval/runs': ['admin', 'researcher'],
   'GET /eval/runs/:id': ['admin', 'researcher'],
+  'GET /eval/questions/baselines': ['admin', 'researcher'],
+  'GET /eval/questions/inspect': ['admin', 'researcher'],
 };

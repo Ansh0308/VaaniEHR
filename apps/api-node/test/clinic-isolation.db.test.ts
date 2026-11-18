@@ -835,6 +835,8 @@ const NOT_CLINIC_SCOPED = [
   // Research evaluation benchmark routes (ADR-D37 / Phase 11): read-only benchmark runs from disk
   'GET /eval/runs',
   'GET /eval/runs/:id',
+  'GET /eval/questions/baselines',
+  'GET /eval/questions/inspect',
 ];
 
 /**

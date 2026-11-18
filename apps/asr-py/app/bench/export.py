@@ -58,8 +58,12 @@ def _question_rows(run: dict) -> list[dict]:
         rows.append(
             {
                 "question_engine": q["engine"],
-                "status": q["status"],
-                "pathways": q["pathways"],
+                "status": q.get("status", "toy pathways only"),
+                "pathways": q.get("pathways", "toy"),
+                "provider": q.get("provider", "-"),
+                "model": q.get("model", "-"),
+                "validity_rate": q.get("validity_rate"),
+                "abstentions": q.get("abstentions"),
                 "n": p.get("n"),
                 "top1": p.get("top1"),
                 "top3": p.get("top3"),
@@ -160,19 +164,22 @@ def summary_md(run: dict) -> str:
         )
     out += ["", run["note"], "", "## Question engines (TOY pathways only)", ""]
     out += [
-        "| Engine | Status | N | Top-1 | Top-3 | Median questions to top-3 | Red flags seeded | Red-flag recall |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Engine | Status | Provider | Model | Validity | Abstain | N | Top-1 | Top-3 | Median questions to top-3 | Red flags seeded | Red-flag recall |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for q in _question_rows(run):
+        val_str = pct(q["validity_rate"]) if q.get("validity_rate") is not None else "-"
+        abs_str = str(q["abstentions"]) if q.get("abstentions") is not None else "-"
         out.append(
-            f"| {q['question_engine']} | {q['status']} | {q['n'] if q['n'] is not None else '-'} | {pct(q['top1'])} | "
+            f"| {q['question_engine']} | {q['status']} | {q['provider']} | {q['model']} | {val_str} | {abs_str} | "
+            f"{q['n'] if q['n'] is not None else '-'} | {pct(q['top1'])} | "
             f"{pct(q['top3'])} | {q['median_questions_to_top3'] if q['median_questions_to_top3'] is not None else 'n/a'} | "
             f"{q['red_flag_seeded'] if q['red_flag_seeded'] is not None else '-'} | {pct(q['red_flag_recall'])} |"
         )
     out += [
         "",
         "These question-engine numbers come from FAKE toy pathways and say nothing about real conditions. "
-        "`llm-only` and `hybrid` are not built. " + run["note"],
+        "Rules-Only, Plain-LLM, and Hybrid baselines evaluated using deterministic synthetic mock completion. " + run["note"],
     ]
 
     error_rows = run.get("error_rows", [])

@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-10-24T14:22:00+00:00",
-  "code_commit": "4dc063d7bade329ec28d4dd14b607e3fefeef5c7",
+  "run_at": "2026-11-18T12:00:13+00:00",
+  "code_commit": "bfb52e46c5b5b843274f0e80a52ba9f0d80d6d63",
   "split": "all",
   "split_hash": "4f2d6a440b5490962f2cd490b3340fe82688cc5b1f5891d0fe722f1179591eeb",
   "test_cases_evaluated": false,
@@ -10,8 +10,58 @@
   "asr_engines": {
     "gold": "gold-transcript"
   },
+  "asr_languages": {
+    "overall": {
+      "segments": 9,
+      "reference_words": 55,
+      "word_errors": 0,
+      "wer": 0.0,
+      "reference_chars": 209,
+      "char_errors": 0,
+      "cer": 0.0
+    },
+    "by_language": {
+      "en": {
+        "segments": 7,
+        "reference_words": 42,
+        "word_errors": 0,
+        "wer": 0.0,
+        "reference_chars": 164,
+        "char_errors": 0,
+        "cer": 0.0
+      },
+      "gu": {
+        "segments": 2,
+        "reference_words": 13,
+        "word_errors": 0,
+        "wer": 0.0,
+        "reference_chars": 45,
+        "char_errors": 0,
+        "cer": 0.0
+      }
+    },
+    "mixed_segments": {
+      "segments": 0,
+      "reference_words": 0,
+      "word_errors": 0,
+      "wer": 0.0,
+      "reference_chars": 0,
+      "char_errors": 0,
+      "cer": 0.0
+    },
+    "unannotated_segments": {
+      "segments": 0,
+      "reference_words": 0,
+      "word_errors": 0,
+      "wer": 0.0,
+      "reference_chars": 0,
+      "char_errors": 0,
+      "cer": 0.0
+    },
+    "protocol_note": "Language breakdowns rely strictly on explicit segment annotations ('gu', 'hi', 'en', 'mixed'). Script detection was not used to assign spoken language. Results on small synthetic/acted test cases are protocol demonstrations and not statistically meaningful population performance."
+  },
   "llm": {
-    "provider": "mock",
+    "provider": "openai_compatible",
     "model": "nvidia/nemotron-3.5-super-vl:free"
   },
   "prompt_hashes": {
@@ -46,11 +96,11 @@
   "question_engines": ["rules-only", "llm-only", "hybrid"],
   "cache": {
     "hits": 0,
-    "misses": 10
+    "misses": 12
   },
   "not_cached_and_not_run": {
     "asr": 0,
-    "extraction": 0
+    "extraction": 9
   },
   "skipped_no_audio": 0,
   "tuning_state": {
@@ -69,6 +119,25 @@
         "against_penalty": 0.5,
         "red_flag_first": true
       }
+    }
+  },
+  "extras": {
+    "fhir_validity": {
+      "bundles": 8,
+      "valid_bundles": 5,
+      "good_bundles": 5,
+      "good_valid": 5,
+      "good_pass_rate": 1.0,
+      "broken_bundles": 3,
+      "broken_caught": 3,
+      "broken_catch_rate": 1.0,
+      "total_errors": 7,
+      "total_warnings": 24,
+      "validation_level": "HL7 validator 7.0.3 against ABDM FHIR IG ndhm.in 6.5.0 profile & terminology definitions",
+      "conformance_disclaimer": "Automated verification against synthetic golden fixtures only; formal ABDM/NRCeS production sandboxing has not been conducted.",
+      "source_file": "D:/CODES/ClinicOS/VaaniEHR/data/fhir/out/golden-summary.json",
+      "source_mtime": "2026-10-23T07:45:35.112782+00:00",
+      "provenance_note": "Historical precomputed offline fixture summary from CI (not newly executed during benchmark run)"
     }
   }
 }

@@ -17782,6 +17782,332 @@
         ]
       }
     },
+    "/eval/questions/baselines": {
+      "get": {
+        "tags": [
+          "Evaluation"
+        ],
+        "summary": "Admin or researcher: list available research question baseline cases and provider status (read only)",
+        "operationId": "getEvalQuestionsBaselines",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "engines": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "provider_mode": {
+                          "type": "string"
+                        },
+                        "synthetic_mock": {
+                          "type": "boolean"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "cases": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "condition_label": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "dialogue": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "speaker": {
+                                      "type": "string"
+                                    },
+                                    "text": {
+                                      "type": "string"
+                                    },
+                                    "lang": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "speaker",
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "confirmed_slots": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "oracle_slots": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "condition_label",
+                              "description",
+                              "dialogue",
+                              "confirmed_slots",
+                              "oracle_slots"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "available_slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "slot": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "choices": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "slot",
+                              "type",
+                              "label"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "engines",
+                        "provider_mode",
+                        "synthetic_mock",
+                        "provider",
+                        "cases",
+                        "available_slots"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "eval.read",
+        "x-allowed-roles": [
+          "admin",
+          "researcher"
+        ]
+      }
+    },
+    "/eval/questions/inspect": {
+      "get": {
+        "tags": [
+          "Evaluation"
+        ],
+        "summary": "Admin or researcher: compare question engine baselines side-by-side for a case (read only, research only)",
+        "operationId": "getEvalQuestionsInspect",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slots",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "gu",
+                "hi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "rules_only": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "plain_llm": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "hybrid": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        "provider_mode": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "case_id",
+                        "context",
+                        "rules_only",
+                        "plain_llm",
+                        "hybrid",
+                        "provider_mode",
+                        "notes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permission": "eval.read",
+        "x-allowed-roles": [
+          "admin",
+          "researcher"
+        ]
+      }
+    },
     "/eval/runs": {
       "get": {
         "tags": [

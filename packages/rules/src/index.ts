@@ -18,3 +18,4 @@ export * from './types.js';
 export * from './validate.js';
 export * from './linking.js';
 export * from './safety.js';
+export * from './baselines/index.js';
