@@ -916,9 +916,7 @@ export function EvaluationPage() {
                   <GitCompare className="size-5 text-action" />
                   {t('eval:questions.comparisonTitle')}
                 </h3>
-                <p className="text-xs text-body">
-                  {t('eval:questions.comparisonSubtitle')}
-                </p>
+                <p className="text-xs text-body">{t('eval:questions.comparisonSubtitle')}</p>
               </div>
               <StateBadge state="ai" label={t('eval:questions.researchBadge')} />
             </div>
@@ -1042,9 +1040,7 @@ export function EvaluationPage() {
                   <Sparkles className="size-5 text-action" />
                   {t('eval:questions.explorerTitle')}
                 </h3>
-                <p className="text-xs text-body">
-                  {t('eval:questions.explorerSubtitle')}
-                </p>
+                <p className="text-xs text-body">{t('eval:questions.explorerSubtitle')}</p>
               </div>
 
               <div className="w-72">
@@ -1076,7 +1072,9 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">{t('eval:questions.rulesEngine')}</span>
+                      <span className="font-semibold text-ink text-sm">
+                        {t('eval:questions.rulesEngine')}
+                      </span>
                       <StateBadge state="clear" label={t('eval:questions.deterministicBadge')} />
                     </div>
                     <div className="mt-3 space-y-2 text-xs">
@@ -1113,7 +1111,9 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">{t('eval:questions.plainLlmEngine')}</span>
+                      <span className="font-semibold text-ink text-sm">
+                        {t('eval:questions.plainLlmEngine')}
+                      </span>
                       <Badge className="bg-blocked-bg text-blocked-fg border-blocked-accent">
                         {t('eval:questions.mockBadge')}
                       </Badge>
@@ -1151,7 +1151,9 @@ export function EvaluationPage() {
                   <div className="mt-3 pt-2 border-t border-line text-[11px] text-body flex items-center justify-between">
                     <span>{t('eval:questions.validityCheck')}</span>
                     <span className="text-positive font-semibold font-mono">
-                      {inspectionResult.plain_llm.validity?.is_valid ? t('eval:questions.validityPass') : 'PASS'}
+                      {inspectionResult.plain_llm.validity?.is_valid
+                        ? t('eval:questions.validityPass')
+                        : 'PASS'}
                     </span>
                   </div>
                 </div>
@@ -1160,7 +1162,9 @@ export function EvaluationPage() {
                 <div className="rounded-lg border border-line bg-surface p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-line pb-2">
-                      <span className="font-semibold text-ink text-sm">{t('eval:questions.hybridEngine')}</span>
+                      <span className="font-semibold text-ink text-sm">
+                        {t('eval:questions.hybridEngine')}
+                      </span>
                       <Badge className="bg-acknowledge-bg text-acknowledge-fg border-acknowledge-accent">
                         {t('eval:questions.mockBadge')}
                       </Badge>
@@ -1194,7 +1198,9 @@ export function EvaluationPage() {
                   </div>
                   <div className="mt-3 pt-2 border-t border-line text-[11px] text-body flex items-center justify-between">
                     <span>{t('eval:questions.deterministicFallback')}</span>
-                    <span className="text-action font-semibold font-mono">{t('eval:questions.guaranteed')}</span>
+                    <span className="text-action font-semibold font-mono">
+                      {t('eval:questions.guaranteed')}
+                    </span>
                   </div>
                 </div>
               </div>
