@@ -1,6 +1,7 @@
 // Types for the doctor-side pathway aids (Phase 6C): the next suggested question, the candidate conditions, and the kept
 // record. The API sends numbers (scores) that the screen never shows: no percentage and no confidence figure anywhere.
-export type PathwayStatus = 'test' | 'draft' | 'active';
+export type PathwayStatus =
+  'test' | 'draft' | 'review_pending' | 'rejected' | 'active' | 'clinically_approved';
 export type Outcome = 'QUESTION' | 'RED_FLAG' | 'ABSTAIN' | 'COMPLETE';
 export type PathwayLang = 'en' | 'gu' | 'hi';
 

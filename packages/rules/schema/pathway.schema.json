@@ -29,7 +29,9 @@
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
     "version": { "type": "integer", "minimum": 1 },
-    "status": { "enum": ["test", "draft", "active"] },
+    "status": {
+      "enum": ["test", "draft", "review_pending", "rejected", "active", "clinically_approved"]
+    },
     "title": { "$ref": "#/$defs/localized" },
     "source": {
       "type": "object",

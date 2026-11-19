@@ -6,6 +6,8 @@ import {
   LANGS,
   OPS,
   STATUSES,
+  isApprovedStatus,
+  isSyntheticPathway,
   type AnswerType,
   type Condition,
   type Pathway,
@@ -109,6 +111,7 @@ export function validatePathway(raw: unknown, label = 'pathway'): Problems {
   if (!(STATUSES as readonly string[]).includes(String(raw.status))) {
     errors.push(`${at}: status must be one of ${STATUSES.join(', ')}`);
   }
+  const approved = isApprovedStatus(raw.status as string);
   checkLocalized(`${at} title`, raw.title, errors);
 
   // source block
@@ -119,7 +122,7 @@ export function validatePathway(raw: unknown, label = 'pathway'): Problems {
       if (!(key in source)) errors.push(`${at}: source.${key} is missing`);
     }
     if (!nonEmpty(source.doc)) errors.push(`${at}: source.doc is empty`);
-    if (raw.status === 'active') {
+    if (approved) {
       if (!nonEmpty(source.reviewed_by)) {
         errors.push(
           `${at}: an active pathway needs source.reviewed_by (a named clinician reviewer)`,
@@ -127,6 +130,15 @@ export function validatePathway(raw: unknown, label = 'pathway'): Problems {
       }
       if (!nonEmpty(source.reviewed_on) || !DATE.test(source.reviewed_on)) {
         errors.push(`${at}: an active pathway needs source.reviewed_on as YYYY-MM-DD`);
+      }
+      if (
+        isSyntheticPathway(raw) &&
+        raw.status === 'clinically_approved' &&
+        (raw as Record<string, unknown>).synthetic !== true
+      ) {
+        errors.push(
+          `${at}: synthetic test fixture cannot claim clinically_approved status without synthetic: true marker`,
+        );
       }
     } else if (nonEmpty(source.reviewed_on) && !DATE.test(source.reviewed_on)) {
       errors.push(`${at}: source.reviewed_on must be YYYY-MM-DD`);
@@ -204,7 +216,7 @@ export function validatePathway(raw: unknown, label = 'pathway'): Problems {
       errors.push(`${where}: refer must be true or false`);
     if ('concept_id' in n && !nonEmpty(n.concept_id))
       errors.push(`${where}: concept_id must be a non-empty text`);
-    if (raw.status !== 'active') continue;
+    if (!approved) continue;
     if (!nonEmpty(n.source_quote))
       errors.push(`${where}: an active pathway needs source_quote on every node`);
     if (!(nonEmpty(n.page) || (typeof n.page === 'number' && n.page >= 0))) {

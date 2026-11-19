@@ -4,6 +4,7 @@
 //   - terminals need the PRD 7.1 `refer` flag (same levels). Treatment content (first-line options) is Phase 7: not checked
 //   - a question without a concept_id is only a warning (concept ids wait for the reviewed word list, OCI-017)
 //   - placeholder text ("TODO...") left in the source block or in a quote
+import { isSyntheticPathway } from './types.js';
 import { validatePathway } from './validate.js';
 
 export interface LintFinding {
@@ -27,12 +28,10 @@ export function lintPathway(raw: unknown): LintFinding[] {
   const gap: LintFinding['level'] = exempt ? 'warning' : 'error';
   const id = typeof raw.id === 'string' ? raw.id : '?';
   const source = isObj(raw.source) ? raw.source : {};
+  const approved = raw.status === 'active' || raw.status === 'clinically_approved';
   for (const key of ['doc', 'page', 'reviewed_by', 'reviewed_on']) {
     if (placeholder(source[key])) {
-      add(
-        raw.status === 'active' ? 'error' : 'warning',
-        `${id}: source.${key} is still a placeholder`,
-      );
+      add(approved ? 'error' : 'warning', `${id}: source.${key} is still a placeholder`);
     }
   }
   for (const n of Array.isArray(raw.nodes) ? raw.nodes : []) {
@@ -80,4 +79,118 @@ export function nextVersion(p: Record<string, unknown>): Record<string, unknown>
     if (isObj(n)) delete n.reviewed_by;
   }
   return copy;
+}
+
+/** Transitions a draft pathway to review_pending after validating that it is well-formed. */
+export function submitPathwayForReview(p: Record<string, unknown>): {
+  pathway: Record<string, unknown>;
+  problems: string[];
+} {
+  const copy = JSON.parse(JSON.stringify(p)) as Record<string, unknown>;
+  if (copy.status !== 'draft') {
+    return {
+      pathway: copy,
+      problems: [
+        `pathway must be in draft status to submit for review, found "${String(copy.status)}"`,
+      ],
+    };
+  }
+  const findings = lintPathway(copy);
+  const errors = findings.filter((f) => f.level === 'error').map((f) => f.message);
+  if (errors.length > 0) {
+    return { pathway: copy, problems: errors };
+  }
+  copy.status = 'review_pending';
+  return { pathway: copy, problems: [] };
+}
+
+/** Clinically approves a pathway with named reviewer metadata, review date, and evidence. */
+export function approvePathway(
+  p: Record<string, unknown>,
+  review: {
+    reviewer: string;
+    reviewed_on: string;
+    guideline_ref?: string;
+    approval_evidence?: string;
+    allowSynthetic?: boolean;
+  },
+): {
+  pathway: Record<string, unknown>;
+  problems: string[];
+} {
+  const copy = JSON.parse(JSON.stringify(p)) as Record<string, unknown>;
+  if (copy.status !== 'review_pending' && copy.status !== 'draft') {
+    return {
+      pathway: copy,
+      problems: [
+        `cannot approve pathway with status "${String(copy.status)}"; must be review_pending or draft`,
+      ],
+    };
+  }
+  if (!text(review.reviewer)) {
+    return { pathway: copy, problems: ['named reviewer is required for clinical approval'] };
+  }
+  if (!text(review.reviewed_on) || !/^\d{4}-\d{2}-\d{2}$/.test(review.reviewed_on)) {
+    return { pathway: copy, problems: ['reviewed_on date must be in YYYY-MM-DD format'] };
+  }
+  const source = isObj(copy.source) ? copy.source : {};
+  source.reviewed_by = review.reviewer.trim();
+  source.reviewed_on = review.reviewed_on.trim();
+  if (review.guideline_ref) source.guideline_ref = review.guideline_ref.trim();
+  if (review.approval_evidence) source.approval_evidence = review.approval_evidence.trim();
+  copy.source = source;
+  copy.status = 'clinically_approved';
+
+  if (isSyntheticPathway(copy)) {
+    if (review.allowSynthetic) {
+      copy.synthetic = true;
+    } else {
+      return {
+        pathway: copy,
+        problems: [
+          'synthetic fixture cannot be clinically approved without explicit allowSynthetic flag',
+        ],
+      };
+    }
+  }
+
+  const findings = lintPathway(copy);
+  const errors = findings.filter((f) => f.level === 'error').map((f) => f.message);
+  if (errors.length > 0) {
+    return { pathway: copy, problems: errors };
+  }
+  return { pathway: copy, problems: [] };
+}
+
+/** Rejects a pathway under clinical review with a reason and recording reviewer. */
+export function rejectPathway(
+  p: Record<string, unknown>,
+  rejection: {
+    reviewer: string;
+    reviewed_on: string;
+    reason: string;
+  },
+): {
+  pathway: Record<string, unknown>;
+  problems: string[];
+} {
+  const copy = JSON.parse(JSON.stringify(p)) as Record<string, unknown>;
+  if (copy.status !== 'review_pending' && copy.status !== 'draft') {
+    return {
+      pathway: copy,
+      problems: [
+        `cannot reject pathway with status "${String(copy.status)}"; must be review_pending or draft`,
+      ],
+    };
+  }
+  if (!text(rejection.reason)) {
+    return { pathway: copy, problems: ['rejection reason is required'] };
+  }
+  const source = isObj(copy.source) ? copy.source : {};
+  source.reviewed_by = rejection.reviewer.trim();
+  source.reviewed_on = rejection.reviewed_on.trim();
+  source.rejection_reason = rejection.reason.trim();
+  copy.source = source;
+  copy.status = 'rejected';
+  return { pathway: copy, problems: [] };
 }

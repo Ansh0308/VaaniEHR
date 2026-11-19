@@ -7,8 +7,21 @@ export const LANGS = ['en', 'gu', 'hi'] as const;
 export type Lang = (typeof LANGS)[number];
 export type Localized = Record<Lang, string>;
 
-export const STATUSES = ['test', 'draft', 'active'] as const;
+export const STATUSES = [
+  'test',
+  'draft',
+  'review_pending',
+  'rejected',
+  'active',
+  'clinically_approved',
+] as const;
 export type PathwayStatus = (typeof STATUSES)[number];
+
+export const isApprovedStatus = (status: string | null | undefined): boolean =>
+  status === 'active' || status === 'clinically_approved';
+
+export const isPendingOrDraft = (status: string | null | undefined): boolean =>
+  status === 'draft' || status === 'review_pending' || status === 'rejected';
 
 export type SlotValue = boolean | number | string;
 export const ANSWER_TYPES = ['boolean', 'number', 'choice'] as const;
@@ -26,6 +39,12 @@ export interface Source {
   page: string | number;
   reviewed_by: string;
   reviewed_on: string;
+  /** Clinical guideline citation / identifier */
+  guideline_ref?: string;
+  /** Summary or quote of clinician approval evidence */
+  approval_evidence?: string;
+  /** Rejection reason if status is rejected */
+  rejection_reason?: string;
 }
 
 export interface Edge {
@@ -81,6 +100,8 @@ export interface Pathway {
   id: string;
   version: number;
   status: PathwayStatus;
+  synthetic?: boolean;
+  tier?: 'synthetic_test' | 'clinical';
   title: Localized;
   source: Source;
   start: string;
@@ -91,3 +112,24 @@ export interface Pathway {
 }
 
 export const nodeKey = (pathwayId: string, nodeId: string): string => `${pathwayId}/${nodeId}`;
+
+/** Pure predicate checking whether a pathway is a synthetic/toy test fixture. */
+export function isSyntheticPathway(raw: unknown): boolean {
+  if (typeof raw !== 'object' || raw === null) return false;
+  const o = raw as Record<string, unknown>;
+  if (o.synthetic === true || o.tier === 'synthetic_test' || o.status === 'test') return true;
+  if (typeof o.id === 'string') {
+    const id = o.id.toLowerCase();
+    if (id.startsWith('toy_') || id.startsWith('synthetic_') || id.startsWith('synth_')) {
+      return true;
+    }
+  }
+  if (typeof o.source === 'object' && o.source !== null) {
+    const s = o.source as Record<string, unknown>;
+    if (typeof s.doc === 'string' && /toy|synthetic|fake|test|todo/i.test(s.doc)) return true;
+    if (typeof s.reviewed_by === 'string' && /fake|synthetic|test|fictional/i.test(s.reviewed_by)) {
+      return true;
+    }
+  }
+  return false;
+}

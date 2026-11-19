@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Pathway } from './types.js';
+import { isApprovedStatus } from './types.js';
 import { validateSet } from './validate.js';
 
 export const LOCK_FILE = 'pathways.lock.json';
@@ -16,8 +17,10 @@ export type Lock = Record<string, string>;
 const LOCK_SOURCE = 'pathway content hashes (immutability lock), written by the lock command';
 
 export interface LoadOptions {
-  /** load status "test" pathways too (dev and tests only) */
+  /** load status "test" and synthetic pathways too (dev and tests only) */
   allowTest: boolean;
+  /** allow synthetic/toy test fixtures to load (defaults to allowTest) */
+  allowSynthetic?: boolean;
   /** every active pathway must have a matching entry in the lock file */
   requireLock?: boolean;
 }
@@ -74,15 +77,25 @@ export function loadPathwayDir(dir: string, options: LoadOptions): Loaded {
       problems.push(`${file}: not valid JSON`);
     }
   }
-  // only files that can be used are checked: a draft being written never stops the service from starting
+  // only files that can be used are checked: draft, review_pending and rejected never load into active engine
+  const allowSynthetic = options.allowSynthetic ?? options.allowTest;
   const usable = items.filter(({ data }) => {
-    const status = (data as { status?: unknown } | null)?.status;
-    return status === 'active' || (status === 'test' && options.allowTest);
+    const d = data as { status?: unknown; synthetic?: unknown; tier?: unknown } | null;
+    const status = d?.status;
+    if (status === 'draft' || status === 'review_pending' || status === 'rejected') {
+      return false;
+    }
+    const isMarkedSynthetic = d?.synthetic === true || d?.tier === 'synthetic_test';
+    if (isApprovedStatus(status as string)) {
+      if (isMarkedSynthetic && !allowSynthetic) return false;
+      return true;
+    }
+    return status === 'test' && allowSynthetic;
   });
   problems.push(...validateSet(usable).errors);
   const lock = readLock(dir);
   const eligible = usable.map(({ data }) => data as Pathway);
-  for (const p of eligible.filter((x) => x.status === 'active')) {
+  for (const p of eligible.filter((x) => isApprovedStatus(x.status))) {
     const key = `${p.id}@${p.version}`;
     const recorded = lock[key];
     if (recorded === undefined) {
@@ -105,14 +118,16 @@ export function loadPathwayDir(dir: string, options: LoadOptions): Loaded {
 
 /** Adds the hashes of active pathways that are not locked yet. Never changes an existing entry. */
 export function lockActive(dir: string): { added: string[]; problems: string[] } {
-  const { problems, pathways } = loadPathwayDir(dir, { allowTest: false });
+  const { problems, pathways } = loadPathwayDir(dir, { allowTest: false, allowSynthetic: true });
   const lock = readLock(dir);
   const added: string[] = [];
   for (const p of pathways) {
-    const key = `${p.id}@${p.version}`;
-    if (lock[key] === undefined) {
-      lock[key] = pathwayHash(p);
-      added.push(key);
+    if (isApprovedStatus(p.status)) {
+      const key = `${p.id}@${p.version}`;
+      if (lock[key] === undefined) {
+        lock[key] = pathwayHash(p);
+        added.push(key);
+      }
     }
   }
   if (problems.length === 0 && added.length > 0) {
@@ -125,11 +140,18 @@ export function lockActive(dir: string): { added: string[]; problems: string[] }
 /** Every usable version of every pathway (for the read-only viewer's version history), newest version first per id. */
 export function loadAllVersions(dir: string, options: LoadOptions): Pathway[] {
   if (!existsSync(dir)) return [];
+  const allowSynthetic = options.allowSynthetic ?? options.allowTest;
   const out: Pathway[] = [];
   for (const file of walk(dir)) {
     try {
       const p = JSON.parse(readFileSync(file, 'utf8')) as Pathway;
-      if (p.status === 'active' || (p.status === 'test' && options.allowTest)) out.push(p);
+      const approved = isApprovedStatus(p.status);
+      const isMarkedSynthetic = p.synthetic === true || p.tier === 'synthetic_test';
+      if (approved) {
+        if (!isMarkedSynthetic || allowSynthetic) out.push(p);
+      } else if (p.status === 'test' && allowSynthetic) {
+        out.push(p);
+      }
     } catch {
       // an unreadable file is reported by loadPathwayDir, never shown
     }

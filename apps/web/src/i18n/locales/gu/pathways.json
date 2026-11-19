@@ -54,7 +54,10 @@
   "status": {
     "test": "પરીક્ષણ (નકલી)",
     "draft": "ડ્રાફ્ટ",
-    "active": "સક્રિય"
+    "review_pending": "સમીક્ષા બાકી",
+    "rejected": "અસ્વીકૃત",
+    "active": "સક્રિય",
+    "clinically_approved": "તબીબી મંજૂર"
   },
   "sourceLine": "{{doc}}, પાનું {{page}}",
   "history": "સંસ્કરણ ઇતિહાસ",

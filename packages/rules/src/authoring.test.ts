@@ -8,7 +8,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { CaseFile } from './cases.js';
 import { DEFAULT_ENGINE_CONFIG } from './config.js';
 import { coverageReport } from './coverage.js';
-import { lintPathway, nextVersion, scaffoldPathway } from './lint.js';
+import {
+  approvePathway,
+  lintPathway,
+  nextVersion,
+  rejectPathway,
+  scaffoldPathway,
+  submitPathwayForReview,
+} from './lint.js';
 import { loadAllVersions, loadPathwayDir, lockActive } from './loader.js';
 import {
   CASES_DIR,
@@ -220,9 +227,139 @@ describe('the command line', () => {
     const half = tmp();
     writeFileSync(join(half, 'toy_condition_a.cases.json'), JSON.stringify({ cases: [] }));
     expect(run('coverage', TOY_DIR, half, '--fail-under', '100').status).toBe(1);
-  });
+  }, 25000);
   it('prints usage and exits 2 for an unknown command', () => {
     expect(run('nonsense').status).toBe(2);
     expect(execFileSync(process.execPath, ['--version'], { encoding: 'utf8' })).toMatch(/^v/);
+  });
+  it('submit, approve, and reject commands update pathway status and metadata via CLI', () => {
+    const dir = tmp();
+    const p = withTrail(toy());
+    p.status = 'draft';
+    p.source.reviewed_by = '';
+    p.source.reviewed_on = '';
+    const file = join(dir, 'test.pathway.json');
+    writeFileSync(file, JSON.stringify(p, null, 2), 'utf8');
+
+    // Submit for review
+    const sub = run('submit', file);
+    expect(sub.status).toBe(0);
+    expect(JSON.parse(readFileSync(file, 'utf8')).status).toBe('review_pending');
+
+    // Reject
+    const rej = run(
+      'reject',
+      file,
+      '--reviewer',
+      'Dr Senior Reviewer',
+      '--reason',
+      'Needs clarification on node q2',
+    );
+    expect(rej.status).toBe(0);
+    const rejectedData = JSON.parse(readFileSync(file, 'utf8'));
+    expect(rejectedData.status).toBe('rejected');
+    expect(rejectedData.source.rejection_reason).toBe('Needs clarification on node q2');
+
+    // Resubmit after edit
+    rejectedData.status = 'draft';
+    writeFileSync(file, JSON.stringify(rejectedData, null, 2), 'utf8');
+    expect(run('submit', file).status).toBe(0);
+
+    // Approve (with allow-synthetic for synthetic fixtures)
+    const app = run(
+      'approve',
+      file,
+      '--reviewer',
+      'Dr Clinician Approver',
+      '--date',
+      '2026-11-19',
+      '--evidence',
+      'Verified against ICMR 2024 guidance',
+      '--allow-synthetic',
+    );
+    expect(app.status).toBe(0);
+    const approvedData = JSON.parse(readFileSync(file, 'utf8'));
+    expect(approvedData.status).toBe('clinically_approved');
+    expect(approvedData.source.reviewed_by).toBe('Dr Clinician Approver');
+    expect(approvedData.source.reviewed_on).toBe('2026-11-19');
+    expect(approvedData.source.approval_evidence).toBe('Verified against ICMR 2024 guidance');
+  }, 25000);
+});
+
+describe('approval workflow lifecycle transitions', () => {
+  it('submitting an incomplete draft reports validation errors', () => {
+    const p = scaffoldPathway('synth_cond');
+    const res = submitPathwayForReview(p);
+    expect(res.problems.length).toBeGreaterThan(0);
+    expect(res.pathway.status).toBe('draft');
+  });
+
+  it('submitting a valid draft transitions to review_pending', () => {
+    const p = withTrail(toy());
+    p.status = 'draft';
+    const res = submitPathwayForReview(p);
+    expect(res.problems).toEqual([]);
+    expect(res.pathway.status).toBe('review_pending');
+  });
+
+  it('approving review_pending without named reviewer or date fails', () => {
+    const p = withTrail(toy());
+    p.status = 'review_pending';
+    const res = approvePathway(p, { reviewer: '', reviewed_on: '2026-11-19' });
+    expect(res.problems).toContain('named reviewer is required for clinical approval');
+    const resDate = approvePathway(p, { reviewer: 'Dr Valid', reviewed_on: 'invalid-date' });
+    expect(resDate.problems).toContain('reviewed_on date must be in YYYY-MM-DD format');
+  });
+
+  it('synthetic fixture cannot claim clinical approval without explicit allowSynthetic flag', () => {
+    const p = withTrail(toy());
+    p.status = 'review_pending';
+    const res = approvePathway(p, {
+      reviewer: 'Dr Valid',
+      reviewed_on: '2026-11-19',
+      allowSynthetic: false,
+    });
+    expect(res.problems).toContain(
+      'synthetic fixture cannot be clinically approved without explicit allowSynthetic flag',
+    );
+  });
+
+  it('approving synthetic fixture with allowSynthetic transitions to clinically_approved with synthetic marker', () => {
+    const p = withTrail(toy());
+    p.status = 'review_pending';
+    const res = approvePathway(p, {
+      reviewer: 'Dr Named Reviewer',
+      reviewed_on: '2026-11-19',
+      approval_evidence: 'Clinical board review panel consensus',
+      guideline_ref: 'ICMR-2024-SYNTH',
+      allowSynthetic: true,
+    });
+    expect(res.problems).toEqual([]);
+    expect(res.pathway.status).toBe('clinically_approved');
+    expect(res.pathway.synthetic).toBe(true);
+    expect((res.pathway.source as Loose).reviewed_by).toBe('Dr Named Reviewer');
+    expect((res.pathway.source as Loose).guideline_ref).toBe('ICMR-2024-SYNTH');
+  });
+
+  it('rejecting review_pending requires reason and records reviewer and date', () => {
+    const p = withTrail(toy());
+    p.status = 'review_pending';
+    const failRes = rejectPathway(p, {
+      reviewer: 'Dr Reviewer',
+      reviewed_on: '2026-11-19',
+      reason: '',
+    });
+    expect(failRes.problems).toContain('rejection reason is required');
+
+    const okRes = rejectPathway(p, {
+      reviewer: 'Dr Reviewer',
+      reviewed_on: '2026-11-19',
+      reason: 'Inadequate red-flag coverage for pediatric edge cases',
+    });
+    expect(okRes.problems).toEqual([]);
+    expect(okRes.pathway.status).toBe('rejected');
+    expect((okRes.pathway.source as Loose).rejection_reason).toBe(
+      'Inadequate red-flag coverage for pediatric edge cases',
+    );
   });
 });

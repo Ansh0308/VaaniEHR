@@ -10256,7 +10256,10 @@
                           "enum": [
                             "test",
                             "draft",
-                            "active"
+                            "review_pending",
+                            "rejected",
+                            "active",
+                            "clinically_approved"
                           ]
                         },
                         "notActive": {
@@ -10582,7 +10585,10 @@
                                 "enum": [
                                   "test",
                                   "draft",
-                                  "active"
+                                  "review_pending",
+                                  "rejected",
+                                  "active",
+                                  "clinically_approved"
                                 ]
                               },
                               "score": {
@@ -11352,7 +11358,10 @@
                                 "enum": [
                                   "test",
                                   "draft",
-                                  "active"
+                                  "review_pending",
+                                  "rejected",
+                                  "active",
+                                  "clinically_approved"
                                 ]
                               },
                               "signedOff": {
@@ -11377,7 +11386,10 @@
                                       "enum": [
                                         "test",
                                         "draft",
-                                        "active"
+                                        "review_pending",
+                                        "rejected",
+                                        "active",
+                                        "clinically_approved"
                                       ]
                                     },
                                     "reviewedBy": {
@@ -11544,7 +11556,10 @@
                           "enum": [
                             "test",
                             "draft",
-                            "active"
+                            "review_pending",
+                            "rejected",
+                            "active",
+                            "clinically_approved"
                           ]
                         },
                         "signedOff": {
@@ -11569,7 +11584,10 @@
                                 "enum": [
                                   "test",
                                   "draft",
-                                  "active"
+                                  "review_pending",
+                                  "rejected",
+                                  "active",
+                                  "clinically_approved"
                                 ]
                               },
                               "reviewedBy": {

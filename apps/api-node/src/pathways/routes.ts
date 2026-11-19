@@ -25,6 +25,15 @@ const selectBody = z.union([
 ]);
 type SelectBody = z.infer<typeof selectBody>;
 
+const statusEnum = z.enum([
+  'test',
+  'draft',
+  'review_pending',
+  'rejected',
+  'active',
+  'clinically_approved',
+]);
+
 const nextShape = z.object({
   outcome: z.enum(['QUESTION', 'RED_FLAG', 'ABSTAIN', 'COMPLETE']),
   eventId: z.uuid().nullable(),
@@ -42,7 +51,7 @@ const nextShape = z.object({
   questionCap: z.number(),
   slotConflicts: z.array(z.string()),
   pathwayTitle: z.string().nullable(),
-  pathwayStatus: z.enum(['test', 'draft', 'active']).nullable(),
+  pathwayStatus: statusEnum.nullable(),
   /** true when any loaded pathway is not active: the screen then says "Test pathway - not clinical" */
   notActive: z.boolean(),
 });
@@ -59,7 +68,7 @@ const candidateShape = z.object({
   pathwayId: z.string(),
   version: z.number(),
   title: z.string(),
-  status: z.enum(['test', 'draft', 'active']),
+  status: statusEnum,
   score: z.number(),
   evidenceFor: z.array(evidenceShape),
   evidenceAgainst: z.array(evidenceShape),
@@ -180,7 +189,9 @@ export function pathwayRoutes(): RouteDef[] {
             slotConflicts: state.conflicts,
             pathwayTitle: titleIn(catalog.pathways, out.pathway_id, ctx.query.lang),
             pathwayStatus: catalog.pathways.find((p) => p.id === out.pathway_id)?.status ?? null,
-            notActive: catalog.pathways.some((p) => p.status !== 'active'),
+            notActive: catalog.pathways.some(
+              (p) => p.status !== 'active' && p.status !== 'clinically_approved',
+            ),
           },
         };
       },
@@ -275,7 +286,9 @@ export function pathwayRoutes(): RouteDef[] {
           data: {
             outcome: out.outcome,
             notice: NOTICE,
-            notActive: catalog.pathways.some((p) => p.status !== 'active'),
+            notActive: catalog.pathways.some(
+              (p) => p.status !== 'active' && p.status !== 'clinically_approved',
+            ),
             candidates: out.candidates.map((c, i) => ({
               rank: i + 1,
               pathwayId: c.pathway_id,
@@ -337,7 +350,9 @@ export function pathwayRoutes(): RouteDef[] {
               pathwayTitle: titleOf(r.pathway_id),
               actedAt: r.acted_at.toISOString(),
             })),
-            notActive: catalog.pathways.some((p) => p.status !== 'active'),
+            notActive: catalog.pathways.some(
+              (p) => p.status !== 'active' && p.status !== 'clinically_approved',
+            ),
           },
         };
       },

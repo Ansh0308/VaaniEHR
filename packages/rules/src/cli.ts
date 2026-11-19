@@ -12,7 +12,14 @@ import { basename, dirname, join, relative, sep } from 'node:path';
 import { runCases, type CaseFile } from './cases.js';
 import { DEFAULT_ENGINE_CONFIG } from './config.js';
 import { coverageReport } from './coverage.js';
-import { lintPathway, nextVersion, scaffoldPathway } from './lint.js';
+import {
+  approvePathway,
+  lintPathway,
+  nextVersion,
+  rejectPathway,
+  scaffoldPathway,
+  submitPathwayForReview,
+} from './lint.js';
 import { loadPathwayDir, lockActive } from './loader.js';
 import {
   SAFETY_LOCK_FILE,
@@ -29,7 +36,19 @@ for (let i = 0; i < rest.length; i++) {
   const a = rest[i] as string;
   if (a.startsWith('--')) {
     const next = rest[i + 1];
-    if (next !== undefined && !next.startsWith('--') && ['--doc', '--fail-under'].includes(a)) {
+    if (
+      next !== undefined &&
+      !next.startsWith('--') &&
+      [
+        '--doc',
+        '--fail-under',
+        '--reviewer',
+        '--date',
+        '--reason',
+        '--evidence',
+        '--guideline',
+      ].includes(a)
+    ) {
       flags.set(a, next);
       i += 1;
     } else flags.set(a, '');
@@ -309,8 +328,76 @@ function main(): number {
     out(`${files.length} file(s), ${errors} error(s), ${warnings} warning(s)`);
     return errors === 0 ? 0 : 1;
   }
+  if (command === 'submit' && args[0]) {
+    if (!existsSync(args[0])) {
+      out(`${args[0]}: file not found`);
+      return 2;
+    }
+    const source = JSON.parse(readFileSync(args[0], 'utf8')) as Record<string, unknown>;
+    const res = submitPathwayForReview(source);
+    if (res.problems.length > 0) {
+      for (const p of res.problems) out(`ERROR ${p}`);
+      return 1;
+    }
+    writeFileSync(args[0], `${JSON.stringify(res.pathway, null, 2)}\n`, 'utf8');
+    out(`submitted ${basename(args[0])} for review (status: review_pending)`);
+    return 0;
+  }
+  if (command === 'approve' && args[0]) {
+    if (!existsSync(args[0])) {
+      out(`${args[0]}: file not found`);
+      return 2;
+    }
+    const reviewer = flags.get('--reviewer');
+    const date = flags.get('--date');
+    if (!reviewer || !date) {
+      out('approve requires --reviewer "Doctor Name" and --date YYYY-MM-DD');
+      return 2;
+    }
+    const source = JSON.parse(readFileSync(args[0], 'utf8')) as Record<string, unknown>;
+    const res = approvePathway(source, {
+      reviewer,
+      reviewed_on: date,
+      approval_evidence: flags.get('--evidence'),
+      guideline_ref: flags.get('--guideline'),
+      allowSynthetic: flags.has('--allow-synthetic') || flags.has('--allow-test'),
+    });
+    if (res.problems.length > 0) {
+      for (const p of res.problems) out(`ERROR ${p}`);
+      return 1;
+    }
+    writeFileSync(args[0], `${JSON.stringify(res.pathway, null, 2)}\n`, 'utf8');
+    out(`approved ${basename(args[0])} by ${reviewer} on ${date} (status: clinically_approved)`);
+    return 0;
+  }
+  if (command === 'reject' && args[0]) {
+    if (!existsSync(args[0])) {
+      out(`${args[0]}: file not found`);
+      return 2;
+    }
+    const reviewer = flags.get('--reviewer') ?? 'Clinician Reviewer';
+    const date = flags.get('--date') ?? new Date().toISOString().slice(0, 10);
+    const reason = flags.get('--reason');
+    if (!reason) {
+      out('reject requires --reason "rejection reason explanation"');
+      return 2;
+    }
+    const source = JSON.parse(readFileSync(args[0], 'utf8')) as Record<string, unknown>;
+    const res = rejectPathway(source, {
+      reviewer,
+      reviewed_on: date,
+      reason,
+    });
+    if (res.problems.length > 0) {
+      for (const p of res.problems) out(`ERROR ${p}`);
+      return 1;
+    }
+    writeFileSync(args[0], `${JSON.stringify(res.pathway, null, 2)}\n`, 'utf8');
+    out(`rejected ${basename(args[0])} (status: rejected)`);
+    return 0;
+  }
   out(
-    'usage: cli.ts validate|lock|cases|coverage|new|version|lint|safety-lint|safety-lock ... (see the header of packages/rules/src/cli.ts)',
+    'usage: cli.ts validate|lock|cases|coverage|new|version|lint|submit|approve|reject|safety-lint|safety-lock ... (see the header of packages/rules/src/cli.ts)',
   );
   return 2;
 }

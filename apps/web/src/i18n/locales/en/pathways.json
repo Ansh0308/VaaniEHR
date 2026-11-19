@@ -54,7 +54,10 @@
   "status": {
     "test": "Test (fake)",
     "draft": "Draft",
-    "active": "Active"
+    "review_pending": "Review Pending",
+    "rejected": "Rejected",
+    "active": "Active",
+    "clinically_approved": "Clinically Approved"
   },
   "sourceLine": "{{doc}}, page {{page}}",
   "history": "Version history",

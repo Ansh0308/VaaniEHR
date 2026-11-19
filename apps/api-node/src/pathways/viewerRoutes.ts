@@ -17,9 +17,18 @@ const valueShape = z.union([scalar, z.array(scalar)]);
 const localized = z.object({ en: z.string(), gu: z.string(), hi: z.string() });
 const conditionShape = z.object({ op: z.string(), value: valueShape });
 
+const pathwayStatusEnum = z.enum([
+  'test',
+  'draft',
+  'review_pending',
+  'rejected',
+  'active',
+  'clinically_approved',
+]);
+
 const versionShape = z.object({
   version: z.number(),
-  status: z.enum(['test', 'draft', 'active']),
+  status: pathwayStatusEnum,
   reviewedBy: z.string().nullable(),
   reviewedOn: z.string().nullable(),
   signedOff: z.boolean(),
@@ -28,7 +37,7 @@ const summaryShape = z.object({
   id: z.string(),
   title: localized,
   latestVersion: z.number(),
-  status: z.enum(['test', 'draft', 'active']),
+  status: pathwayStatusEnum,
   signedOff: z.boolean(),
   notActive: z.boolean(),
   nodeCount: z.number(),
@@ -114,7 +123,7 @@ export function pathwayViewerRoutes(): RouteDef[] {
       latestVersion: latest.version,
       status: latest.status,
       signedOff: signed(latest),
-      notActive: latest.status !== 'active',
+      notActive: latest.status !== 'active' && latest.status !== 'clinically_approved',
       nodeCount: latest.nodes.length,
       versions: versions.map(versionView),
     };
